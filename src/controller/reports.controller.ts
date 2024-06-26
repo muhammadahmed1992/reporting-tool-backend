@@ -19,8 +19,8 @@ export class ReportsController {
   }
   
   @Get('/sales')
-  async sales(@Query('startDate') startDate: Date, @Query('endDate') endDate: Date): Promise<any> {
-    const result = await this.reportService.generateReport(ReportName.Sales, startDate, endDate);
+  async sales(@Query('startDate') startDate: Date, @Query('endDate') endDate: Date, @Query('warehouse') warehouse: string): Promise<any> {
+    const result = await this.reportService.generateReport(ReportName.Sales, startDate, endDate, warehouse);
     return result;
   }
   
@@ -43,8 +43,8 @@ export class ReportsController {
   }
   
   @Get('/sales-2')
-  async sales2(@Query('startDate') startDate: Date, @Query('endDate') endDate: Date): Promise<any> {
-    const result = await this.reportService.generateReport(ReportName.Sales2, startDate, endDate);
+  async sales2(@Query('startDate') startDate: Date, @Query('endDate') endDate: Date, @Query('warehouse') warehouse: string): Promise<any> {
+    const result = await this.reportService.generateReport(ReportName.Sales2, startDate, endDate, warehouse);
     return result;
   } 
 
