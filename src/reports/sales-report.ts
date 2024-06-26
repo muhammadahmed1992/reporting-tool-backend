@@ -1,12 +1,18 @@
-import { Injectable } from '@nestjs/common';
-import { DateRangeReportStrategy } from 'src/interfaces/report-date-range-parameter.strategy';
+import { Injectable, HttpStatus } from '@nestjs/common';
+
+
+import { ReportStrategy } from '../interfaces-strategy/report-strategy';
+import { SalesDTO } from '../dto/sales.dto';
 import { GenericRepository } from '../repository/generic.repository'
 
+import ApiResponse from 'src/helper/api-response';
+import ResponseHelper from 'src/helper/response-helper';
+
 @Injectable()
-export class CashDrawerReportStrategy implements DateRangeReportStrategy {
+export class SalesReport implements ReportStrategy {
     constructor(private readonly genericRepository: GenericRepository) {}
 
-    public async generateReport(startDate: Date, endDate: Date): Promise<any> {
+    public async generateReport(...param: any): Promise<ApiResponse<any>> {
         let query = `
         SELECT 
         a.dinvdate AS Date,
@@ -73,10 +79,13 @@ export class CashDrawerReportStrategy implements DateRangeReportStrategy {
     ON 
         c.ddradate = a.dinvdate
     ORDER BY 
-        Date;
-    
-        `;
-        const result = await this.genericRepository.query(query, [startDate, endDate]);
-        return result;
+        Date;`;
+        const [startDate, endDate] = param;
+        const response = await this.genericRepository.query<SalesDTO>(query, [startDate, endDate]);
+        if (response?.length) {
+            return ResponseHelper.CreateResponse<SalesDTO[]>(response, HttpStatus.OK, 'Data retrieved successfully.');
+        } else {
+            return ResponseHelper.CreateResponse<SalesDTO[]>([], HttpStatus.NOT_FOUND, 'Data not found on these parameters.');
+        }
     }
 }

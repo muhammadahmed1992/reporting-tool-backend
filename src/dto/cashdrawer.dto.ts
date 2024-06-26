@@ -1,4 +1,4 @@
-export interface FinancialRecordDTO {
+export interface CashDrawerDTO {
     Dinvdate: Date;
     Opening: number;
     DP: number;

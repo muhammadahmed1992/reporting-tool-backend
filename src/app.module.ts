@@ -1,17 +1,28 @@
+// Nest Framework
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { AuthModule } from './module/auth.module';
 
-import { GenericRepository } from './repository/generic.repository';
-import { ReportService } from './services/report.service';
-import { ReportFactory } from './factory/report-factory';
-import { CashDrawerReportStrategy } from './strategies/cash-drawer-report.strategy';
+// Controllers
 import { ReportsController } from './controller/reports.controller';
 
+// Services
+import { ReportService } from './services/report.service';
+import { GenericRepository } from './repository/generic.repository';
+import { ReportFactory } from './factory/report-factory';
+
+// Reports
+import { CashDrawerReport } from './reports/cash-drawer-report';
+import { PriceListReport } from './reports/price-list-report';
+import { SalesReport } from './reports/sales-report';
+import { SalesAnalystReport } from './reports/sales-analyst-report';
+import { SalesAnalyst2Report } from './reports/sales-analyst-2-report';
+import { Sales2Report } from './reports/sales-2-report';
+import { StockBalanceReport } from './reports/stock-balance-report';
 
 const environment = process.env.NODE_ENV || 'development';
 const config = require(`../ormconfig.${environment}.json`);
-console.log(config);
+
 @Module({
   imports: [
     TypeOrmModule.forRoot({
@@ -23,8 +34,14 @@ console.log(config);
   providers: [
     ReportService,
     ReportFactory,
-    CashDrawerReportStrategy,
-    GenericRepository
+    GenericRepository,
+    CashDrawerReport,
+    PriceListReport,
+    SalesReport,
+    SalesAnalystReport,
+    SalesAnalyst2Report,
+    Sales2Report,
+    StockBalanceReport
   ]
 })
 export class AppModule {}
