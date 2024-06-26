@@ -1,0 +1,11 @@
+{
+    "type": "mysql",
+    "host": "localhost",
+    "port": 3306,
+    "username": "root",
+    "password": "crmsrv@12A",
+    "database": "eisdata",
+    "entities": ["dist/**/*.entity{.ts,.js}"],
+    "synchronize": false
+}
+  
