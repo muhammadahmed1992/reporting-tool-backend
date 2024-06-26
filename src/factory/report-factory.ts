@@ -28,7 +28,7 @@ export class ReportFactory {
         switch (reportType) {
             case ReportName.CashDrawer:
                 return this.cashDrawerReport;
-                case ReportName.PriceList: 
+            case ReportName.PriceList:
                     return this.priceListReport;
             case ReportName.Sales:
                 return this.salesReport;
