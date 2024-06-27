@@ -1,8 +1,8 @@
+import { StocBalancekDTO } from './../dto/stock-balance.dto';
 import { Injectable, HttpStatus } from '@nestjs/common';
 
 import { ReportStrategy } from '../interfaces-strategy/report-strategy';
 import { GenericRepository } from '../repository/generic.repository'
-import { Sales2DTO } from './../dto/sales-2.dto';
 
 import ApiResponse from 'src/helper/api-response';
 import ResponseHelper from 'src/helper/response-helper';
@@ -55,11 +55,11 @@ export class StockBalanceReport implements ReportStrategy {
         order by StockID,Location asc
         `;
         const [stockGroup, warehouse] = params;
-        const response = await this.genericRepository.query<Sales2DTO>(query, [stockGroup, warehouse]);
+        const response = await this.genericRepository.query<StocBalancekDTO>(query, [stockGroup.replace(' ', '+'), warehouse.replace(' ', '+')]);
         if (response?.length) {
-            return ResponseHelper.CreateResponse<Sales2DTO[]>(response, HttpStatus.OK, 'Data retrieved successfully.');
+            return ResponseHelper.CreateResponse<StocBalancekDTO[]>(response, HttpStatus.OK, 'Data retrieved successfully.');
         } else {
-            return ResponseHelper.CreateResponse<Sales2DTO[]>([], HttpStatus.NOT_FOUND, 'Data not found on these parameters.');
+            return ResponseHelper.CreateResponse<StocBalancekDTO[]>([], HttpStatus.NOT_FOUND, 'Data not found on these parameters.');
         }
     }
 }

@@ -14,7 +14,8 @@ export class SalesReport implements ReportStrategy {
 
     public async generateReport(...param: any): Promise<ApiResponse<any>> {
         let query = `
-        select cinvrefno as Invoice,dinvdate as Date,centdesc as Customer,cexcdesc as Curr,sum((sumdetails-ndisc/'rows')*(if(nivdstkppn=1,1+ninvtax/100,1)))+nfreight as Amount from
+        select cinvrefno as Invoice,dinvdate as 'Date',centdesc as Customer,cexcdesc as Curr,
+        sum((sumdetails-ndisc/'rows')*(if(nivdstkppn=1,1+ninvtax/100,1)))+nfreight as 'Amount' from
 
 (select civdfkinv,count(*) as 'rows' from invoicedetail
 inner join invoice on civdfkinv=cinvpk
@@ -39,7 +40,7 @@ group by cinvrefno,dinvdate,centdesc,cexcdesc
 order by curr,date,invoice
     `;
         const [startDate, endDate, warehouse] = param;
-        const response = await this.genericRepository.query<SalesDTO>(query, [startDate, endDate, warehouse]);
+        const response = await this.genericRepository.query<SalesDTO>(query, [startDate, endDate, warehouse.replace(' ', '+')]);
         if (response?.length) {
             return ResponseHelper.CreateResponse<SalesDTO[]>(response, HttpStatus.OK, 'Data retrieved successfully.');
         } else {

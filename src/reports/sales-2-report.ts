@@ -26,7 +26,7 @@ group by cinvrefno,dinvdate,centdesc,cexcdesc,ninvdisc1,ninvdisc2,ninvdisc3,ninv
 order by curr,date,invoice
         `;
         const [startDate, endDate, warehouse] = params;
-        const response = await this.genericRepository.query<Sales2DTO>(query, [startDate, endDate, warehouse]);
+        const response = await this.genericRepository.query<Sales2DTO>(query, [startDate, endDate, warehouse.replace(' ', '+')]);
         if (response?.length) {
             return ResponseHelper.CreateResponse<Sales2DTO[]>(response, HttpStatus.OK, 'Data retrieved successfully.');
         } else {

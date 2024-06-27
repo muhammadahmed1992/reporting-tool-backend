@@ -50,7 +50,7 @@ export class SalesAnalystReport implements ReportStrategy {
         group by cstdcode,cstkdesc,cexcdesc
         `;
         const [startDate, endDate, warehouse, stockGroup] = params;
-        const response = await this.genericRepository.query<SalesAnalystDTO>(query, [startDate, endDate, warehouse, stockGroup]);
+        const response = await this.genericRepository.query<SalesAnalystDTO>(query, [startDate, endDate, warehouse.replace(' ', '+'), stockGroup.replace(' ', '+')]);
         if (response?.length) {
             return ResponseHelper.CreateResponse<SalesAnalystDTO[]>(response, HttpStatus.OK, 'Data retrieved successfully.');
         } else {

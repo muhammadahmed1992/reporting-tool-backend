@@ -37,7 +37,7 @@ export class SalesAnalyst2Report implements ReportStrategy {
  order by cexcdesc,cstdcode
         `;
         const [startDate, endDate, warehouse, stockGroup] = params;
-        const response = await this.genericRepository.query<SalesAnalystDTO>(query, [startDate, endDate, warehouse, stockGroup]);
+        const response = await this.genericRepository.query<SalesAnalystDTO>(query, [startDate, endDate, warehouse.replace(' ', '+'), stockGroup.replace(' ', '+')]);
         if (response?.length) {
             return ResponseHelper.CreateResponse<SalesAnalystDTO[]>(response, HttpStatus.OK, 'Data retrieved successfully.');
         } else {
