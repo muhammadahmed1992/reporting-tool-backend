@@ -1,10 +1,12 @@
-import { HttpStatus, Injectable } from '@nestjs/common';
+import { HttpStatus, Injectable, Scope } from '@nestjs/common';
 import { GenericRepository } from '../../repository/generic.repository'
 import * as crypto from 'crypto';
 import ApiResponse from 'src/helper/api-response';
 import ResponseHelper from 'src/helper/response-helper';
+import { REQUEST } from '@nestjs/core';
+import { Request } from 'express';
 
-@Injectable()
+@Injectable({ scope: Scope.REQUEST })
 export class Andriod2Service {
   constructor(private readonly genericRepository: GenericRepository) {}
 

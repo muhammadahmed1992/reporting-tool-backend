@@ -1,5 +1,5 @@
 // Nest Framework
-import { Module } from '@nestjs/common';
+import { DynamicModule, MiddlewareConsumer, Module, RequestMethod } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { AuthModule } from './module/auth.module';
 
@@ -20,15 +20,17 @@ import { SalesAnalystReport } from './reports/sales-analyst-report';
 import { SalesAnalyst2Report } from './reports/sales-analyst-2-report';
 import { Sales2Report } from './reports/sales-2-report';
 import { StockBalanceReport } from './reports/stock-balance-report';
+import { ConnectionStringMiddleware } from './middleware/connection-string.middleware';
+import { REQUEST } from '@nestjs/core';
 
 const environment = process.env.NODE_ENV || 'development';
 const config = require(`../ormconfig.${environment}.json`);
 
 @Module({
   imports: [
-    TypeOrmModule.forRoot({
-      ...config,
-    }),
+    // TypeOrmModule.forRoot({
+    //   ...config,
+    // }),
     AuthModule,
   ],
   controllers: [ReportsController],
@@ -46,4 +48,30 @@ const config = require(`../ormconfig.${environment}.json`);
     StockBalanceReport
   ]
 })
-export class AppModule {}
+export class AppModule {
+  configure(consumer: MiddlewareConsumer) {
+    consumer
+      .apply(ConnectionStringMiddleware)
+      .forRoutes({ path: '*', method: RequestMethod.ALL });
+  }
+  
+  static forRoot(): DynamicModule {
+    return {
+      module: AppModule,
+      imports: [
+        TypeOrmModule.forRootAsync({
+          useFactory: (req: Request) => {
+            const connectionString = req['connectionString'];
+            return {
+              type: 'mysql',
+              url: connectionString,
+              autoLoadEntities: true,
+              synchronize: true,
+            };
+          },
+          inject: [REQUEST],
+        }),
+      ],
+    };
+  }
+}
