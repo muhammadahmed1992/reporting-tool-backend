@@ -11,6 +11,7 @@ import { SalesReport } from '../reports/sales-report';
 import { SalesAnalystReport } from '../reports/sales-analyst-report';
 import { SalesAnalyst2Report } from './../reports/sales-analyst-2-report';
 import { Sales2Report } from './../reports/sales-2-report';
+import { SearchStockIDReport } from 'src/reports/search-stockid-report';
 
 @Injectable()
 export class ReportFactory {
@@ -21,7 +22,8 @@ export class ReportFactory {
         private readonly salesAnalystReport: SalesAnalystReport,
         private readonly salesAnalyst2Report: SalesAnalyst2Report,
         private readonly sales2Report: Sales2Report,
-        private readonly stockBalanceReport: StockBalanceReport
+        private readonly stockBalanceReport: StockBalanceReport,
+        private readonly stockBalanceBarCodeReport: SearchStockIDReport
     ) {}
 
     getStrategy(reportType: string): ReportStrategy {
@@ -40,6 +42,8 @@ export class ReportFactory {
                 return this.sales2Report;
             case ReportName.Stock_Balance:
                 return this.stockBalanceReport;
+            case ReportName.Stock_Balance_BarCode:
+                return this.stockBalanceBarCodeReport;
             default:
                 throw new Error(`Report type '${reportType}' not supported`);
         }

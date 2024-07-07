@@ -49,13 +49,13 @@ export class StockBalanceReport implements ReportStrategy {
         on cIvdFkStk=cSTDfkSTK And nSTDfactor=1 and nstdkey=1 
         INNER JOIN unit ON cSTDfkUNI=cUNIpk
         where 1=1 
-        and cstkfkgrp=?
-        and cwhspk=?
+        and (IFNULL(?, cstkfkgrp) = cstkfkgrp or cstkfkgrp is null)
+        and (IFNULL(?, cwhspk) = cwhspk or cwhspk is null)
         group by cIvdFkStk,Location 
         order by StockID,Location asc
         `;
         const [stockGroup, warehouse] = params;
-        const response = await this.genericRepository.query<StocBalancekDTO>(query, [stockGroup.replace(' ', '+'), warehouse.replace(' ', '+')]);
+        const response = await this.genericRepository.query<StocBalancekDTO>(query, [stockGroup, warehouse]);
         if (response?.length) {
             return ResponseHelper.CreateResponse<StocBalancekDTO[]>(response, HttpStatus.OK, 'Data retrieved successfully.');
         } else {

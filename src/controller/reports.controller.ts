@@ -53,4 +53,10 @@ export class ReportsController {
     const result = await this.reportService.generateReport(ReportName.Stock_Balance, stockGroup, warehouse);
     return result;
   }
+
+  @Get('/stock-search-barcode')
+  async stockSearchBarCode(@Query('stockId') stockId: string): Promise<any> {
+    const result = await this.reportService.generateReport(ReportName.Stock_Balance_BarCode, stockId);
+    return result;
+  }
 }

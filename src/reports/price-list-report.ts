@@ -2,7 +2,6 @@ import { Injectable, HttpStatus } from '@nestjs/common';
 
 
 import { ReportStrategy } from '../interfaces-strategy/report-strategy';
-import { SalesDTO } from '../dto/sales.dto';
 import { GenericRepository } from '../repository/generic.repository'
 
 import ApiResponse from 'src/helper/api-response';
@@ -23,10 +22,11 @@ export class PriceListReport implements ReportStrategy {
         ON Stockdetail.cSTDfkUNI = Unit.cUNIpk
         inner join stockgroup on cstkfkgrp = cgrppk
         where 1=1
-        and cstkfkgrp= ?
+        and (IFNULL(?, cstkfkgrp) = cstkfkgrp or cstkfkgrp is null)
         ORDER BY cstdcode,nstdfactor ASC
         `;
         const [stockGroup] = params;
+
         const response = await this.genericRepository.query<PriceListDTO>(query, [stockGroup]);
         if (response?.length) {
             return ResponseHelper.CreateResponse<PriceListDTO[]>(response, HttpStatus.OK, 'Data retrieved successfully.');

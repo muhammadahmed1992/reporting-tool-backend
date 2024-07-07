@@ -40,8 +40,8 @@ export class SalesAnalystReport implements ReportStrategy {
            ON  cSTKpk = cSTDfkSTK
          WHERE nstdkey = 1 and nIVDkirim=1 AND (cINVspecial='JL' or cINVspecial='RJ' or cINVspecial='PS' or cINVspecial='RS')
             and dinvdate>= ? and dinvdate<= ?
-            and cinvfkwhs = ?
-            and cstkfkgrp = ?
+            and (IFNULL(?, cinvfkwhs) = cinvfkwhs or cinvfkwhs is null)
+            and (IFNULL(?, cstkfkgrp) = cstkfkgrp or cstkfkgrp is null)            
          group by nstkppn,cinvspecial,civdfkinv,cstdcode, cstkdesc, cexcdesc,ninvdisc,nivdstkppn,ninvtax
          order by cexcdesc,cstdcode
         ) as b
@@ -49,8 +49,14 @@ export class SalesAnalystReport implements ReportStrategy {
         on a.civdfkinv=b.civdfkinv
         group by cstdcode,cstkdesc,cexcdesc
         `;
-        const [startDate, endDate, warehouse, stockGroup] = params;
-        const response = await this.genericRepository.query<SalesAnalystDTO>(query, [startDate, endDate, warehouse.replace(' ', '+'), stockGroup.replace(' ', '+')]);
+
+        let [startDate, endDate, warehouse, stockGroup] = params;
+ 
+        if (!startDate)
+            startDate = new Date();
+        if (!endDate)
+            endDate = new Date();
+        const response = await this.genericRepository.query<SalesAnalystDTO>(query, [startDate, endDate, warehouse, stockGroup]);
         if (response?.length) {
             return ResponseHelper.CreateResponse<SalesAnalystDTO[]>(response, HttpStatus.OK, 'Data retrieved successfully.');
         } else {

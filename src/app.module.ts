@@ -22,6 +22,7 @@ import { Sales2Report } from './reports/sales-2-report';
 import { StockBalanceReport } from './reports/stock-balance-report';
 import { ConnectionStringMiddleware } from './middleware/connection-string.middleware';
 import { REQUEST } from '@nestjs/core';
+import { SearchStockIDReport } from './reports/search-stockid-report';
 
 const environment = process.env.NODE_ENV || 'development';
 const config = require(`../ormconfig.${environment}.json`);
@@ -45,7 +46,8 @@ const config = require(`../ormconfig.${environment}.json`);
     SalesAnalystReport,
     SalesAnalyst2Report,
     Sales2Report,
-    StockBalanceReport
+    StockBalanceReport,
+    SearchStockIDReport
   ]
 })
 export class AppModule {

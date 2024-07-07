@@ -79,8 +79,14 @@ export class CashDrawerReport implements ReportStrategy {
         c.ddradate = a.dinvdate
     ORDER BY 
         Date;`;
-        const [startDate, endDate] = params;
-        const response = await this.genericRepository.query<CashDrawerDTO>(query, [startDate, endDate]);
+        let [startDate, endDate] = params;
+
+        if (!startDate)
+            startDate = new Date();
+        if (!endDate)
+            endDate = new Date();
+
+        const response = await this.genericRepository.query<CashDrawerDTO>(query, [startDate , endDate]);
         if (response?.length) {
             return ResponseHelper.CreateResponse<CashDrawerDTO[]>(response, HttpStatus.OK, 'Data retrieved successfully.');
         } else {

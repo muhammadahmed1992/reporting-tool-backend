@@ -21,12 +21,17 @@ inner join exchange on cinvfkexc=cexcpk
 left join entity on cinvfkent=centpk
 where (cinvspecial='JL' or cinvspecial='RJ' or cinvspecial='PS' or cinvspecial='RS')
 and dinvdate>=? and dinvdate<=?
-and cinvfkwhs=?
+and (IFNULL(?, cinvfkwhs) = cinvfkwhs or cinvfkwhs is null)
 group by cinvrefno,dinvdate,centdesc,cexcdesc,ninvdisc1,ninvdisc2,ninvdisc3,ninvtax,ninvfreight
 order by curr,date,invoice
         `;
-        const [startDate, endDate, warehouse] = params;
-        const response = await this.genericRepository.query<Sales2DTO>(query, [startDate, endDate, warehouse.replace(' ', '+')]);
+        let [startDate, endDate, warehouse] = params;
+ 
+        if (!startDate)
+            startDate = new Date();
+        if (!endDate)
+            endDate = new Date();       
+        const response = await this.genericRepository.query<Sales2DTO>(query, [startDate, endDate, warehouse]);
         if (response?.length) {
             return ResponseHelper.CreateResponse<Sales2DTO[]>(response, HttpStatus.OK, 'Data retrieved successfully.');
         } else {
