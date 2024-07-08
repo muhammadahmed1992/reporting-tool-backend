@@ -25,7 +25,6 @@ import { REQUEST } from '@nestjs/core';
 import { SearchStockIDReport } from './reports/search-stockid-report';
 
 const environment = process.env.NODE_ENV || 'development';
-const config = require(`../ormconfig.${environment}.json`);
 
 @Module({
   imports: [
