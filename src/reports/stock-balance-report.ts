@@ -55,7 +55,9 @@ export class StockBalanceReport implements ReportStrategy {
         order by StockID,Location asc
         `;
         const [stockGroup, warehouse] = params;
-        const response = await this.genericRepository.query<StocBalancekDTO>(query, [stockGroup, warehouse]);
+        console.log('warehouse: ', decodeURIComponent(warehouse));
+        console.log('stockGroup: ', decodeURIComponent(stockGroup));
+        const response = await this.genericRepository.query<StocBalancekDTO>(query, [decodeURIComponent(stockGroup), decodeURIComponent(warehouse)]);
         if (response?.length) {
             return ResponseHelper.CreateResponse<StocBalancekDTO[]>(response, HttpStatus.OK, 'Data retrieved successfully.');
         } else {

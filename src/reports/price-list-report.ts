@@ -26,8 +26,8 @@ export class PriceListReport implements ReportStrategy {
         ORDER BY cstdcode,nstdfactor ASC
         `;
         const [stockGroup] = params;
-
-        const response = await this.genericRepository.query<PriceListDTO>(query, [stockGroup]);
+        console.log('parameter: ', decodeURIComponent(stockGroup));
+        const response = await this.genericRepository.query<PriceListDTO>(query, [decodeURIComponent(stockGroup)]);
         if (response?.length) {
             return ResponseHelper.CreateResponse<PriceListDTO[]>(response, HttpStatus.OK, 'Data retrieved successfully.');
         } else {

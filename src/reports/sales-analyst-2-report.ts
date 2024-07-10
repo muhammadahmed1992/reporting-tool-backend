@@ -42,7 +42,9 @@ export class SalesAnalyst2Report implements ReportStrategy {
             startDate = new Date();
         if (!endDate)
             endDate = new Date();
-        const response = await this.genericRepository.query<SalesAnalystDTO>(query, [startDate, endDate, warehouse, stockGroup]);
+        console.log('warehouse: ', decodeURIComponent(warehouse));
+        console.log('stockGroup: ', decodeURIComponent(stockGroup));
+        const response = await this.genericRepository.query<SalesAnalystDTO>(query, [startDate, endDate, decodeURIComponent(warehouse), decodeURIComponent(stockGroup)]);
         if (response?.length) {
             return ResponseHelper.CreateResponse<SalesAnalystDTO[]>(response, HttpStatus.OK, 'Data retrieved successfully.');
         } else {

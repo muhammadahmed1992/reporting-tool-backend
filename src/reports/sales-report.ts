@@ -45,7 +45,9 @@ order by curr,date,invoice
             startDate = new Date();
         if (!endDate)
             endDate = new Date();
-        const response = await this.genericRepository.query<SalesDTO>(query, [startDate, endDate, warehouse]);
+        console.log('warehouse: ', decodeURIComponent(warehouse));
+
+        const response = await this.genericRepository.query<SalesDTO>(query, [startDate, endDate, decodeURIComponent(warehouse)]);
         if (response?.length) {
             return ResponseHelper.CreateResponse<SalesDTO[]>(response, HttpStatus.OK, 'Data retrieved successfully.');
         } else {

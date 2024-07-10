@@ -30,8 +30,9 @@ order by curr,date,invoice
         if (!startDate)
             startDate = new Date();
         if (!endDate)
-            endDate = new Date();       
-        const response = await this.genericRepository.query<Sales2DTO>(query, [startDate, endDate, warehouse]);
+            endDate = new Date();
+        console.log('parameter: ', decodeURIComponent(warehouse));   
+        const response = await this.genericRepository.query<Sales2DTO>(query, [startDate, endDate,  decodeURIComponent(warehouse)]);
         if (response?.length) {
             return ResponseHelper.CreateResponse<Sales2DTO[]>(response, HttpStatus.OK, 'Data retrieved successfully.');
         } else {
