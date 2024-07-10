@@ -42,9 +42,18 @@ export class GenericRepository {
   }
 
   async query<T>(sql: string, parameters?: any[]): Promise<T[]> {
-    const connection = await this.createConnection();
-    const result = await connection.query(sql, parameters);
-    await connection.close();
+    let result:any = null;
+    let connection: any = null;
+    try {
+      connection = await this.createConnection();
+      result = await connection.query(sql, parameters);
+    } catch(e) {
+      console.log('in error');
+      console.log(e);
+    } finally {
+      await connection.close();      
+    }
+
     return result;
   }
 }
