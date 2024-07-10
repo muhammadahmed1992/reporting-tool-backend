@@ -10,7 +10,6 @@ import { ReportsController } from './controller/reports.controller';
 import { ReportService } from './services/report.service';
 import { GenericRepository } from './repository/generic.repository';
 import { ReportFactory } from './factory/report-factory';
-import { FormattingService } from './services/formatting.service';
 
 // Reports
 import { CashDrawerReport } from './reports/cash-drawer-report';
@@ -23,21 +22,20 @@ import { StockBalanceReport } from './reports/stock-balance-report';
 import { ConnectionStringMiddleware } from './middleware/connection-string.middleware';
 import { REQUEST } from '@nestjs/core';
 import { SearchStockIDReport } from './reports/search-stockid-report';
+import { SchemaInfoController } from './controller/database.schema.controller';
+import { SchemaInformationService } from './services/schema.information.service';
 
 const environment = process.env.NODE_ENV || 'development';
 
 @Module({
   imports: [
-    // TypeOrmModule.forRoot({
-    //   ...config,
-    // }),
     AuthModule,
   ],
-  controllers: [ReportsController],
+  controllers: [ReportsController, SchemaInfoController],
   providers: [
     ReportService,
+    SchemaInformationService,
     ReportFactory,
-    FormattingService,
     GenericRepository,
     CashDrawerReport,
     PriceListReport,
