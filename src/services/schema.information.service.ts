@@ -9,7 +9,7 @@ export class SchemaInformationService {
 
     async getDatabaseInformation(): Promise<ApiResponse<any>> {
         let query = `
-                SELECT 'SCHEMA_NAME'
+                SELECT SCHEMA_NAME
                 FROM information_schema.SCHEMATA;
         `;
 
