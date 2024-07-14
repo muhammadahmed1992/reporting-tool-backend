@@ -10,4 +10,16 @@ export class SchemaInfoController {
     const result = await this.schemaInformationService.getDatabaseInformation();
     return result;
   }
+
+  @Get('/stock-group-list')
+  async stockGroup(): Promise<any> {
+    const result = await this.schemaInformationService.getStockGroupList();
+    return result;
+  }
+
+  @Get('/ware-house-list')
+  async warehouse(): Promise<any> {
+    const result = await this.schemaInformationService.getWarehouseList();
+    return result;
+  }
 }

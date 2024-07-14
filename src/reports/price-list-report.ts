@@ -13,6 +13,7 @@ export class PriceListReport implements ReportStrategy {
     constructor(private readonly genericRepository: GenericRepository) {}
 
     public async generateReport(...params: any): Promise<ApiResponse<any>> {
+        const [stockGroup] = params;
         let query = `
         SELECT cSTDcode StockID, cSTKdesc StockName,
         nSTDprice as Price,cUNIdesc Unit
@@ -21,12 +22,12 @@ export class PriceListReport implements ReportStrategy {
         INNER JOIN Unit
         ON Stockdetail.cSTDfkUNI = Unit.cUNIpk
         inner join stockgroup on cstkfkgrp = cgrppk
-        where 1=1
-        and (IFNULL(?, cstkfkgrp) = cstkfkgrp or cstkfkgrp is null)
-        ORDER BY cstdcode,nstdfactor ASC
-        `;
-        const [stockGroup] = params;
-        console.log('parameter: ', decodeURIComponent(stockGroup));
+        where 1=1 `
+        if (stockGroup) {
+            query+= ` and (IFNULL(?, cstkfkgrp) = cstkfkgrp or cstkfkgrp is null) `;
+        }
+        query+= `  ORDER BY cstdcode,nstdfactor ASC `;
+        console.log('parameter: stockGroup: ', decodeURIComponent(stockGroup));
         const response = await this.genericRepository.query<PriceListDTO>(query, [decodeURIComponent(stockGroup)]);
         if (response?.length) {
             return ResponseHelper.CreateResponse<PriceListDTO[]>(response, HttpStatus.OK, 'Data retrieved successfully.');

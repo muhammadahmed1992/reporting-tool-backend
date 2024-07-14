@@ -14,6 +14,6 @@ export class Andriod2Service {
     const hashedPassword = crypto.createHash('sha1').update(password).digest('hex');
     const query = 'SELECT 1 FROM `android2` WHERE canddesc = ? AND candpw = ?';
     const result = await this.genericRepository.query(query, [username, hashedPassword]);
-    return ResponseHelper.CreateResponse(result.length > 0, result.length > 0 ? HttpStatus.FOUND : HttpStatus.NOT_FOUND);
+    return ResponseHelper.CreateResponse(result.length > 0, result.length > 0 ? HttpStatus.OK : HttpStatus.NOT_FOUND);
   }
 }

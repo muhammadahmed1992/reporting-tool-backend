@@ -20,4 +20,30 @@ export class SchemaInformationService {
             return ResponseHelper.CreateResponse<any[]>([], HttpStatus.NOT_FOUND, 'Data not found on these parameters.');
         }       
     }
+
+    async getStockGroupList(): Promise<ApiResponse<any>> {
+        let query = `
+                select cgrppk, cgrpdesc from stockgroup;
+        `;
+
+        const response = await this.genericRepository.query<any>(query);
+        if (response?.length) {
+            return ResponseHelper.CreateResponse<any[]>(response, HttpStatus.OK, 'Data retrieved successfully.');
+        } else {
+            return ResponseHelper.CreateResponse<any[]>([], HttpStatus.NOT_FOUND, 'Data not found on these parameters.');
+        }
+    }
+
+    async getWarehouseList(): Promise<ApiResponse<any>> {
+        let query = `
+                select cwhspk, cwhsdesc from warehouse;
+        `;
+
+        const response = await this.genericRepository.query<any>(query);
+        if (response?.length) {
+            return ResponseHelper.CreateResponse<any[]>(response, HttpStatus.OK, 'Data retrieved successfully.');
+        } else {
+            return ResponseHelper.CreateResponse<any[]>([], HttpStatus.NOT_FOUND, 'Data not found on these parameters.');
+        }
+    }
 }

@@ -12,6 +12,7 @@ export class StockBalanceReport implements ReportStrategy {
     constructor(private readonly genericRepository: GenericRepository) {}
 
     public async generateReport(...params: any): Promise<ApiResponse<any>> {
+        const [stockGroup, warehouse] = params;
         let query = `
         select cSTDcode as StockID,cSTKdesc as StockName,
         cwhsdesc as Location,
@@ -48,16 +49,26 @@ export class StockBalanceReport implements ReportStrategy {
         INNER JOIN stockdetail sdt 
         on cIvdFkStk=cSTDfkSTK And nSTDfactor=1 and nstdkey=1 
         INNER JOIN unit ON cSTDfkUNI=cUNIpk
-        where 1=1 
-        and (IFNULL(?, cstkfkgrp) = cstkfkgrp or cstkfkgrp is null)
-        and (IFNULL(?, cwhspk) = cwhspk or cwhspk is null)
-        group by cIvdFkStk,Location 
-        order by StockID,Location asc
+        where 1=1 `;
+        if (stockGroup) {
+            query+= ` and (IFNULL(?, cstkfkgrp) = cstkfkgrp or cstkfkgrp is null) `;
+        }
+        if (warehouse) {
+            query+= ` and (IFNULL(?, cwhspk) = cwhspk or cwhspk is null) `;
+        }
+        query+= `
+                group by cIvdFkStk,Location 
+                order by StockID,Location asc
         `;
-        const [stockGroup, warehouse] = params;
+
         console.log('warehouse: ', decodeURIComponent(warehouse));
         console.log('stockGroup: ', decodeURIComponent(stockGroup));
-        const response = await this.genericRepository.query<StocBalancekDTO>(query, [decodeURIComponent(stockGroup), decodeURIComponent(warehouse)]);
+        const parameters = [];
+        if (warehouse)
+            parameters.push(decodeURIComponent(warehouse));
+        if (stockGroup)
+            parameters.push(decodeURIComponent(stockGroup));
+        const response = await this.genericRepository.query<StocBalancekDTO>(query, parameters);
         if (response?.length) {
             return ResponseHelper.CreateResponse<StocBalancekDTO[]>(response, HttpStatus.OK, 'Data retrieved successfully.');
         } else {

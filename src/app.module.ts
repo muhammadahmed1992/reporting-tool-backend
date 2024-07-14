@@ -24,6 +24,7 @@ import { REQUEST } from '@nestjs/core';
 import { SearchStockIDReport } from './reports/search-stockid-report';
 import { SchemaInfoController } from './controller/database.schema.controller';
 import { SchemaInformationService } from './services/schema.information.service';
+import { HeartBeatController } from './controller/heart.beat.controller';
 
 const environment = process.env.NODE_ENV || 'development';
 
@@ -31,7 +32,7 @@ const environment = process.env.NODE_ENV || 'development';
   imports: [
     AuthModule,
   ],
-  controllers: [ReportsController, SchemaInfoController],
+  controllers: [ReportsController, SchemaInfoController, HeartBeatController],
   providers: [
     ReportService,
     SchemaInformationService,
@@ -51,7 +52,11 @@ export class AppModule {
   configure(consumer: MiddlewareConsumer) {
     consumer
       .apply(ConnectionStringMiddleware)
-      .forRoutes({ path: '*', method: RequestMethod.ALL });
+      .forRoutes(
+        { path: 'andriod2', method: RequestMethod.ALL },
+        { path: 'schemaInfo', method: RequestMethod.ALL },
+        { path: 'reports', method: RequestMethod.ALL },
+      );
   }
   
   static forRoot(): DynamicModule {

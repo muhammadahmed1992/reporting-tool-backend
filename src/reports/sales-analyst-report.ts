@@ -14,6 +14,17 @@ export class SalesAnalystReport implements ReportStrategy {
     constructor(private readonly genericRepository: GenericRepository) {}
 
     public async generateReport(...params: any): Promise<ApiResponse<any>> {
+
+        let [startDate, endDate, warehouse, stockGroup] = params;
+ 
+        if (!startDate)
+            startDate = new Date();
+        if (!endDate)
+            endDate = new Date();
+        
+        const parameters = [];
+        parameters.push(startDate);
+        parameters.push(endDate);
         let query = 
         `select cstdcode as StockID,cstkdesc as StockName,sum(tqty) as Qty,cexcdesc as Curr,sum(semua-if(cinvspecial='RJ' or cinvspecial='RS',
         -ninvdisc,ninvdisc)/'rows') as Amount,
@@ -39,10 +50,17 @@ export class SalesAnalystReport implements ReportStrategy {
             INNER JOIN stockdetail
            ON  cSTKpk = cSTDfkSTK
          WHERE nstdkey = 1 and nIVDkirim=1 AND (cINVspecial='JL' or cINVspecial='RJ' or cINVspecial='PS' or cINVspecial='RS')
-            and dinvdate>= ? and dinvdate<= ?
-            and (IFNULL(?, cinvfkwhs) = cinvfkwhs or cinvfkwhs is null)
-            and (IFNULL(?, cstkfkgrp) = cstkfkgrp or cstkfkgrp is null)            
-         group by nstkppn,cinvspecial,civdfkinv,cstdcode, cstkdesc, cexcdesc,ninvdisc,nivdstkppn,ninvtax
+            and dinvdate>= ? and dinvdate<= ? `
+        if (warehouse) {
+            query+= ` and (IFNULL(?, cinvfkwhs) = cinvfkwhs or cinvfkwhs is null) `
+            parameters.push(decodeURIComponent(warehouse));
+        }
+        if (stockGroup) {
+            query+= ` and (IFNULL(?, cstkfkgrp) = cstkfkgrp or cstkfkgrp is null)  `;
+            parameters.push(decodeURIComponent(stockGroup));
+        }
+                               
+        query+= ` group by nstkppn,cinvspecial,civdfkinv,cstdcode, cstkdesc, cexcdesc,ninvdisc,nivdstkppn,ninvtax 
          order by cexcdesc,cstdcode
         ) as b
         
@@ -50,15 +68,9 @@ export class SalesAnalystReport implements ReportStrategy {
         group by cstdcode,cstkdesc,cexcdesc
         `;
 
-        let [startDate, endDate, warehouse, stockGroup] = params;
- 
-        if (!startDate)
-            startDate = new Date();
-        if (!endDate)
-            endDate = new Date();
         console.log('warehouse: ', decodeURIComponent(warehouse));
         console.log('stockGroup: ', decodeURIComponent(stockGroup));
-        const response = await this.genericRepository.query<SalesAnalystDTO>(query, [startDate, endDate, decodeURIComponent(warehouse), decodeURIComponent(stockGroup)]);
+        const response = await this.genericRepository.query<SalesAnalystDTO>(query, parameters);
         if (response?.length) {
             return ResponseHelper.CreateResponse<SalesAnalystDTO[]>(response, HttpStatus.OK, 'Data retrieved successfully.');
         } else {
