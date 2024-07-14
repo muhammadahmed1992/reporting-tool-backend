@@ -25,6 +25,7 @@ import { SearchStockIDReport } from './reports/search-stockid-report';
 import { SchemaInfoController } from './controller/database.schema.controller';
 import { SchemaInformationService } from './services/schema.information.service';
 import { HeartBeatController } from './controller/heart.beat.controller';
+import { Andriod2Controller } from './auth/controller/andriod2.controller';
 
 const environment = process.env.NODE_ENV || 'development';
 
@@ -53,29 +54,7 @@ export class AppModule {
     consumer
       .apply(ConnectionStringMiddleware)
       .forRoutes(
-        { path: 'andriod2', method: RequestMethod.ALL },
-        { path: 'schemaInfo', method: RequestMethod.ALL },
-        { path: 'reports', method: RequestMethod.ALL },
+        Andriod2Controller, SchemaInfoController, ReportsController
       );
-  }
-  
-  static forRoot(): DynamicModule {
-    return {
-      module: AppModule,
-      imports: [
-        TypeOrmModule.forRootAsync({
-          useFactory: (req: Request) => {
-            const connectionString = req['connectionString'];
-            return {
-              type: 'mysql',
-              url: connectionString,
-              autoLoadEntities: true,
-              synchronize: true,
-            };
-          },
-          inject: [REQUEST],
-        }),
-      ],
-    };
   }
 }

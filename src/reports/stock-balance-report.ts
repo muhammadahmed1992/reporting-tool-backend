@@ -64,10 +64,10 @@ export class StockBalanceReport implements ReportStrategy {
         console.log('warehouse: ', decodeURIComponent(warehouse));
         console.log('stockGroup: ', decodeURIComponent(stockGroup));
         const parameters = [];
-        if (warehouse)
-            parameters.push(decodeURIComponent(warehouse));
         if (stockGroup)
             parameters.push(decodeURIComponent(stockGroup));
+        if (warehouse)
+            parameters.push(decodeURIComponent(warehouse));
         const response = await this.genericRepository.query<StocBalancekDTO>(query, parameters);
         if (response?.length) {
             return ResponseHelper.CreateResponse<StocBalancekDTO[]>(response, HttpStatus.OK, 'Data retrieved successfully.');

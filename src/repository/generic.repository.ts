@@ -12,7 +12,7 @@ export class GenericRepository {
   constructor(@Inject(REQUEST) private readonly request: Request) {}
 
   async createConnection(): Promise<Connection> {
-    const connectionString = this.request['connectionString'];
+    const connectionString = this.request['connection-string'];
     const connectionManager = getConnectionManager();
 
     if (connectionManager.has('default')) {
