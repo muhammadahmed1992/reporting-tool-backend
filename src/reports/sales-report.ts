@@ -25,8 +25,8 @@ export class SalesReport implements ReportStrategy {
         parameters.push(endDate);
         let query = `
         select cinvrefno as Invoice,dinvdate as 'Date',centdesc as Customer,cexcdesc as Curr,
-        sum((sumdetails-ndisc/'rows')*(if(nivdstkppn=1,1+ninvtax/100,1)))+nfreight as 'Amount' from
-        (select civdfkinv,count(*) as 'rows' from invoicedetail
+        sum((sumdetails-ndisc/rows2)*(if(nivdstkppn=1,1+ninvtax/100,1)))+nfreight as 'Amount' from
+        (select civdfkinv,count(1) as rows2 from invoicedetail
         inner join invoice on civdfkinv=cinvpk
         and dinvdate>=? and dinvdate<=? `
         if (warehouse) {
@@ -56,6 +56,7 @@ export class SalesReport implements ReportStrategy {
             parameters.push(decodeURIComponent(warehouse));
 
         const response = await this.genericRepository.query<SalesDTO>(query, parameters);
+        console.log(response);
         if (response?.length) {
             return ResponseHelper.CreateResponse<SalesDTO[]>(response, HttpStatus.OK, 'Data retrieved successfully.');
         } else {

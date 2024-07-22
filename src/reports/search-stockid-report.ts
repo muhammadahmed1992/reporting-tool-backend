@@ -8,6 +8,7 @@ import ApiResponse from 'src/helper/api-response';
 import ResponseHelper from 'src/helper/response-helper';
 import { PriceListDTO } from 'src/dto/price-list.dto';
 import { StocBalancekDTO } from 'src/dto/stock-balance.dto';
+import { ReportName } from 'src/helper/enums/report-names.enum';
 
 @Injectable()
 export class SearchStockIDReport implements ReportStrategy {
@@ -66,8 +67,9 @@ export class SearchStockIDReport implements ReportStrategy {
         if (stockCode) {
             parameters.push(decodeURIComponent(stockCode));
         }
+        console.log(`Report Name: ${ReportName.Stock_Balance_BarCode}`);
         console.log(`stockCode ${decodeURIComponent(stockCode)}`);
-        
+        console.log(`==================================================`);
         const response = await this.genericRepository.query<StocBalancekDTO>(query, parameters);
         if (response?.length) {
             return ResponseHelper.CreateResponse<StocBalancekDTO[]>(response, HttpStatus.OK, 'Data retrieved successfully.');

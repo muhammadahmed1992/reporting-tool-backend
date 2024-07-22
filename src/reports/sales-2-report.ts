@@ -6,6 +6,7 @@ import { Sales2DTO } from './../dto/sales-2.dto';
 
 import ApiResponse from 'src/helper/api-response';
 import ResponseHelper from 'src/helper/response-helper';
+import { ReportName } from 'src/helper/enums/report-names.enum';
 
 @Injectable()
 export class Sales2Report implements ReportStrategy {
@@ -37,8 +38,9 @@ export class Sales2Report implements ReportStrategy {
         query += `
         group by cinvrefno,dinvdate,centdesc,cexcdesc,ninvdisc1,ninvdisc2,ninvdisc3,ninvtax,ninvfreight
         order by curr,date,invoice `;
- 
-        console.log('warehouse: ', decodeURIComponent(warehouse));   
+        console.log(`Report Name: ${ReportName.Sales2}`);
+        console.log('warehouse: ', decodeURIComponent(warehouse));
+        console.log(`=============================================`);   
         const response = await this.genericRepository.query<Sales2DTO>(query, parameters);
         if (response?.length) {
             return ResponseHelper.CreateResponse<Sales2DTO[]>(response, HttpStatus.OK, 'Data retrieved successfully.');

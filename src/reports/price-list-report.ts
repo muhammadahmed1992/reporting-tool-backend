@@ -7,6 +7,7 @@ import { GenericRepository } from '../repository/generic.repository'
 import ApiResponse from 'src/helper/api-response';
 import ResponseHelper from 'src/helper/response-helper';
 import { PriceListDTO } from 'src/dto/price-list.dto';
+import { ReportName } from 'src/helper/enums/report-names.enum';
 
 @Injectable()
 export class PriceListReport implements ReportStrategy {
@@ -27,7 +28,9 @@ export class PriceListReport implements ReportStrategy {
             query+= ` and (IFNULL(?, cstkfkgrp) = cstkfkgrp or cstkfkgrp is null) `;
         }
         query+= `  ORDER BY cstdcode,nstdfactor ASC `;
+        console.log(`Report Name: ${ReportName.PriceList}`);
         console.log('parameter: stockGroup: ', decodeURIComponent(stockGroup));
+        console.log('=====================================');
         const response = await this.genericRepository.query<PriceListDTO>(query, [decodeURIComponent(stockGroup)]);
         if (response?.length) {
             return ResponseHelper.CreateResponse<PriceListDTO[]>(response, HttpStatus.OK, 'Data retrieved successfully.');

@@ -8,6 +8,7 @@ import ApiResponse from 'src/helper/api-response';
 import ResponseHelper from 'src/helper/response-helper';
 
 import { SalesAnalystDTO } from '../dto/sales-analyst.dto';
+import { ReportName } from 'src/helper/enums/report-names.enum';
 
 @Injectable()
 export class SalesAnalyst2Report implements ReportStrategy {
@@ -56,8 +57,10 @@ export class SalesAnalyst2Report implements ReportStrategy {
         if (warehouse) {
             parameters.push(decodeURIComponent(warehouse));
         }
+        console.log(`Report Name: ${ReportName.Sales_Analyst2}`);
         console.log('warehouse: ', decodeURIComponent(warehouse));
         console.log('stockGroup: ', decodeURIComponent(stockGroup));
+        console.log(`=============================================`);
         const response = await this.genericRepository.query<SalesAnalystDTO>(query, parameters);
         if (response?.length) {
             return ResponseHelper.CreateResponse<SalesAnalystDTO[]>(response, HttpStatus.OK, 'Data retrieved successfully.');

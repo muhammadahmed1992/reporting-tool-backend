@@ -8,6 +8,7 @@ import ApiResponse from 'src/helper/api-response';
 import ResponseHelper from 'src/helper/response-helper';
 
 import { SalesAnalystDTO } from '../dto/sales-analyst.dto';
+import { ReportName } from 'src/helper/enums/report-names.enum';
 
 @Injectable()
 export class SalesAnalystReport implements ReportStrategy {
@@ -27,12 +28,12 @@ export class SalesAnalystReport implements ReportStrategy {
         parameters.push(endDate);
         let query = 
         `select cstdcode as StockID,cstkdesc as StockName,sum(tqty) as Qty,cexcdesc as Curr,sum(semua-if(cinvspecial='RJ' or cinvspecial='RS',
-        -ninvdisc,ninvdisc)/'rows') as Amount,
-        sum((semua-if(cinvspecial='RJ' or cinvspecial='RS',-ninvdisc,ninvdisc)/'rows')*(1+if(nivdstkppn=1,ninvtax/100,0))) as Amount_tax
+        -ninvdisc,ninvdisc)/rows2) as Amount,
+        sum((semua-if(cinvspecial='RJ' or cinvspecial='RS',-ninvdisc,ninvdisc)/rows2)*(1+if(nivdstkppn=1,ninvtax/100,0))) as Amount_tax
         
         from
         
-        (SELECT civdfkinv,count(*) as 'rows' FROM invoicedetail
+        (SELECT civdfkinv,count(1) as rows2 FROM invoicedetail
             INNER JOIN invoice on cinvpk=civdfkinv
             WHERE nIVDkirim=1 GROUP BY civdfkinv
         ) as a
@@ -67,9 +68,10 @@ export class SalesAnalystReport implements ReportStrategy {
         on a.civdfkinv=b.civdfkinv
         group by cstdcode,cstkdesc,cexcdesc
         `;
-
+        console.log(`Report Name: ${ReportName.Sales_Analyst}`);
         console.log('warehouse: ', decodeURIComponent(warehouse));
         console.log('stockGroup: ', decodeURIComponent(stockGroup));
+        console.log(`=============================================`);
         const response = await this.genericRepository.query<SalesAnalystDTO>(query, parameters);
         if (response?.length) {
             return ResponseHelper.CreateResponse<SalesAnalystDTO[]>(response, HttpStatus.OK, 'Data retrieved successfully.');

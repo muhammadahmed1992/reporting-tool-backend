@@ -6,6 +6,7 @@ import { GenericRepository } from '../repository/generic.repository'
 
 import ApiResponse from 'src/helper/api-response';
 import ResponseHelper from 'src/helper/response-helper';
+import { ReportName } from 'src/helper/enums/report-names.enum';
 
 @Injectable()
 export class StockBalanceReport implements ReportStrategy {
@@ -62,9 +63,10 @@ export class StockBalanceReport implements ReportStrategy {
         
         query+= ` group by Kode,Nama,Lokasi 
         order by Lokasi,kode asc `;
-
+        console.log(`Report Name: ${ReportName.Stock_Balance}`);
         console.log('warehouse: ', decodeURIComponent(warehouse));
         console.log('stockGroup: ', decodeURIComponent(stockGroup));
+        console.log(`=================================================`);
         const parameters = [];
         if (warehouse)
             parameters.push(decodeURIComponent(warehouse));

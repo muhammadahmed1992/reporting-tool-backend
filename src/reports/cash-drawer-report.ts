@@ -6,6 +6,7 @@ import { GenericRepository } from '../repository/generic.repository'
 import { CashDrawerDTO } from '../dto/cashdrawer.dto';
 import ApiResponse from 'src/helper/api-response';
 import ResponseHelper from 'src/helper/response-helper';
+import { ReportName } from 'src/helper/enums/report-names.enum';
 
 @Injectable()
 export class CashDrawerReport implements ReportStrategy {
@@ -87,8 +88,10 @@ export class CashDrawerReport implements ReportStrategy {
         const parameters = [];
         parameters.push(startDate);
         parameters.push(endDate);
+        console.log(`Report Name: ${ReportName.CashDrawer}`);
         console.log(`startDate: ${startDate}`);
         console.log(`endDate: ${endDate}`);
+        console.log('=============================');
         const response = await this.genericRepository.query<CashDrawerDTO>(query, parameters);
         if (response?.length) {
             return ResponseHelper.CreateResponse<CashDrawerDTO[]>(response, HttpStatus.OK, 'Data retrieved successfully.');
