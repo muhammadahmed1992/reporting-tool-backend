@@ -18,41 +18,54 @@ export class SearchStockIDReport implements ReportStrategy {
         const parameters = [];
         let query = `
         select cSTDcode as StockID,cSTKdesc as StockName,
-        cwhsdesc as Location,
+        warehouse.cwhsdesc as Location,
         sum(zqtyin-zqtyout) as Qty,sdt.nSTDprice as Price,
         sum(zqtyin-zqtyout)*nstdprice as Balance
         from
         (
+        
         SELECT cIvdFkStk, cInvFkWhs as pkWhs,
-        SUM(nIVDzqtyIn) as zQtyIn, SUM(nIVDzqtyout) as zQtyOut,cIVDcode,
+        SUM(nIVDzqtyIn) as zQtyIn, SUM(nIVDzqtyout) as zQtyOut, 
         'a' as detailType FROM Invoicedetail
         INNER JOIN Invoice ON cIVDfkINV = cINVpk
-        WHERE cinvspecial<>'KS'
-        and nIVDkirim=1 and cInvFkWhs is not null
-        group by cIvdFkStk, cInvFkWhs
-        union
+        WHERE cinvspecial<>'KS' 
+        and nivdaccqty>=0
+        and cinvspecial<>'02' 
+        group by cIvdFkStk, cInvFkWhs 
+        
+        union 
+        
         SELECT cIvdFkStk, cInvTransfer as pkWhs,
         SUM(nIVDzqtyOut) as zQtyIn,
-        SUM(nIVDzqtyIn) as zQtyOut,cIVDcode,
+        SUM(nIVDzqtyIn) as zQtyOut, 
         't' as detailType FROM Invoicedetail
         INNER JOIN Invoice ON cIVDfkINV = cINVpk
-        WHERE cinvspecial<>'KS'
+        WHERE cinvspecial<>'KS'  
         and cInvTransfer <> 'n/a'
         and nIVDkirim=1 and cInvTransfer is not null
-        group by cIvdFkStk, cInvTransfer
+        and nivdaccqty>=0
+        and cinvspecial<>'02'
+        group by cIvdFkStk, cInvTransfer 
+        
         ) as c
-        inner join warehouse
+        
+        inner join warehouse 
         on warehouse.cwhspk=c.pkwhs
-        INNER JOIN stock
+        INNER JOIN stock 
         on cIvdFkStk=CSTKPK and nstksuspend=0 and nstkservice=0
-        INNER JOIN stockdetail sdt
-        on cIvdFkStk=cSTDfkSTK And nSTDfactor=1 and nstdkey=1
+        INNER JOIN stockdetail sdt 
+        on cIvdFkStk=cSTDfkSTK And nSTDfactor=1 and nstdkey=1 
         INNER JOIN unit ON cSTDfkUNI=cUNIpk `
+        
         if (stockCode) {
-            query+= ` where (IFNULL(?, cstdcode) = cstdcode or cstdcode is null) `
+            query+= ` where cstdcode=? `
+        }
+        
+        query+= `group by StockId,StockName,Location
+        order by Location asc`
+        if (stockCode) {
             parameters.push(decodeURIComponent(stockCode));
         }
-        query+= ` group by cIvdFkStk,Location `;
         console.log(`stockCode ${decodeURIComponent(stockCode)}`);
         
         const response = await this.genericRepository.query<StocBalancekDTO>(query, parameters);

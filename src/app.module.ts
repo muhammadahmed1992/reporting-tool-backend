@@ -57,4 +57,24 @@ export class AppModule {
         Andriod2Controller, SchemaInfoController, ReportsController
       );
   }
+  static forRoot(): DynamicModule {
+    return {
+      module: AppModule,
+      imports: [
+        TypeOrmModule.forRootAsync({
+          useFactory: (req: Request) => {
+            const connectionString = req['connection-string'];
+            console.log(`connection string initialized by typeorm: ${connectionString}`);
+            return {
+              type: 'mysql',
+              url: connectionString,
+              autoLoadEntities: true,
+              synchronize: true,
+            };
+          },
+          inject: [REQUEST],
+        }),
+      ],
+    };
+  }
 }

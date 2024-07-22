@@ -14,31 +14,34 @@ export class StockBalanceReport implements ReportStrategy {
     public async generateReport(...params: any): Promise<ApiResponse<any>> {
         const [stockGroup, warehouse] = params;
         let query = `
-        select cSTDcode as StockID,cSTKdesc as StockName,
-        cwhsdesc as Location,
+        select cSTDcode as Kode,cSTKdesc as Nama,
+        warehouse.cwhsdesc as Lokasi,
         sum(zqtyin-zqtyout) as Qty,sdt.nSTDprice as Price,
         sum(zqtyin-zqtyout)*nstdprice as Balance
         from
         (
+        
         SELECT cIvdFkStk, cInvFkWhs as pkWhs,
-        SUM(nIVDzqtyIn) as zQtyIn, SUM(nIVDzqtyout) as zQtyOut,cIVDcode,
+        SUM(nIVDzqtyIn) as zQtyIn, SUM(nIVDzqtyout) as zQtyOut, 
         'a' as detailType FROM Invoicedetail
         INNER JOIN Invoice ON cIVDfkINV = cINVpk
         WHERE cinvspecial<>'KS'  
-        and nIVDkirim=1 and cInvFkWhs is not null
-        group by cIvdFkStk, cInvFkWhs
+        and nIVDkirim=1
+        and nivdaccqty>=0
+        and cinvspecial<>'02'
+        group by cIvdFkStk, cInvFkWhs 
         
         union 
         
         SELECT cIvdFkStk, cInvTransfer as pkWhs,
-        SUM(nIVDzqtyOut) as zQtyIn,
-        SUM(nIVDzqtyIn) as zQtyOut,cIVDcode,
+        SUM(nIVDzqtyOut) as zQtyIn,SUM(nIVDzqtyIn) as zQtyOut,
         't' as detailType FROM Invoicedetail
         INNER JOIN Invoice ON cIVDfkINV = cINVpk
         WHERE cinvspecial<>'KS'  
-        and cInvTransfer <> 'n/a'
-        and nIVDkirim=1 and cInvTransfer is not null
-        group by cIvdFkStk, cInvTransfer
+        and nIVDkirim=1
+        and nivdaccqty>=0
+        and cinvspecial<>'02'
+        group by cIvdFkStk, cInvTransfer 
         
         ) as c
         
@@ -49,25 +52,24 @@ export class StockBalanceReport implements ReportStrategy {
         INNER JOIN stockdetail sdt 
         on cIvdFkStk=cSTDfkSTK And nSTDfactor=1 and nstdkey=1 
         INNER JOIN unit ON cSTDfkUNI=cUNIpk
-        where 1=1 `;
-        if (stockGroup) {
-            query+= ` and (IFNULL(?, cstkfkgrp) = cstkfkgrp or cstkfkgrp is null) `;
-        }
+        where 1=1 `
         if (warehouse) {
             query+= ` and (IFNULL(?, cwhspk) = cwhspk or cwhspk is null) `;
         }
-        query+= `
-                group by cIvdFkStk,Location 
-                order by StockID,Location asc
-        `;
+        if (stockGroup) {
+            query+= ` and (IFNULL(?, cstkfkgrp) = cstkfkgrp or cstkfkgrp is null) `;
+        }
+        
+        query+= ` group by Kode,Nama,Lokasi 
+        order by Lokasi,kode asc `;
 
         console.log('warehouse: ', decodeURIComponent(warehouse));
         console.log('stockGroup: ', decodeURIComponent(stockGroup));
         const parameters = [];
-        if (stockGroup)
-            parameters.push(decodeURIComponent(stockGroup));
         if (warehouse)
             parameters.push(decodeURIComponent(warehouse));
+        if (stockGroup)
+            parameters.push(decodeURIComponent(stockGroup));
         const response = await this.genericRepository.query<StocBalancekDTO>(query, parameters);
         if (response?.length) {
             return ResponseHelper.CreateResponse<StocBalancekDTO[]>(response, HttpStatus.OK, 'Data retrieved successfully.');

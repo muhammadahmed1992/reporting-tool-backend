@@ -8,7 +8,7 @@
   "scripts": {
     "build": "nest build && npm run copy && npm run node_modules:prod",
     "copy": "copy \"package.json\" \"dist/\"",
-    "node_modules:prod": "cd dist && npm install --only=production",
+    "node_modules:prod": "cd dist && npm install --omit=dev",
     "format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\"",
     "start": "nest start",
     "start:dev": "nest start --watch",
