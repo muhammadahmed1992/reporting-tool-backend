@@ -47,14 +47,14 @@ export class GenericRepository implements OnModuleDestroy {
     try {
       dataSource = await this.createDataSource();
       result = await dataSource.query(sql, parameters);
-    } catch (e) {
+    } catch (e: any) {
       console.error('Error executing query:', e.message);
       console.error('Stack trace:', e.stack);
     } finally {
       if (dataSource && dataSource.isInitialized) {
         try {
           await dataSource.destroy();
-        } catch (closeError) {
+        } catch (closeError: any) {
           console.error('Error closing dataSource:', closeError.message);
           console.error('Stack trace:', closeError.stack);
         }
@@ -70,7 +70,7 @@ export class GenericRepository implements OnModuleDestroy {
       try {
         await this.dataSource.destroy();
         console.log(`DataSource closed: ${this.connectionName}`);
-      } catch (closeError) {
+      } catch (closeError: any) {
         console.error('Error closing dataSource during module destroy:', closeError.message);
         console.error('Stack trace:', closeError.stack);
       }
