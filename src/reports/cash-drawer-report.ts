@@ -15,7 +15,7 @@ export class CashDrawerReport implements ReportStrategy {
     public async generateReport(...params: any): Promise<ApiResponse<any>> {
         let query = `
         SELECT 
-        DATE_FORMAT(a.dinvdate, '%d-%m-%Y') AS Date,
+        a.dinvdate AS Date,
         IF(nopen IS NULL, 0, nopen) AS Opening,
         mdp AS DP,
         mvoucher AS Voucher,
