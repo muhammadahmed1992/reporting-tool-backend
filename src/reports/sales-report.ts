@@ -56,7 +56,6 @@ export class SalesReport implements ReportStrategy {
             parameters.push(decodeURIComponent(warehouse));
 
         const response = await this.genericRepository.query<SalesDTO>(query, parameters);
-        console.log(response);
         if (response?.length) {
             return ResponseHelper.CreateResponse<SalesDTO[]>(response, HttpStatus.OK, 'Data retrieved successfully.');
         } else {

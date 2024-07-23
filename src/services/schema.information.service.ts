@@ -10,7 +10,9 @@ export class SchemaInformationService {
     async getDatabaseInformation(): Promise<ApiResponse<any>> {
         let query = `
                 SELECT SCHEMA_NAME
-                FROM information_schema.SCHEMATA;
+                FROM information_schema.SCHEMATA
+                WHERE SCHEMA_NAME NOT IN ('information_schema', 'mysql', 'performance_schema', 'sakila', 'world', 'sys')
+                AND SCHEMA_NAME NOT LIKE 'vpm%'
         `;
 
         const response = await this.genericRepository.query<any>(query);

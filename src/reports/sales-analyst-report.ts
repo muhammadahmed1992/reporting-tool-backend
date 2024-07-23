@@ -29,7 +29,7 @@ export class SalesAnalystReport implements ReportStrategy {
         let query = 
         `select cstdcode as StockID,cstkdesc as StockName,sum(tqty) as Qty,cexcdesc as Curr,sum(semua-if(cinvspecial='RJ' or cinvspecial='RS',
         -ninvdisc,ninvdisc)/rows2) as Amount,
-        sum((semua-if(cinvspecial='RJ' or cinvspecial='RS',-ninvdisc,ninvdisc)/rows2)*(1+if(nivdstkppn=1,ninvtax/100,0))) as Amount_tax
+        sum((semua-if(cinvspecial='RJ' or cinvspecial='RS',-ninvdisc,ninvdisc)/rows2)*(1+if(nivdstkppn=1,ninvtax/100,0))) as Amount_Tax
         
         from
         
@@ -62,7 +62,7 @@ export class SalesAnalystReport implements ReportStrategy {
         }
                                
         query+= ` group by nstkppn,cinvspecial,civdfkinv,cstdcode, cstkdesc, cexcdesc,ninvdisc,nivdstkppn,ninvtax 
-         order by cexcdesc,cstdcode
+         order by cexcdesc,cstdcode,cstkdesc
         ) as b
         
         on a.civdfkinv=b.civdfkinv

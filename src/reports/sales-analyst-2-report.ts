@@ -58,6 +58,8 @@ export class SalesAnalyst2Report implements ReportStrategy {
             parameters.push(decodeURIComponent(warehouse));
         }
         console.log(`Report Name: ${ReportName.Sales_Analyst2}`);
+        console.log(`start Date: ${startDate}`);
+        console.log(`end Date: ${endDate}`);
         console.log('warehouse: ', decodeURIComponent(warehouse));
         console.log('stockGroup: ', decodeURIComponent(stockGroup));
         console.log(`=============================================`);
