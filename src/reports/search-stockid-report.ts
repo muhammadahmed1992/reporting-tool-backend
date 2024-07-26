@@ -22,8 +22,8 @@ export class SearchStockIDReport implements ReportStrategy {
         LTRIM(RTRIM(cSTKdesc)) as StockName,
         LTRIM(RTRIM(warehouse.cwhsdesc)) as Location,
         FORMAT(sum(zqtyin-zqtyout),0) as Qty,
-        FORMAT(sdt.nSTDprice,0) as Price,
-        FORMAT(sum(zqtyin-zqtyout)*nstdprice,0) as Balance
+        FORMAT(SUM(sdt.nSTDprice),0) as Price,
+        FORMAT(sum(zqtyin-zqtyout)*SUM(nstdprice),0) as Balance
         from
         (
         

@@ -25,7 +25,8 @@ export class SalesReport implements ReportStrategy {
         parameters.push(startDate);
         parameters.push(endDate);
         let query = `
-        SELECT Invoice, Date, IFNULL(Customer, '') Customer, Curr, Amount,
+        SELECT Invoice, Date, IFNULL(Customer, '') Customer, Curr, 
+            FORMAT(Amount, 0) As Amount,
             FORMAT(IF(@currentGroup <> Curr, 
                 IF(@currentGroup:= Curr, @currentSum:= 0, @currentSum:= Amount), 
                 @currentSum:= @currentSum + Amount
@@ -36,7 +37,7 @@ export class SalesReport implements ReportStrategy {
         DATE_FORMAT(dinvdate,'%d-%m-%Y') as 'Date',
         LTRIM(RTRIM(centdesc)) as Customer,
         LTRIM(RTRIM(cexcdesc)) as Curr,
-        FORMAT(sum((sumdetails-ndisc/rows2)*(if(nivdstkppn=1,1+ninvtax/100,1)))+nfreight,0) as 'Amount' from
+        sum((sumdetails-ndisc/rows2)*(if(nivdstkppn=1,1+ninvtax/100,1)))+nfreight as 'Amount' from
         (select civdfkinv,count(1) as rows2 from invoicedetail
         inner join invoice on civdfkinv=cinvpk
         and dinvdate>=? and dinvdate<=? `
@@ -58,7 +59,7 @@ export class SalesReport implements ReportStrategy {
         group by civdfkstk,civdfkinv,ninvdisc,nivdstkppn,ninvtax,cinvrefno,dinvdate,centdesc,cexcdesc,nINVfreight,nINVdisc) as b
 
         on a.civdfkinv=b.civdfkinv
-        group by cinvrefno,dinvdate,centdesc,cexcdesc
+        group by cinvrefno,dinvdate,centdesc,cexcdesc,nfreight
         order by curr,date,invoice) AS a, (SELECT @currentGroup := '', @currentSum := 0) r; `;
 
         console.log(`query: ${query}`);

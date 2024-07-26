@@ -17,17 +17,17 @@ export class StockBalanceReport implements ReportStrategy {
         let query = `
         select
         Kode, Nama, Lokasi,
-                FORMAT(Qty, 0) Qty,
-                Format(Price, 0) Price,
-                Format(Balance, 0) Balance,
+                FORMAT(d.Qty, 0) Qty,
+                Format(d.Price, 0) Price,
+                Format(d.Balance, 0) Balance,
         Format(@totalBalance:= @totalBalance + Balance, 0) AS TotalBalance
         from (
 
         select LTRIM(RTRIM(cSTDcode)) as Kode,LTRIM(RTRIM(cSTKdesc)) as Nama,
         LTRIM(RTRIM(warehouse.cwhsdesc)) as Lokasi,
         SUM(zqtyin - zqtyout) as Qty,
-        sdt.nSTDprice as Price,
-        SUM(zqtyin - zqtyout) * sdt.nSTDprice as Balance
+        SUM(sdt.nSTDprice) as Price,
+        SUM(zqtyin - zqtyout) * SUM(sdt.nSTDprice) as Balance
         from
         (
         
@@ -70,12 +70,13 @@ export class StockBalanceReport implements ReportStrategy {
             query+= ` and (IFNULL(?, cstkfkgrp) = cstkfkgrp or cstkfkgrp is null) `;
         }
         
-        query+= ` group by Kode,Nama,Lokasi 
+        query+= ` group by Kode,Nama,Lokasi
         order by Lokasi,kode asc ) d
         JOIN (SELECT @totalBalance := 0) r
-        group by Kode,Nama,Lokasi,Qty,
-        Price,
-        Balance        
+        group by Kode,Nama,Lokasi,
+        d.Qty,
+        d.Price,
+        d.Balance
         `;
         console.log(`query: ${query} `);
         console.log(`Report Name: ${ReportName.Stock_Balance}`);

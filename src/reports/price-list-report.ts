@@ -16,8 +16,8 @@ export class PriceListReport implements ReportStrategy {
     public async generateReport(...params: any): Promise<ApiResponse<any>> {
         const [stockGroup] = params;
         let query = `
-        SELECT cSTDcode StockID, cSTKdesc StockName,
-        nSTDprice as Price,cUNIdesc Unit
+        SELECT cSTDcode StockID, LTRIM(RTRIM(cSTKdesc)) StockName,
+        FORMAT(nSTDprice,0) as Price,cUNIdesc Unit
         FROM Stock INNER JOIN Stockdetail
         ON Stock.cSTKpk = Stockdetail.cSTDfkSTK
         INNER JOIN Unit
@@ -28,6 +28,8 @@ export class PriceListReport implements ReportStrategy {
             query+= ` and (IFNULL(?, cstkfkgrp) = cstkfkgrp or cstkfkgrp is null) `;
         }
         query+= `  ORDER BY cstdcode,nstdfactor ASC `;
+        
+        console.log(`query: ${query}`);
         console.log(`Report Name: ${ReportName.PriceList}`);
         console.log('parameter: stockGroup: ', decodeURIComponent(stockGroup));
         console.log('=====================================');
