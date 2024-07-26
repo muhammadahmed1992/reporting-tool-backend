@@ -47,7 +47,7 @@ export class Sales2Report implements ReportStrategy {
         }
 
         query += `
-        group by cinvrefno,dinvdate,centdesc,cexcdesc,ninvdisc1,ninvdisc2,ninvdisc3,ninvtax,ninvfreight
+        group by cinvrefno,dinvdate,centdesc,cexcdesc,ninvdisc1,ninvdisc2,ninvdisc3,ninvtax,ninvfreight,cinvspecial
         order by curr,date,invoice) AS c, (SELECT @currentGroup := '', @currentSum := 0) r `;
 
         console.log(`query: ${query}`);

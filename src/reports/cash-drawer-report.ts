@@ -14,8 +14,33 @@ export class CashDrawerReport implements ReportStrategy {
 
     public async generateReport(...params: any): Promise<ApiResponse<any>> {
         let query = `
+SELECT
+    Date,
+    FORMAT(Opening,0) Opening,
+    FORMAT(@running_opening := @running_opening + Opening,0) AS RunningOpening,
+    FORMAT(DP,0) AS DP,
+    FORMAT(@running_dp := @running_dp + DP,0) AS RunningDP,
+    FORMAT(Voucher,0) AS Voucher,
+    FORMAT(@running_voucher := @running_voucher + Voucher,0) AS RunningVoucher,
+    FORMAT(Cash,0) AS Cash,
+    FORMAT(@running_cash := @running_cash + Cash,0) AS RunningCash,
+    FORMAT(Payroll,0) AS Payroll,
+    FORMAT(@running_payroll := @running_payroll + Payroll,0) AS RunningPayroll,
+    FORMAT(CreditCard,0) AS CreditCard,
+    FORMAT(@running_creditcard := @running_creditcard + CreditCard,0) AS RunningCreditCard,
+    FORMAT(DebitCard,0) AS DebitCard,
+    FORMAT(@running_debitcard := @running_debitcard + DebitCard,0) AS RunningDebitCard,
+    FORMAT(Online,0) AS Online,
+    FORMAT(@running_online := @running_online + Online,0) AS RunningOnline,
+    FORMAT(Withdrawn,0) AS Withdrawn,
+    FORMAT(@running_withdrawn := @running_withdrawn + Withdrawn,0) AS RunningWithdrawn,
+    FORMAT(Cancel,0) AS Cancel,
+    FORMAT(@running_cancel := @running_cancel + Cancel,0) AS RunningCancel,
+    FORMAT(Balance,0) AS Balance,
+    FORMAT(@running_balance := @running_balance + Balance,0) AS RunningBalance
+FROM (        
         SELECT 
-        a.dinvdate AS Date,
+        DATE_FORMAT(a.dinvdate,'%d-%m-%y') AS Date,
         IF(nopen IS NULL, 0, nopen) AS Opening,
         mdp AS DP,
         mvoucher AS Voucher,
@@ -79,7 +104,21 @@ export class CashDrawerReport implements ReportStrategy {
     ON 
         c.ddradate = a.dinvdate
     ORDER BY 
-        Date;`;
+        Date)  AS subquery,
+(SELECT 
+    @running_opening := 0,
+    @running_dp := 0,
+    @running_voucher := 0,
+    @running_cash := 0,
+    @running_payroll := 0,
+    @running_creditcard := 0,
+    @running_debitcard := 0,
+    @running_online := 0,
+    @running_withdrawn := 0,
+    @running_cancel := 0,
+    @running_balance := 0
+) AS vars;
+`;
         let [startDate, endDate] = params;
         if (!startDate)
             startDate = new Date();
@@ -88,6 +127,7 @@ export class CashDrawerReport implements ReportStrategy {
         const parameters = [];
         parameters.push(startDate);
         parameters.push(endDate);
+        console.log(`query: ${query}`);
         console.log(`Report Name: ${ReportName.CashDrawer}`);
         console.log(`startDate: ${startDate}`);
         console.log(`endDate: ${endDate}`);
