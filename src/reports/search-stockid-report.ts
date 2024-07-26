@@ -18,10 +18,12 @@ export class SearchStockIDReport implements ReportStrategy {
         const [stockCode] = params;
         const parameters = [];
         let query = `
-        select cSTDcode as StockID,cSTKdesc as StockName,
-        warehouse.cwhsdesc as Location,
-        sum(zqtyin-zqtyout) as Qty,sdt.nSTDprice as Price,
-        sum(zqtyin-zqtyout)*nstdprice as Balance
+        select LTRIM(RTRIM(cSTDcode)) as StockID,
+        LTRIM(RTRIM(cSTKdesc)) as StockName,
+        LTRIM(RTRIM(warehouse.cwhsdesc)) as Location,
+        FORMAT(sum(zqtyin-zqtyout),0) as Qty,
+        FORMAT(sdt.nSTDprice,0) as Price,
+        FORMAT(sum(zqtyin-zqtyout)*nstdprice,0) as Balance
         from
         (
         
@@ -67,6 +69,7 @@ export class SearchStockIDReport implements ReportStrategy {
         if (stockCode) {
             parameters.push(decodeURIComponent(stockCode));
         }
+        console.log(`query: ${query}`);
         console.log(`Report Name: ${ReportName.Stock_Balance_BarCode}`);
         console.log(`stockCode ${decodeURIComponent(stockCode)}`);
         console.log(`==================================================`);

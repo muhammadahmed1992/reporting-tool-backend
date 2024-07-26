@@ -27,8 +27,19 @@ export class SalesAnalystReport implements ReportStrategy {
         parameters.push(startDate);
         parameters.push(endDate);
         let query = 
-        `select cstdcode as StockID,cstkdesc as StockName,sum(tqty) as Qty,cexcdesc as Curr,sum(semua-if(cinvspecial='RJ' or cinvspecial='RS',
-        -ninvdisc,ninvdisc)/rows2) as Amount,
+        `
+        SELECT StockID, StockName, Qty, Curr, Amount, Amount_Tax,
+            IF(@currentGroup <> Curr, 
+                IF(@currentGroup:= Curr, @currentSum:= 0, @currentSum:= Amount), 
+                @currentSum:= @currentSum + Amount
+            ) AS SubTotal
+        FROM (
+        select 
+        LTRIM(RTRIM(cstdcode)) as StockID,
+        LTRIM(RTRIM(cstkdesc)) as StockName,
+        sum(tqty) as Qty,
+        LTRIM(RTRIM(cexcdesc)) as Curr,
+        sum(semua-if(cinvspecial='RJ' or cinvspecial='RS',-ninvdisc,ninvdisc)/rows2) as Amount,
         sum((semua-if(cinvspecial='RJ' or cinvspecial='RS',-ninvdisc,ninvdisc)/rows2)*(1+if(nivdstkppn=1,ninvtax/100,0))) as Amount_Tax
         
         from
@@ -66,8 +77,9 @@ export class SalesAnalystReport implements ReportStrategy {
         ) as b
         
         on a.civdfkinv=b.civdfkinv
-        group by cstdcode,cstkdesc,cexcdesc
-        `;
+        group by cstdcode,cstkdesc,cexcdesc ) AS c, (SELECT @currentGroup := '', @currentSum := 0) r 
+        order by StockID, StockName`;
+        console.log(`query: ${query}`);
         console.log(`Report Name: ${ReportName.Sales_Analyst}`);
         console.log('warehouse: ', decodeURIComponent(warehouse));
         console.log('stockGroup: ', decodeURIComponent(stockGroup));

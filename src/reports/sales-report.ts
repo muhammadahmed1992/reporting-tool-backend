@@ -7,6 +7,7 @@ import { GenericRepository } from '../repository/generic.repository'
 
 import ApiResponse from 'src/helper/api-response';
 import ResponseHelper from 'src/helper/response-helper';
+import { ReportName } from 'src/helper/enums/report-names.enum';
 
 @Injectable()
 export class SalesReport implements ReportStrategy {
@@ -24,8 +25,18 @@ export class SalesReport implements ReportStrategy {
         parameters.push(startDate);
         parameters.push(endDate);
         let query = `
-        select cinvrefno as Invoice,dinvdate as 'Date',centdesc as Customer,cexcdesc as Curr,
-        sum((sumdetails-ndisc/rows2)*(if(nivdstkppn=1,1+ninvtax/100,1)))+nfreight as 'Amount' from
+        SELECT Invoice, Date, IFNULL(Customer, '') Customer, Curr, Amount,
+            IF(@currentGroup <> Curr, 
+                IF(@currentGroup:= Curr, @currentSum:= 0, @currentSum:= Amount), 
+                @currentSum:= @currentSum + Amount
+            ) AS SubTotal
+        FROM (
+        select 
+        LTRIM(RTRIM(cinvrefno)) as Invoice,
+        DATE_FORMAT(dinvdate,'%d-%m-%Y') as 'Date',
+        LTRIM(RTRIM(centdesc)) as Customer,
+        LTRIM(RTRIM(cexcdesc)) as Curr,
+        FORMAT(sum((sumdetails-ndisc/rows2)*(if(nivdstkppn=1,1+ninvtax/100,1)))+nfreight,0) as 'Amount' from
         (select civdfkinv,count(1) as rows2 from invoicedetail
         inner join invoice on civdfkinv=cinvpk
         and dinvdate>=? and dinvdate<=? `
@@ -48,9 +59,12 @@ export class SalesReport implements ReportStrategy {
 
         on a.civdfkinv=b.civdfkinv
         group by cinvrefno,dinvdate,centdesc,cexcdesc
-        order by curr,date,invoice `;
+        order by curr,date,invoice) AS a, (SELECT @currentGroup := '', @currentSum := 0) r; `;
 
+        console.log(`query: ${query}`);
+        console.log(`Report Name: ${ReportName.Sales}`);
         console.log('warehouse: ', decodeURIComponent(warehouse));
+        console.log(`==================================================`);
 
         if (warehouse)
             parameters.push(decodeURIComponent(warehouse));

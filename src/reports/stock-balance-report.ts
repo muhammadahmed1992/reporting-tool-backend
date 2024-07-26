@@ -15,10 +15,19 @@ export class StockBalanceReport implements ReportStrategy {
     public async generateReport(...params: any): Promise<ApiResponse<any>> {
         const [stockGroup, warehouse] = params;
         let query = `
-        select cSTDcode as Kode,cSTKdesc as Nama,
-        warehouse.cwhsdesc as Lokasi,
-        sum(zqtyin-zqtyout) as Qty,sdt.nSTDprice as Price,
-        sum(zqtyin-zqtyout)*nstdprice as Balance
+        select
+        Kode, Nama, Lokasi,
+                FORMAT(Qty, 0) Qty,
+                Format(Price, 0) Price,
+                Format(Balance, 0) Balance,
+        Format(@totalBalance:= @totalBalance + Balance, 0) AS TotalBalance
+        from (
+
+        select LTRIM(RTRIM(cSTDcode)) as Kode,LTRIM(RTRIM(cSTKdesc)) as Nama,
+        LTRIM(RTRIM(warehouse.cwhsdesc)) as Lokasi,
+        SUM(zqtyin - zqtyout) as Qty,
+        sdt.nSTDprice as Price,
+        SUM(zqtyin - zqtyout) * sdt.nSTDprice as Balance
         from
         (
         
@@ -62,7 +71,13 @@ export class StockBalanceReport implements ReportStrategy {
         }
         
         query+= ` group by Kode,Nama,Lokasi 
-        order by Lokasi,kode asc `;
+        order by Lokasi,kode asc ) d
+        JOIN (SELECT @totalBalance := 0) r
+        group by Kode,Nama,Lokasi,Qty,
+        Price,
+        Balance        
+        `;
+        console.log(`query: ${query} `);
         console.log(`Report Name: ${ReportName.Stock_Balance}`);
         console.log('warehouse: ', decodeURIComponent(warehouse));
         console.log('stockGroup: ', decodeURIComponent(stockGroup));
