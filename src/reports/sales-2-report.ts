@@ -22,7 +22,18 @@ export class Sales2Report implements ReportStrategy {
         parameters.push(startDate);
         parameters.push(endDate);
         let query = `
-        select cinvrefno as Invoice,dinvdate as Date,centdesc as Customer,cexcdesc as Curr,
+        SELECT Invoice, Date, IFNULL(Customer, '') Customer, Curr,
+            FORMAT(Amount,0) AS Amount,
+            FORMAT(IF(@currentGroup <> Curr, 
+                IF(@currentGroup:= Curr, @currentSum:= 0, @currentSum:= Amount), 
+                @currentSum:= @currentSum + Amount
+            ),0) AS SubTotal
+        FROM (
+        select 
+        LTRIM(RTRIM(cinvrefno)) as Invoice,
+        DATE_FORMAT(dinvdate,'%d-%m-%Y') as Date,
+        LTRIM(RTRIM(centdesc)) as Customer,
+        cexcdesc as Curr,
         sum(if(cinvspecial='RJ' or cinvspecial='RS',-nIVDAmount,nIVDAmount)*(1-nInvDisc1/100)*(1-nInvDisc2/100)*(1-nInvDisc3/100)*(if(nivdstkppn=1,1+ninvtax/100,1)))+if(cinvspecial='RJ' or cinvspecial='RS',-ninvfreight,ninvfreight) as Amount
         from invoice
         inner join invoicedetail on cinvpk=civdfkinv
@@ -37,7 +48,9 @@ export class Sales2Report implements ReportStrategy {
 
         query += `
         group by cinvrefno,dinvdate,centdesc,cexcdesc,ninvdisc1,ninvdisc2,ninvdisc3,ninvtax,ninvfreight
-        order by curr,date,invoice `;
+        order by curr,date,invoice) AS c, (SELECT @currentGroup := '', @currentSum := 0) r `;
+
+        console.log(`query: ${query}`);
         console.log(`Report Name: ${ReportName.Sales2}`);
         console.log('warehouse: ', decodeURIComponent(warehouse));
         console.log(`=============================================`);   

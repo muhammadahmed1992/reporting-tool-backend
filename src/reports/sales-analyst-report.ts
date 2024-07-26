@@ -28,17 +28,17 @@ export class SalesAnalystReport implements ReportStrategy {
         parameters.push(endDate);
         let query = 
         `
-        SELECT StockID, StockName, Qty, Curr, Amount, Amount_Tax,
-            IF(@currentGroup <> Curr, 
+        SELECT StockID, StockName, FORMAT(Qty,0) Qty, Curr, FORMAT(Amount,0) Amount, FORMAT(Amount_Tax,0) 'Amount Tax',
+            FORMAT(IF(@currentGroup <> Curr, 
                 IF(@currentGroup:= Curr, @currentSum:= 0, @currentSum:= Amount), 
                 @currentSum:= @currentSum + Amount
-            ) AS SubTotal
+            ),0) AS SubTotal
         FROM (
         select 
-        LTRIM(RTRIM(cstdcode)) as StockID,
+        cstdcode as StockID,
         LTRIM(RTRIM(cstkdesc)) as StockName,
         sum(tqty) as Qty,
-        LTRIM(RTRIM(cexcdesc)) as Curr,
+        cexcdesc as Curr,
         sum(semua-if(cinvspecial='RJ' or cinvspecial='RS',-ninvdisc,ninvdisc)/rows2) as Amount,
         sum((semua-if(cinvspecial='RJ' or cinvspecial='RS',-ninvdisc,ninvdisc)/rows2)*(1+if(nivdstkppn=1,ninvtax/100,0))) as Amount_Tax
         
@@ -73,12 +73,12 @@ export class SalesAnalystReport implements ReportStrategy {
         }
                                
         query+= ` group by nstkppn,cinvspecial,civdfkinv,cstdcode, cstkdesc, cexcdesc,ninvdisc,nivdstkppn,ninvtax 
-         order by cexcdesc,cstdcode,cstkdesc
+         order by cexcdesc,cstdcode
         ) as b
         
         on a.civdfkinv=b.civdfkinv
-        group by cstdcode,cstkdesc,cexcdesc ) AS c, (SELECT @currentGroup := '', @currentSum := 0) r 
-        order by StockID, StockName`;
+        group by cstdcode,cstkdesc,cexcdesc
+        order by cexcdesc,cstdcode ASC ) AS c, (SELECT @currentGroup := '', @currentSum := 0) r`;
         console.log(`query: ${query}`);
         console.log(`Report Name: ${ReportName.Sales_Analyst}`);
         console.log('warehouse: ', decodeURIComponent(warehouse));

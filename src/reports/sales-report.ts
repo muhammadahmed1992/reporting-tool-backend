@@ -26,10 +26,10 @@ export class SalesReport implements ReportStrategy {
         parameters.push(endDate);
         let query = `
         SELECT Invoice, Date, IFNULL(Customer, '') Customer, Curr, Amount,
-            IF(@currentGroup <> Curr, 
+            FORMAT(IF(@currentGroup <> Curr, 
                 IF(@currentGroup:= Curr, @currentSum:= 0, @currentSum:= Amount), 
                 @currentSum:= @currentSum + Amount
-            ) AS SubTotal
+            ),0) AS SubTotal
         FROM (
         select 
         LTRIM(RTRIM(cinvrefno)) as Invoice,

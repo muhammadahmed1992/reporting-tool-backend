@@ -5,15 +5,25 @@ import ApiResponse from 'src/helper/api-response';
 import ResponseHelper from 'src/helper/response-helper';
 import { REQUEST } from '@nestjs/core';
 import { Request } from 'express';
+import { UserDTO } from 'src/dto/user.dto';
 
 @Injectable({ scope: Scope.REQUEST })
 export class Andriod2Service {
   constructor(private readonly genericRepository: GenericRepository) {}
 
-  async validateUser(username: string, password: string): Promise<ApiResponse<boolean>> {
+  async validateUser(username: string, password: string): Promise<ApiResponse<any>> {
     const hashedPassword = crypto.createHash('sha1').update(password).digest('hex');
-    const query = 'SELECT 1 FROM `android2` WHERE canddesc = ? AND candpw = ?';
+    const query = 'SELECT nandbeli as IsSwitchDatabaseAllowed FROM `android2` WHERE canddesc = ? AND candpw = ?';
     const result = await this.genericRepository.query(query, [username, hashedPassword]);
-    return ResponseHelper.CreateResponse(result.length > 0, result.length > 0 ? HttpStatus.OK : HttpStatus.NOT_FOUND);
+
+    if (result.length === 0) {
+      return ResponseHelper.CreateResponse(null, HttpStatus.NOT_FOUND);
+    } else {
+      let res: UserDTO = {
+        IsValid: true,
+        IsSwitchDatabase: !((result[0] as any).IsSwitchDatabaseAllowed) ? false:true
+      };
+      return ResponseHelper.CreateResponse(res, HttpStatus.OK);
+    }
   }
 }
