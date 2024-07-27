@@ -7,6 +7,7 @@ import { GenericRepository } from '../repository/generic.repository'
 import ApiResponse from 'src/helper/api-response';
 import ResponseHelper from 'src/helper/response-helper';
 import { ReportName } from 'src/helper/enums/report-names.enum';
+import Constants from 'src/helper/constants';
 
 @Injectable()
 export class StockBalanceReport implements ReportStrategy {
@@ -90,9 +91,9 @@ export class StockBalanceReport implements ReportStrategy {
             parameters.push(decodeURIComponent(stockGroup));
         const response = await this.genericRepository.query<StocBalancekDTO>(query, parameters);
         if (response?.length) {
-            return ResponseHelper.CreateResponse<StocBalancekDTO[]>(response, HttpStatus.OK, 'Data retrieved successfully.');
+            return ResponseHelper.CreateResponse<StocBalancekDTO[]>(response, HttpStatus.OK, Constants.DATA_SUCCESS);
         } else {
-            return ResponseHelper.CreateResponse<StocBalancekDTO[]>([], HttpStatus.NOT_FOUND, 'Data not found on these parameters.');
+            return ResponseHelper.CreateResponse<StocBalancekDTO[]>([], HttpStatus.NOT_FOUND, Constants.DATA_NOT_FOUND);
         }
     }
 }

@@ -7,6 +7,7 @@ import { Sales2DTO } from './../dto/sales-2.dto';
 import ApiResponse from 'src/helper/api-response';
 import ResponseHelper from 'src/helper/response-helper';
 import { ReportName } from 'src/helper/enums/report-names.enum';
+import Constants from 'src/helper/constants';
 
 @Injectable()
 export class Sales2Report implements ReportStrategy {
@@ -56,9 +57,9 @@ export class Sales2Report implements ReportStrategy {
         console.log(`=============================================`);   
         const response = await this.genericRepository.query<Sales2DTO>(query, parameters);
         if (response?.length) {
-            return ResponseHelper.CreateResponse<Sales2DTO[]>(response, HttpStatus.OK, 'Data retrieved successfully.');
+            return ResponseHelper.CreateResponse<Sales2DTO[]>(response, HttpStatus.OK, Constants.DATA_SUCCESS);
         } else {
-            return ResponseHelper.CreateResponse<Sales2DTO[]>([], HttpStatus.NOT_FOUND, 'Data not found on these parameters.');
+            return ResponseHelper.CreateResponse<Sales2DTO[]>([], HttpStatus.NOT_FOUND, Constants.DATA_NOT_FOUND);
         }
     }
 }

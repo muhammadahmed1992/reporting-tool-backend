@@ -9,6 +9,7 @@ import ResponseHelper from 'src/helper/response-helper';
 
 import { SalesAnalystDTO } from '../dto/sales-analyst.dto';
 import { ReportName } from 'src/helper/enums/report-names.enum';
+import Constants from 'src/helper/constants';
 
 @Injectable()
 export class SalesAnalystReport implements ReportStrategy {
@@ -32,7 +33,11 @@ export class SalesAnalystReport implements ReportStrategy {
             FORMAT(IF(@currentGroup <> Curr, 
                 IF(@currentGroup:= Curr, @currentSum:= 0, @currentSum:= Amount), 
                 @currentSum:= @currentSum + Amount
-            ),0) AS SubTotal
+            ),0) AS SubTotal,
+            FORMAT(IF(@currentGroupAmountTax <> Curr, 
+                IF(@currentGroupAmountTax:= Curr, @currentSumAmountTax:= 0, @currentSumAmountTax:= Amount_Tax), 
+                @currentSum:= @currentSumAmountTax + Amount_Tax
+            ),0) AS AmountTaxTotal   
         FROM (
         select 
         cstdcode as StockID,
@@ -78,7 +83,7 @@ export class SalesAnalystReport implements ReportStrategy {
         
         on a.civdfkinv=b.civdfkinv
         group by cstdcode,cstkdesc,cexcdesc
-        order by cexcdesc,cstdcode ASC ) AS c, (SELECT @currentGroup := '', @currentSum := 0) r`;
+        order by cexcdesc,cstdcode ASC ) AS c, (SELECT @currentGroup := '', @currentSum := 0, @currentGroupAmountTax := '', @currentSumAmountTax := 0) r`;
         console.log(`query: ${query}`);
         console.log(`Report Name: ${ReportName.Sales_Analyst}`);
         console.log('warehouse: ', decodeURIComponent(warehouse));
@@ -86,9 +91,9 @@ export class SalesAnalystReport implements ReportStrategy {
         console.log(`=============================================`);
         const response = await this.genericRepository.query<SalesAnalystDTO>(query, parameters);
         if (response?.length) {
-            return ResponseHelper.CreateResponse<SalesAnalystDTO[]>(response, HttpStatus.OK, 'Data retrieved successfully.');
+            return ResponseHelper.CreateResponse<SalesAnalystDTO[]>(response, HttpStatus.OK, Constants.DATA_SUCCESS);
         } else {
-            return ResponseHelper.CreateResponse<SalesAnalystDTO[]>([], HttpStatus.NOT_FOUND, 'Data not found on these parameters.');
+            return ResponseHelper.CreateResponse<SalesAnalystDTO[]>([], HttpStatus.NOT_FOUND, Constants.DATA_NOT_FOUND);
         }
     }
 }

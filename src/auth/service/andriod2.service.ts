@@ -6,6 +6,7 @@ import ResponseHelper from 'src/helper/response-helper';
 import { REQUEST } from '@nestjs/core';
 import { Request } from 'express';
 import { UserDTO } from 'src/dto/user.dto';
+import Constants from 'src/helper/constants';
 
 @Injectable({ scope: Scope.REQUEST })
 export class Andriod2Service {
@@ -17,9 +18,9 @@ export class Andriod2Service {
     const result = await this.genericRepository.query(query, [username, hashedPassword]);
 
     if (result.length === 0) {
-      return ResponseHelper.CreateResponse(null, HttpStatus.NOT_FOUND);
+      return ResponseHelper.CreateResponse(null, HttpStatus.NOT_FOUND, Constants.INVALID_USER);
     } else {
-      let res: UserDTO = {
+      const res: UserDTO = {
         IsValid: true,
         IsSwitchDatabase: !((result[0] as any).IsSwitchDatabaseAllowed) ? false:true
       };

@@ -8,6 +8,7 @@ import ApiResponse from 'src/helper/api-response';
 import ResponseHelper from 'src/helper/response-helper';
 import { PriceListDTO } from 'src/dto/price-list.dto';
 import { ReportName } from 'src/helper/enums/report-names.enum';
+import Constants from 'src/helper/constants';
 
 @Injectable()
 export class PriceListReport implements ReportStrategy {
@@ -35,9 +36,9 @@ export class PriceListReport implements ReportStrategy {
         console.log('=====================================');
         const response = await this.genericRepository.query<PriceListDTO>(query, [decodeURIComponent(stockGroup)]);
         if (response?.length) {
-            return ResponseHelper.CreateResponse<PriceListDTO[]>(response, HttpStatus.OK, 'Data retrieved successfully.');
+            return ResponseHelper.CreateResponse<PriceListDTO[]>(response, HttpStatus.OK, Constants.DATA_SUCCESS);
         } else {
-            return ResponseHelper.CreateResponse<PriceListDTO[]>([], HttpStatus.NOT_FOUND, 'Data not found on these parameters.');
+            return ResponseHelper.CreateResponse<PriceListDTO[]>([], HttpStatus.NOT_FOUND, Constants.DATA_NOT_FOUND);
         }
     }
 }

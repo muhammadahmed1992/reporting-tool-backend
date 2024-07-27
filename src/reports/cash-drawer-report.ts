@@ -7,6 +7,7 @@ import { CashDrawerDTO } from '../dto/cashdrawer.dto';
 import ApiResponse from 'src/helper/api-response';
 import ResponseHelper from 'src/helper/response-helper';
 import { ReportName } from 'src/helper/enums/report-names.enum';
+import Constants from 'src/helper/constants';
 
 @Injectable()
 export class CashDrawerReport implements ReportStrategy {
@@ -134,9 +135,9 @@ FROM (
         console.log('=============================');
         const response = await this.genericRepository.query<CashDrawerDTO>(query, parameters);
         if (response?.length) {
-            return ResponseHelper.CreateResponse<CashDrawerDTO[]>(response, HttpStatus.OK, 'Data retrieved successfully.');
+            return ResponseHelper.CreateResponse<CashDrawerDTO[]>(response, HttpStatus.OK, Constants.DATA_SUCCESS);
         } else {
-            return ResponseHelper.CreateResponse<CashDrawerDTO[]>([], HttpStatus.NOT_FOUND, 'Data not found on these parameters.');
+            return ResponseHelper.CreateResponse<CashDrawerDTO[]>([], HttpStatus.NOT_FOUND, Constants.DATA_NOT_FOUND);
         }
     }
 }

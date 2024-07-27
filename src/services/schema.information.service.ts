@@ -1,5 +1,6 @@
 import { HttpStatus, Injectable, Scope } from '@nestjs/common';
 import ApiResponse from 'src/helper/api-response';
+import Constants from 'src/helper/constants';
 import ResponseHelper from 'src/helper/response-helper';
 import { GenericRepository } from 'src/repository/generic.repository';
 
@@ -17,9 +18,9 @@ export class SchemaInformationService {
 
         const response = await this.genericRepository.query<any>(query);
         if (response?.length) {
-            return ResponseHelper.CreateResponse<any[]>(response, HttpStatus.OK, 'Data retrieved successfully.');
+            return ResponseHelper.CreateResponse<any[]>(response, HttpStatus.OK, Constants.DATA_SUCCESS);
         } else {
-            return ResponseHelper.CreateResponse<any[]>([], HttpStatus.NOT_FOUND, 'Data not found on these parameters.');
+            return ResponseHelper.CreateResponse<any[]>([], HttpStatus.NOT_FOUND, Constants.DATA_NOT_FOUND);
         }       
     }
 
@@ -30,9 +31,9 @@ export class SchemaInformationService {
 
         const response = await this.genericRepository.query<any>(query);
         if (response?.length) {
-            return ResponseHelper.CreateResponse<any[]>(response, HttpStatus.OK, 'Data retrieved successfully.');
+            return ResponseHelper.CreateResponse<any[]>(response, HttpStatus.OK, Constants.DATA_SUCCESS);
         } else {
-            return ResponseHelper.CreateResponse<any[]>([], HttpStatus.NOT_FOUND, 'Data not found on these parameters.');
+            return ResponseHelper.CreateResponse<any[]>([], HttpStatus.NOT_FOUND, Constants.DATA_NOT_FOUND);
         }
     }
 
@@ -43,9 +44,9 @@ export class SchemaInformationService {
 
         const response = await this.genericRepository.query<any>(query);
         if (response?.length) {
-            return ResponseHelper.CreateResponse<any[]>(response, HttpStatus.OK, 'Data retrieved successfully.');
+            return ResponseHelper.CreateResponse<any[]>(response, HttpStatus.OK, Constants.DATA_SUCCESS);
         } else {
-            return ResponseHelper.CreateResponse<any[]>([], HttpStatus.NOT_FOUND, 'Data not found on these parameters.');
+            return ResponseHelper.CreateResponse<any[]>([], HttpStatus.NOT_FOUND, Constants.DATA_NOT_FOUND);
         }
     }
 }

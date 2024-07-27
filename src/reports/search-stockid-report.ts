@@ -9,6 +9,7 @@ import ResponseHelper from 'src/helper/response-helper';
 import { PriceListDTO } from 'src/dto/price-list.dto';
 import { StocBalancekDTO } from 'src/dto/stock-balance.dto';
 import { ReportName } from 'src/helper/enums/report-names.enum';
+import Constants from 'src/helper/constants';
 
 @Injectable()
 export class SearchStockIDReport implements ReportStrategy {
@@ -75,9 +76,9 @@ export class SearchStockIDReport implements ReportStrategy {
         console.log(`==================================================`);
         const response = await this.genericRepository.query<StocBalancekDTO>(query, parameters);
         if (response?.length) {
-            return ResponseHelper.CreateResponse<StocBalancekDTO[]>(response, HttpStatus.OK, 'Data retrieved successfully.');
+            return ResponseHelper.CreateResponse<StocBalancekDTO[]>(response, HttpStatus.OK, Constants.DATA_SUCCESS);
         } else {
-            return ResponseHelper.CreateResponse<StocBalancekDTO[]>([], HttpStatus.NOT_FOUND, 'Data not found on these parameters.');
+            return ResponseHelper.CreateResponse<StocBalancekDTO[]>([], HttpStatus.NOT_FOUND, Constants.DATA_NOT_FOUND);
         }
     }
 }
