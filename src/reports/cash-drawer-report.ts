@@ -66,7 +66,7 @@ FROM (
             SUM(ninvmobile) AS mmobile,
             SUM(nINVccard_nilai) AS mcard,
             SUM((ninvvalue - ninvfreight) / (1 + ninvtax / 100)) AS mnetto, 
-            COUNT(*) AS tstruk, 
+            COUNT(1) AS tstruk, 
             SUM(ninvccard_nilai - ninvcredit) AS extrac
          FROM 
             invoice
@@ -82,7 +82,7 @@ FROM (
             dINVdate, 
             SUM(nINVdp + nINVvoucher + nINVtunai + nINVpiutang + nINVccard_nilai + nINVdebit + ninvmobile) AS batal,
             SUM(ninvccard_nilai - ninvcredit) AS bextrac,
-            COUNT(*) AS btstruk
+            COUNT(1) AS btstruk
          FROM 
             invoice 
          WHERE 

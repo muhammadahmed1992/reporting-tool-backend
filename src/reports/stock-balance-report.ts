@@ -27,8 +27,8 @@ export class StockBalanceReport implements ReportStrategy {
         select LTRIM(RTRIM(cSTDcode)) as Kode,LTRIM(RTRIM(cSTKdesc)) as Nama,
         LTRIM(RTRIM(warehouse.cwhsdesc)) as Lokasi,
         SUM(zqtyin - zqtyout) as Qty,
-        SUM(sdt.nSTDprice) as Price,
-        SUM(zqtyin - zqtyout) * SUM(sdt.nSTDprice) as Balance
+        (sdt.nSTDprice) as Price,
+        SUM(zqtyin - zqtyout) * (sdt.nSTDprice) as Balance
         from
         (
         
@@ -72,13 +72,8 @@ export class StockBalanceReport implements ReportStrategy {
         }
         
         query+= ` group by Kode,Nama,Lokasi
-        order by Lokasi,kode asc ) d
-        JOIN (SELECT @totalBalance := 0) r
-        group by Kode,Nama,Lokasi,
-        d.Qty,
-        d.Price,
-        d.Balance
-        `;
+        order by Kode,Nama,Lokasi asc ) d
+        JOIN (SELECT @totalBalance := 0) r`;
         console.log(`query: ${query} `);
         console.log(`Report Name: ${ReportName.Stock_Balance}`);
         console.log('warehouse: ', decodeURIComponent(warehouse));

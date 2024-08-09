@@ -36,7 +36,7 @@ export class SalesAnalystReport implements ReportStrategy {
             ),0) AS SubTotal,
             FORMAT(IF(@currentGroupAmountTax <> Curr, 
                 IF(@currentGroupAmountTax:= Curr, @currentSumAmountTax:= 0, @currentSumAmountTax:= Amount_Tax), 
-                @currentSum:= @currentSumAmountTax + Amount_Tax
+                @currentSumAmountTax:= @currentSumAmountTax + Amount_Tax
             ),0) AS AmountTaxTotal   
         FROM (
         select 
