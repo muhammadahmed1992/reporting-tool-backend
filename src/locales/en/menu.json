@@ -1,0 +1,13 @@
+{
+    "stock_report": "Stock Report",
+    "purchasing_report": "Purchasing Report",
+    "purchasing_report_no_disc": "Purchasing Report (No Disc)",
+    "purchasing_analyst_report": "Purchasing Analyst Report",
+    "purchasing_analyst_report_no_disc": "Purchasing Analyst Report (No Disc)",
+    "sales_report": "Sales Report",
+    "sales_report_no_disc": "Sales Report (No Disc)",
+    "sales_analyst_report": "Sales Analyst Report",
+    "sales_analyst_report_no_disc": "Sales Analyst Report (No Disc)",
+    "cash_drawer_report": "Cash Drawer Report",
+    "cash_drawer_report_detail": "Cash Drawer Report (Detail)"
+}

@@ -10,7 +10,7 @@
     "copy": "copy \"package.json\" \"dist/\"",
     "node_modules:prod": "cd dist && npm install --omit=dev",
     "format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\"",
-    "start": "node dist/bundle.js",
+    "start": "node dist/main.js",
     "start:dev": "nest start --watch",
     "start:debug": "nest start --debug --watch",
     "start:prod": "node dist/main",

@@ -28,7 +28,7 @@ export class PriceListReport implements ReportStrategy {
         if (stockGroup) {
             query+= ` and (IFNULL(?, cstkfkgrp) = cstkfkgrp or cstkfkgrp is null) `;
         }
-        query+= `  ORDER BY cstdcode,nstdfactor ASC `;
+        query+= `  ORDER BY cstdcode ASC `;
         
         console.log(`query: ${query}`);
         console.log(`Report Name: ${ReportName.PriceList}`);

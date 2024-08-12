@@ -1,0 +1,13 @@
+{
+    "stock_report": "Saldo Stock",
+    "purchasing_report": "Laporan Pembelian",
+    "purchasing_report_no_disc": "Laporan Pembelian (No Disc)",
+    "purchasing_analyst_report": "Analisa Pembelian",
+    "purchasing_analyst_report_no_disc": "Analisa Pembelian (No Disc)",
+    "sales_report": "Laporan Penjualan",
+    "sales_report_no_disc": "Laporan Penjualan (No Disc)",
+    "sales_analyst_report": "Analisa Penjualan",
+    "sales_analyst_report_no_disc": "Analisa Penjualan (No Disc)",
+    "cash_drawer_report": "Laporan Cash Drawer",
+    "cash_drawer_report_detail": "Laporan Cash Drawer (Detail)"
+}
