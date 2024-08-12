@@ -8,7 +8,7 @@ import ResponseHelper from 'src/helper/response-helper';
 export class LocalizationService {
   private translations: Record<string, any> = {};
 
-    constructor() {
+  constructor() {
       this.loadTranslations().then(() => {
         console.log(`translations has been loaded`)
     });
