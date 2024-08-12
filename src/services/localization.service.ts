@@ -1,8 +1,6 @@
 import { HttpStatus, Injectable } from '@nestjs/common';
-import fs, { readFileSync } from 'fs';
-import path, {join} from 'path';
-import ApiResponse from 'src/helper/api-response';
-import ResponseHelper from 'src/helper/response-helper';
+import fs from 'fs';
+import path from 'path';
 
 @Injectable()
 export class LocalizationService {
@@ -29,11 +27,12 @@ export class LocalizationService {
     }
   }
 
-  public translate(lang: string, key: string): ApiResponse<string> {
-    return ResponseHelper.CreateResponse(this.translations[lang][key] || this.translations['en'][key] || key, HttpStatus.OK);
+  public translate(lang: string, context: string, key: string): string {
+    console.log(this.translations);
+    return (this.translations[lang][context][key] || this.translations['en'][context][key] || key);
   }
 
-  public getTranslations(lang: string, context: string): ApiResponse<Record<string, string>> {
-    return ResponseHelper.CreateResponse(this.translations[lang][context] || this.translations[lang] || {}, HttpStatus.OK);
+  public getTranslations(lang: string, context: string): Record<string, string> {
+    return (this.translations[lang][context] || this.translations[lang] || {});
   }
 }
