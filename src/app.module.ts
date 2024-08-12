@@ -26,6 +26,11 @@ import { SchemaInfoController } from './controller/database.schema.controller';
 import { SchemaInformationService } from './services/schema.information.service';
 import { HeartBeatController } from './controller/heart.beat.controller';
 import { Andriod2Controller } from './auth/controller/andriod2.controller';
+import { PurchaseReport } from './reports/purchasing-report';
+import { PurchaseReportNoDisc } from './reports/purchasing-report-no-disc';
+import { PurchaseAnalystReport } from './reports/purchasing-analyst-report';
+import { PurchaseAnalystReportNoDisc } from './reports/purchasing-analyst-report-no-disc';
+import { CashDrawerDetailReport } from './reports/cash-drawer-detail-report';
 
 const environment = process.env.NODE_ENV || 'development';
 
@@ -46,7 +51,12 @@ const environment = process.env.NODE_ENV || 'development';
     SalesAnalyst2Report,
     Sales2Report,
     StockBalanceReport,
-    SearchStockIDReport
+    SearchStockIDReport,
+    PurchaseReport,
+    PurchaseReportNoDisc,
+    PurchaseAnalystReport,
+    PurchaseAnalystReportNoDisc,
+    CashDrawerDetailReport
   ]
 })
 export class AppModule {

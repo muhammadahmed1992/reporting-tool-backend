@@ -59,4 +59,40 @@ export class ReportsController {
     const result = await this.reportService.generateReport(ReportName.Stock_Balance_BarCode, stockId);
     return result;
   }
+  
+  @Get('/purchase')
+  async purchasing(@Query('startDate') startDate: Date, @Query('endDate') endDate: Date, @Query('warehouse') warehouse: string): Promise<any> {
+    const result = await this.reportService.generateReport(ReportName.PurchaseReport, startDate, endDate, warehouse);
+    return result;
+  }
+  
+  @Get('/purchase-analyst')
+  async purchaseanalyst(@Query('startDate') startDate: Date, 
+                     @Query('endDate') endDate: Date, 
+                    @Query('warehouse') warehouse: string, 
+                    @Query('stockGroup') stockGroup: string): Promise<any> {
+    const result = await this.reportService.generateReport(ReportName.Purchasing_Analyst_Report, startDate, endDate, warehouse, stockGroup);
+    return result;
+  }
+  
+  @Get('/purchase-analyst-no-disc')
+  async purchaseAnalystNoDisc(@Query('startDate') startDate: Date, 
+  @Query('endDate') endDate: Date, 
+ @Query('warehouse') warehouse: string, 
+ @Query('stockGroup') stockGroup: string): Promise<any> {
+    const result = await this.reportService.generateReport(ReportName.Purchasing_Analyst_Report_No_Disc, startDate, endDate, warehouse, stockGroup);
+    return result;
+  }
+  
+  @Get('/purchase-no-disc')
+  async purcahseNoDisc(@Query('startDate') startDate: Date, @Query('endDate') endDate: Date, @Query('warehouse') warehouse: string): Promise<any> {
+    const result = await this.reportService.generateReport(ReportName.PurchasingReport_No_Disc, startDate, endDate, warehouse);
+    return result;
+  }
+  
+  @Get('/cash-drawer-detail')
+  async cashDrawerDetails(@Query('startDate') startDate: Date, @Query('endDate') endDate: Date): Promise<any> {
+    const result = await this.reportService.generateReport(ReportName.CashDrawer_Detail, startDate, endDate);
+    return result;
+  }
 }
