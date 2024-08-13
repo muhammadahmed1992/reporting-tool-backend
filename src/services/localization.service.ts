@@ -20,6 +20,7 @@ export class LocalizationService {
       this.translations[lang] = {};
       for (const file of files) {
         const filePath = path.join(__dirname, `../locales/${lang}/${file}.json`);
+        console.log(`filePaths: ${filePath}`);
         if (fs.existsSync(filePath)) {
           this.translations[lang][file] = JSON.parse(fs.readFileSync(filePath, 'utf-8'));
         }
