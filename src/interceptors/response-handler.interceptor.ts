@@ -23,7 +23,7 @@ export default class ResponseHandlerInterceptor<T>
     next: CallHandler,
   ): Observable<ApiResponse<T>> {
     const request = context.switchToHttp().getRequest<Request>();
-    const locale = request.headers['accept-language'];
+    const locale = request.headers['accept-language'] || 'en';
     return next.handle().pipe(
       map((data) => {
         const response = context.switchToHttp().getResponse();
@@ -31,10 +31,8 @@ export default class ResponseHandlerInterceptor<T>
           response.status(HttpStatus.INTERNAL_SERVER_ERROR);
         } else {
           data.message = this.localizationService.translate(locale, 'backend', data.message);
-          console.log(data.message);
           response.status(data.statusCode);
         }
-        console.log(data);
         return data;
       }),
     );

@@ -29,7 +29,6 @@ export class LocalizationService {
   }
 
   public translate(lang: string, context: string, key: string): string {
-    console.log(this.translations);
     return (this.translations[lang][context][key] || this.translations['en'][context][key] || key);
   }
 
