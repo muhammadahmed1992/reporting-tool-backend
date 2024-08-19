@@ -3,16 +3,18 @@ import { Injectable, HttpStatus } from '@nestjs/common';
 import { ReportStrategy } from '../interfaces-strategy/report-strategy';
 import { GenericRepository } from '../repository/generic.repository'
 
-import { CashDrawerDTO } from '../dto/cashdrawer.dto';
 import ApiResponse from 'src/helper/api-response';
 import ResponseHelper from 'src/helper/response-helper';
 import { ReportName } from 'src/helper/enums/report-names.enum';
 import Constants from 'src/helper/constants';
 import { CashDrawerDetailDTO } from 'src/dto/cashdrawer-detail.dto';
+import { LocalizationService } from 'src/services/localization.service';
 
 @Injectable()
 export class CashDrawerDetailReport implements ReportStrategy {
-    constructor(private readonly genericRepository: GenericRepository) {}
+    constructor(private readonly genericRepository: GenericRepository,
+                private readonly localizationService: LocalizationService
+    ) {}
 
     public async generateReport(...params: any): Promise<ApiResponse<any>> {
         let query = `
