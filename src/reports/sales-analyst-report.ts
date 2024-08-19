@@ -29,7 +29,7 @@ export class SalesAnalystReport implements ReportStrategy {
         parameters.push(endDate);
         let query = 
         `
-        SELECT StockID, StockName, FORMAT(Qty,0) Qty, Curr, FORMAT(Amount,0) Amount, FORMAT(Amount_Tax,0) 'Amount Tax',
+        SELECT StockID, StockName, FORMAT(Qty,0) Qty, Curr, FORMAT(Amount,0) Amount, FORMAT(Amount_Tax,0) 'AmountTax',
             FORMAT(IF(@currentGroup <> Curr, 
                 IF(@currentGroup:= Curr, @currentSum:= 0, @currentSum:= Amount), 
                 @currentSum:= @currentSum + Amount

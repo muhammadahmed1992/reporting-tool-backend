@@ -23,7 +23,7 @@ export class PurchaseAnalystReportNoDisc implements ReportStrategy {
             endDate = new Date();
         let query = 
         `
-        SELECT StockID, StockName, FORMAT(Qty,0) Qty, Curr, FORMAT(Amount, 0) Amount, FORMAT(Amount_Tax, 0) 'Amount Tax',
+        SELECT StockID, StockName, FORMAT(Qty,0) Qty, Curr, FORMAT(Amount, 0) Amount, FORMAT(Amount_Tax, 0) 'AmountTax',
             FORMAT(IF(@currentGroup <> Curr, 
                 IF(@currentGroup:= Curr, @currentSum:= 0, @currentSum:= Amount), 
                 @currentSum:= @currentSum + Amount
@@ -70,7 +70,7 @@ export class PurchaseAnalystReportNoDisc implements ReportStrategy {
         }
         
         console.log(`query: ${query}`);
-        console.log(`Report Name: ${ReportName.Purchasing_Analyst_Report_No_Disc}`);
+        console.log(`Report Name: ${ReportName.Purchase_Analyst_Report_No_Disc}`);
         console.log(`start Date: ${startDate}`);
         console.log(`end Date: ${endDate}`);
         console.log('warehouse: ', decodeURIComponent(warehouse));

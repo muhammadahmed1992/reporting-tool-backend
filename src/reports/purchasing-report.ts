@@ -65,7 +65,7 @@ export class PurchaseReport implements ReportStrategy {
         order by curr,date,invoice) AS a, (SELECT @currentGroup := '', @currentSum := 0) r; `;
 
         console.log(`query: ${query}`);
-        console.log(`Report Name: ${ReportName.PurchaseReport}`);
+        console.log(`Report Name: ${ReportName.Purchase_Report}`);
         console.log('warehouse: ', decodeURIComponent(warehouse));
         console.log(`==================================================`);
 

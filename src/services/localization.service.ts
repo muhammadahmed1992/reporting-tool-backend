@@ -28,11 +28,21 @@ export class LocalizationService {
     }
   }
 
-  public translate(lang: string, context: string, key: string): string {
-    return (this.translations[lang][context][key] || this.translations['en'][context][key] || key);
+  public async translate(lang: string, context: string, key: string): Promise<string> {
+    return new Promise((resolve, reject) => {
+      const data = (this.translations[lang][context][key] || this.translations['en'][context][key] || key);
+      resolve(data);
+    });
   }
 
-  public getTranslations(lang: string, context: string): Record<string, string> {
-    return (this.translations[lang][context] || this.translations[lang] || {});
+  public async getTranslations(lang: string, context: string): Promise<Record<string, string>> {
+    return new Promise((resolve, reject) => {
+      const data = (this.translations[lang][context] || this.translations[lang] || null);
+      if (data) {
+        resolve(data);
+      } else {
+        reject('translation not found for this locale');
+      }
+    })
   }
 }

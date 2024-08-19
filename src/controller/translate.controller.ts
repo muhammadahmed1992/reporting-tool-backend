@@ -8,19 +8,19 @@ export class LocalizationController {
   constructor(private localizationService: LocalizationService) {}
 
   @Get('translate/:lang')
-  translate(
+  async translate(
     @Param('lang') lang: string,
     @Query('context') context: string,
     @Query('key') key: string,
-  ): ApiResponse<string> {
-    return ResponseHelper.CreateResponse(this.localizationService.translate(key, context, lang), HttpStatus.OK);
+  ): Promise<ApiResponse<string>> {
+    return ResponseHelper.CreateResponse(await this.localizationService.translate(key, context, lang), HttpStatus.OK);
   }
 
   @Get('translations/:lang')
-  getTranslations(
+  async getTranslations(
     @Param('lang') lang: string,
     @Query('context') context: string,
-  ): ApiResponse<Record<string, string>> {
-    return ResponseHelper.CreateResponse(this.localizationService.getTranslations(lang, context), HttpStatus.OK);
+  ): Promise<ApiResponse<Record<string, string>>> {
+    return ResponseHelper.CreateResponse(await this.localizationService.getTranslations(lang, context), HttpStatus.OK);
   }
 }

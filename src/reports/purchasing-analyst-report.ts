@@ -29,7 +29,7 @@ export class PurchaseAnalystReport implements ReportStrategy {
         parameters.push(endDate);
         let query = 
         `
-        SELECT StockID, StockName, FORMAT(Qty,0) Qty, Curr, FORMAT(Amount,0) Amount, FORMAT(Amount_Tax,0) 'Amount Tax',
+        SELECT StockID, StockName, FORMAT(Qty,0) Qty, Curr, FORMAT(Amount,0) Amount, FORMAT(Amount_Tax,0) 'AmountTax',
             FORMAT(IF(@currentGroup <> Curr, 
                 IF(@currentGroup:= Curr, @currentSum:= 0, @currentSum:= Amount), 
                 @currentSum:= @currentSum + Amount
@@ -85,7 +85,7 @@ export class PurchaseAnalystReport implements ReportStrategy {
         group by cstdcode,cstkdesc,cexcdesc
         order by cexcdesc,cstdcode ASC ) AS c, (SELECT @currentGroup := '', @currentSum := 0, @currentGroupAmountTax := '', @currentSumAmountTax := 0) r`;
         console.log(`query: ${query}`);
-        console.log(`Report Name: ${ReportName.Purchasing_Analyst_Report}`);
+        console.log(`Report Name: ${ReportName.Purchase_Analyst_Report}`);
         console.log('warehouse: ', decodeURIComponent(warehouse));
         console.log('stockGroup: ', decodeURIComponent(stockGroup));
         console.log(`=============================================`);

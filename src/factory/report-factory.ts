@@ -38,31 +38,31 @@ export class ReportFactory {
 
     getStrategy(reportType: string): ReportStrategy {
         switch (reportType) {
-            case ReportName.CashDrawer:
+            case ReportName.Cash_Drawer:
                 return this.cashDrawerReport;
-            case ReportName.PriceList:
+            case ReportName.Price_List:
                     return this.priceListReport;
             case ReportName.Sales:
                 return this.salesReport;
             case ReportName.Sales_Analyst:
                 return this.salesAnalystReport;
-            case ReportName.Sales_Analyst2:
+            case ReportName.Sales_Analyst_No_Disc:
                 return this.salesAnalyst2Report;
-            case ReportName.Sales2:
+            case ReportName.Sales_No_Disc:
                 return this.sales2Report;
             case ReportName.Stock_Balance:
                 return this.stockBalanceReport;
             case ReportName.Stock_Balance_BarCode:
                 return this.stockBalanceBarCodeReport;
-            case ReportName.PurchaseReport:
+            case ReportName.Purchase_Report:
                 return this.purchaseReport;
-            case ReportName.PurchasingReport_No_Disc:
+            case ReportName.Purchase_Report_No_Disc:
                 return this.purchaseReportNoDisc;
-            case ReportName.Purchasing_Analyst_Report: 
+            case ReportName.Purchase_Analyst_Report: 
                 return this.purchaseAnaylystReport;
-            case ReportName.Purchasing_Analyst_Report_No_Disc:
+            case ReportName.Purchase_Analyst_Report_No_Disc:
                 return this.purchaseAnalystReportNoDisc;
-            case ReportName.CashDrawer_Detail:
+            case ReportName.Cash_Drawer_Detail:
                 return this.cashDrawerDetailReport;
             default:
                 throw new Error(`Report type '${reportType}' not supported`);

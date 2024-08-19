@@ -52,7 +52,7 @@ export class Sales2Report implements ReportStrategy {
         order by curr,date,invoice) AS c, (SELECT @currentGroup := '', @currentSum := 0) r `;
 
         console.log(`query: ${query}`);
-        console.log(`Report Name: ${ReportName.Sales2}`);
+        console.log(`Report Name: ${ReportName.Sales_No_Disc}`);
         console.log('warehouse: ', decodeURIComponent(warehouse));
         console.log(`=============================================`);   
         const response = await this.genericRepository.query<Sales2DTO>(query, parameters);

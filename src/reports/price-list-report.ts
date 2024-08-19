@@ -18,7 +18,7 @@ export class PriceListReport implements ReportStrategy {
         const [stockGroup] = params;
         let query = `
         SELECT cSTDcode StockID, LTRIM(RTRIM(cSTKdesc)) StockName,
-        FORMAT(nSTDprice,0) as Price,cUNIdesc Unit
+        FORMAT(nSTDprice,0) as Price,LTRIM(RTRIM(cUNIdesc)) Unit
         FROM Stock INNER JOIN Stockdetail
         ON Stock.cSTKpk = Stockdetail.cSTDfkSTK
         INNER JOIN Unit
@@ -31,7 +31,7 @@ export class PriceListReport implements ReportStrategy {
         query+= `  ORDER BY cstdcode ASC `;
         
         console.log(`query: ${query}`);
-        console.log(`Report Name: ${ReportName.PriceList}`);
+        console.log(`Report Name: ${ReportName.Price_List}`);
         console.log('parameter: stockGroup: ', decodeURIComponent(stockGroup));
         console.log('=====================================');
         const response = await this.genericRepository.query<PriceListDTO>(query, [decodeURIComponent(stockGroup)]);

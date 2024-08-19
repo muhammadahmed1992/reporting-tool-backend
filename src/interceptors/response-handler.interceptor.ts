@@ -5,17 +5,15 @@ import {
   CallHandler,
   HttpStatus,
 } from '@nestjs/common';
-import { Observable } from 'rxjs';
-import { map } from 'rxjs/operators';
+import { Observable, from } from 'rxjs';
+import { map, switchMap } from 'rxjs/operators';
 import ApiResponse from '../helper/api-response';
 import { LocalizationService } from 'src/services/localization.service';
-
 
 @Injectable()
 export default class ResponseHandlerInterceptor<T>
   implements NestInterceptor<T, ApiResponse<T>>
 {
-  
   constructor(private readonly localizationService: LocalizationService) {}
 
   intercept(
@@ -24,16 +22,24 @@ export default class ResponseHandlerInterceptor<T>
   ): Observable<ApiResponse<T>> {
     const request = context.switchToHttp().getRequest<Request>();
     const locale = request.headers['accept-language'] || 'en';
+
     return next.handle().pipe(
-      map((data) => {
+      switchMap((data) => {
         const response = context.switchToHttp().getResponse();
-        if (!data) {
-          response.status(HttpStatus.INTERNAL_SERVER_ERROR);
+
+        if (data) {
+          return from(this.localizationService.translate(locale, 'backend', data.message))
+            .pipe(
+              map((translatedMessage) => {
+                data.message = translatedMessage;
+                response.status(data.statusCode);
+                return data;
+              })
+            );
         } else {
-          data.message = this.localizationService.translate(locale, 'backend', data.message);
-          response.status(data.statusCode);
+          response.status(HttpStatus.INTERNAL_SERVER_ERROR);
+          return from([data]);
         }
-        return data;
       }),
     );
   }

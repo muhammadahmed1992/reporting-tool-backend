@@ -52,7 +52,7 @@ export class PurchaseReportNoDisc implements ReportStrategy {
         order by curr,date,invoice) AS c, (SELECT @currentGroup := '', @currentSum := 0) r `;
 
         console.log(`query: ${query}`);
-        console.log(`Report Name: ${ReportName.PurchasingReport_No_Disc}`);
+        console.log(`Report Name: ${ReportName.Purchase_Report_No_Disc}`);
         console.log('warehouse: ', decodeURIComponent(warehouse));
         console.log(`=============================================`);   
         const response = await this.genericRepository.query<PurchasingReportNoDiscDTO>(query, parameters);

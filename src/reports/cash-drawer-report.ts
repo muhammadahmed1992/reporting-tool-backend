@@ -129,7 +129,7 @@ FROM (
         parameters.push(startDate);
         parameters.push(endDate);
         console.log(`query: ${query}`);
-        console.log(`Report Name: ${ReportName.CashDrawer}`);
+        console.log(`Report Name: ${ReportName.Cash_Drawer}`);
         console.log(`startDate: ${startDate}`);
         console.log(`endDate: ${endDate}`);
         console.log('=============================');
