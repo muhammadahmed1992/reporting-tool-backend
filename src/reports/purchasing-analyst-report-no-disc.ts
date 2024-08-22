@@ -23,18 +23,18 @@ export class PurchaseAnalystReportNoDisc implements ReportStrategy {
             endDate = new Date();
         let query = 
         `
-        SELECT StockID, StockName, FORMAT(Qty,0) Qty, Curr, FORMAT(Amount, 0) Amount, FORMAT(Amount_Tax, 0) 'AmountTax',
-            FORMAT(IF(@currentGroup <> Curr, 
-                IF(@currentGroup:= Curr, @currentSum:= 0, @currentSum:= Amount), 
+        SELECT StockID as stock_id_header, StockName as stock_name_header, FORMAT(Qty,0) as qty_header, Currency as currency_header, FORMAT(Amount, 0) as amount_header, FORMAT(Amount_Tax, 0) as amount_tax_header,
+            FORMAT(IF(@currentGroup <> Currency, 
+                IF(@currentGroup:= Currency, @currentSum:= 0, @currentSum:= Amount), 
                 @currentSum:= @currentSum + Amount
-            ),0) AS SubTotal,
-            FORMAT(IF(@currentGroupAmountTax <> Curr, 
-                IF(@currentGroupAmountTax:= Curr, @currentSumAmountTax:= 0, @currentSumAmountTax:= Amount_Tax), 
+            ),0) AS subtotal_header,
+            FORMAT(IF(@currentGroupAmountTax <> Currency, 
+                IF(@currentGroupAmountTax:= Currency, @currentSumAmountTax:= 0, @currentSumAmountTax:= Amount_Tax), 
                 @currentSumAmountTax:= @currentSumAmountTax + Amount_Tax
-            ),0) AS AmountTaxTotal            
+            ),0) AS amount_tax_total_header            
         FROM (
         SELECT cstdcode as StockID, LTRIM(RTRIM(cstkdesc)) as StockName,
-        sum(nivdzqtyin-nivdzqtyout) as Qty, cexcdesc as Curr,
+        sum(nivdzqtyin-nivdzqtyout) as Qty, cexcdesc as Currency,
         sum(if(cinvspecial='RB',-nIVDAmount,nivdamount)*(1-nINVdisc1/100)*(1-nINVdisc2/100)*(1-nINVdisc3/100)) as Amount,
         sum(if(cinvspecial='RB',-nIVDAmount,nivdamount)*(1-nINVdisc1/100)*(1-nINVdisc2/100)*(1-nINVdisc3/100)*(1+if(nivdstkppn=1,ninvtax/100,0))) as Amount_Tax
         FROM invoice

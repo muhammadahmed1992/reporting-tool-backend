@@ -14,7 +14,7 @@ export class Andriod2Service {
 
   async validateUser(username: string, password: string): Promise<ApiResponse<any>> {
     const hashedPassword = crypto.createHash('sha1').update(password).digest('hex');
-    const query = 'SELECT nandbeli as IsSwitchDatabaseAllowed FROM `android2` WHERE canddesc = ? AND candpw = ?';
+    const query = 'SELECT nandbeli as IsSwitchDatabaseAndPurchaseReportAllowed, nandstock as IsStockReportAllowed, nandjual as IsSalesReportAndCashReportAllowed FROM `android2` WHERE canddesc = ? AND candpw = ?';
     const result = await this.genericRepository.query(query, [username, hashedPassword]);
 
     if (result.length === 0) {
@@ -22,7 +22,9 @@ export class Andriod2Service {
     } else {
       const res: UserDTO = {
         IsValid: true,
-        IsSwitchDatabase: !((result[0] as any).IsSwitchDatabaseAllowed) ? false:true
+        IsSwitchDatabaseAndPurchaseReportAllowed: !(!((result[0] as any).IsSwitchDatabaseAndPurchaseReportAllowed)),
+        IsStockReportAllowed: !(!((result[0] as any).IsStockReportAllowed)),
+        IsSalesReportAndCashReportAllowed: !(!((result[0] as any).IsSalesReportAndCashReportAllowed))
       };
       return ResponseHelper.CreateResponse(res, HttpStatus.OK);
     }

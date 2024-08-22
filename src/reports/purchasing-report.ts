@@ -27,18 +27,18 @@ export class PurchaseReport implements ReportStrategy {
         parameters.push(startDate);
         parameters.push(endDate);
         let query = `
-        SELECT Invoice, Date, IFNULL(Supplier, '') Supplier, Curr, 
-            FORMAT(Amount, 0) As Amount,
-            FORMAT(IF(@currentGroup <> Curr, 
-                IF(@currentGroup:= Curr, @currentSum:= 0, @currentSum:= Amount), 
+        SELECT Invoice as invoice_header, Date as date_header, IFNULL(Supplier, '') as supplier_header, Currency as currency_header,
+            FORMAT(Amount,0) AS amount_header,
+            FORMAT(IF(@currentGroup <> Currency, 
+                IF(@currentGroup:= Currency, @currentSum:= 0, @currentSum:= Amount), 
                 @currentSum:= @currentSum + Amount
-            ),0) AS SubTotal
+            ),0) AS subtotal_header
         FROM (
         select 
         LTRIM(RTRIM(cinvrefno)) as Invoice,
         DATE_FORMAT(dinvdate,'%d-%m-%Y') as 'Date',
         LTRIM(RTRIM(centdesc)) as Supplier,
-        LTRIM(RTRIM(cexcdesc)) as Curr,
+        LTRIM(RTRIM(cexcdesc)) as Currency,
         sum((sumdetails-ndisc/rows2)*(if(nivdstkppn=1,1+ninvtax/100,1)))+nfreight as 'Amount' from
         (select civdfkinv,count(1) as rows2 from invoicedetail
         inner join invoice on civdfkinv=cinvpk
@@ -62,7 +62,7 @@ export class PurchaseReport implements ReportStrategy {
 
         on a.civdfkinv=b.civdfkinv
         group by cinvrefno,dinvdate,centdesc,cexcdesc,nfreight
-        order by curr,date,invoice) AS a, (SELECT @currentGroup := '', @currentSum := 0) r; `;
+        order by currency,date,invoice) AS a, (SELECT @currentGroup := '', @currentSum := 0) r; `;
 
         console.log(`query: ${query}`);
         console.log(`Report Name: ${ReportName.Purchase_Report}`);

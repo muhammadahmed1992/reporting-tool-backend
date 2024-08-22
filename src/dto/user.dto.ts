@@ -1,4 +1,6 @@
 export interface UserDTO {
-    IsSwitchDatabase: boolean,
+    IsSwitchDatabaseAndPurchaseReportAllowed: boolean,
+    IsStockReportAllowed: boolean,
+    IsSalesReportAndCashReportAllowed: boolean,
     IsValid: boolean
 }

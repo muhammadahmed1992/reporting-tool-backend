@@ -17,8 +17,8 @@ export class PriceListReport implements ReportStrategy {
     public async generateReport(...params: any): Promise<ApiResponse<any>> {
         const [stockGroup] = params;
         let query = `
-        SELECT cSTDcode StockID, LTRIM(RTRIM(cSTKdesc)) StockName,
-        FORMAT(nSTDprice,0) as Price,LTRIM(RTRIM(cUNIdesc)) Unit
+        SELECT cSTDcode as stock_id_header, LTRIM(RTRIM(cSTKdesc)) as stock_name_header,
+        FORMAT(nSTDprice,0) as price_header,LTRIM(RTRIM(cUNIdesc)) as unit_header
         FROM Stock INNER JOIN Stockdetail
         ON Stock.cSTKpk = Stockdetail.cSTDfkSTK
         INNER JOIN Unit

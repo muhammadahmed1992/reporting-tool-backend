@@ -29,21 +29,21 @@ export class SalesAnalystReport implements ReportStrategy {
         parameters.push(endDate);
         let query = 
         `
-        SELECT StockID, StockName, FORMAT(Qty,0) Qty, Curr, FORMAT(Amount,0) Amount, FORMAT(Amount_Tax,0) 'AmountTax',
-            FORMAT(IF(@currentGroup <> Curr, 
-                IF(@currentGroup:= Curr, @currentSum:= 0, @currentSum:= Amount), 
+        SELECT StockID as stock_id_header, StockName as stock_name_header, FORMAT(Qty,0) as qty_header, Currency as currency_header, FORMAT(Amount, 0) as amount_header, FORMAT(Amount_Tax, 0) as amount_tax_header,
+            FORMAT(IF(@currentGroup <> Currency, 
+                IF(@currentGroup:= Currency, @currentSum:= 0, @currentSum:= Amount), 
                 @currentSum:= @currentSum + Amount
-            ),0) AS SubTotal,
-            FORMAT(IF(@currentGroupAmountTax <> Curr, 
-                IF(@currentGroupAmountTax:= Curr, @currentSumAmountTax:= 0, @currentSumAmountTax:= Amount_Tax), 
+            ),0) AS subtotal_header,
+            FORMAT(IF(@currentGroupAmountTax <> Currency, 
+                IF(@currentGroupAmountTax:= Currency, @currentSumAmountTax:= 0, @currentSumAmountTax:= Amount_Tax), 
                 @currentSumAmountTax:= @currentSumAmountTax + Amount_Tax
-            ),0) AS AmountTaxTotal   
+            ),0) AS amount_tax_total_header   
         FROM (
         select 
         cstdcode as StockID,
         LTRIM(RTRIM(cstkdesc)) as StockName,
         sum(tqty) as Qty,
-        cexcdesc as Curr,
+        cexcdesc as Currency,
         sum(semua-if(cinvspecial='RJ' or cinvspecial='RS',-ninvdisc,ninvdisc)/rows2) as Amount,
         sum((semua-if(cinvspecial='RJ' or cinvspecial='RS',-ninvdisc,ninvdisc)/rows2)*(1+if(nivdstkppn=1,ninvtax/100,0))) as Amount_Tax
         

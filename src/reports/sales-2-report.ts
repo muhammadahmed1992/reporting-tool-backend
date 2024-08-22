@@ -23,18 +23,18 @@ export class Sales2Report implements ReportStrategy {
         parameters.push(startDate);
         parameters.push(endDate);
         let query = `
-        SELECT Invoice, Date, IFNULL(Customer, '') Customer, Curr,
-            FORMAT(Amount,0) AS Amount,
-            FORMAT(IF(@currentGroup <> Curr, 
-                IF(@currentGroup:= Curr, @currentSum:= 0, @currentSum:= Amount), 
+        SELECT Invoice as invoice_header, Date as date_header, Currency as currency_header,
+            FORMAT(Amount,0) AS amount_header,
+            FORMAT(IF(@currentGroup <> Currency, 
+                IF(@currentGroup:= Currency, @currentSum:= 0, @currentSum:= Amount), 
                 @currentSum:= @currentSum + Amount
-            ),0) AS SubTotal
+            ),0) AS subtotal_header
         FROM (
         select 
         LTRIM(RTRIM(cinvrefno)) as Invoice,
         DATE_FORMAT(dinvdate,'%d-%m-%Y') as Date,
         LTRIM(RTRIM(centdesc)) as Customer,
-        cexcdesc as Curr,
+        cexcdesc as Currency,
         sum(if(cinvspecial='RJ' or cinvspecial='RS',-nIVDAmount,nIVDAmount)*(1-nInvDisc1/100)*(1-nInvDisc2/100)*(1-nInvDisc3/100)*(if(nivdstkppn=1,1+ninvtax/100,1)))+if(cinvspecial='RJ' or cinvspecial='RS',-ninvfreight,ninvfreight) as Amount
         from invoice
         inner join invoicedetail on cinvpk=civdfkinv
@@ -49,7 +49,7 @@ export class Sales2Report implements ReportStrategy {
 
         query += `
         group by cinvrefno,dinvdate,centdesc,cexcdesc,ninvdisc1,ninvdisc2,ninvdisc3,ninvtax,ninvfreight,cinvspecial
-        order by curr,date,invoice) AS c, (SELECT @currentGroup := '', @currentSum := 0) r `;
+        order by currency,date,invoice) AS c, (SELECT @currentGroup := '', @currentSum := 0) r `;
 
         console.log(`query: ${query}`);
         console.log(`Report Name: ${ReportName.Sales_No_Disc}`);
