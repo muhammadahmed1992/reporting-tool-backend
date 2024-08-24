@@ -1,5 +1,5 @@
 {
     "select_stock_group": "Select a Stock group",
     "select_warehouse": "Select a Warehouse",
-    "select_data": "Select Date"
+    "select_date": "Select Date"
 }
