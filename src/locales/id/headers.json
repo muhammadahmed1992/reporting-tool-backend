@@ -1,6 +1,6 @@
 {
     "cash_drawer_report": {
-      "date_header": "Tanggal",
+      "date_drawer_header": "Tanggal",
       "opening_header": "Pembukaan",
       "dp_header": "DP",
       "voucher_header": "Voucher",
@@ -40,24 +40,21 @@
       "qty_header": "Jumlah",
       "price_header": "Harga",
       "location_header": "Lokasi",
-      "balance_header": "Saldo",
-      "total_balance_header": "Total Saldo"
+      "balance_header": "Saldo"
     },
     "purchasing_report": {
       "invoice_header": "Faktur",
       "date_header": "Tanggal",
       "supplier_header": "Pemasok",
       "currency_header": "Mata Uang",
-      "amount_header": "Jumlah",
-      "subtotal_header": "Subtotal"
+      "amount_header": "Jumlah"
     },
     "purchasing_report_no_disc": {
       "invoice_header": "Faktur",
       "date_header": "Tanggal",
       "supplier_header": "Pemasok",
       "currency_header": "Mata Uang",
-      "amount_header": "Jumlah",
-      "subtotal_header": "Subtotal"
+      "amount_header": "Jumlah"
     },
     "purchasing_analyst_report": {
       "stock_id_header": "ID Stok",
@@ -65,9 +62,7 @@
       "qty_header": "Jumlah",
       "currency_header": "Mata Uang",
       "amount_header": "Jumlah",
-      "amount_tax_header": "Pajak Jumlah",
-      "subtotal_header": "Subtotal",
-      "amount_tax_total_header": "Total Pajak Jumlah"
+      "amount_tax_header": "Pajak Jumlah"
     },
     "purchasing_analyst_report_no_disc": {
       "stock_id_header": "ID Stok",
@@ -75,23 +70,19 @@
       "qty_header": "Jumlah",
       "currency_header": "Mata Uang",
       "amount_header": "Jumlah",
-      "amount_tax_header": "Pajak Jumlah",
-      "subtotal_header": "Subtotal",
-      "amount_tax_total_header": "Total Pajak Jumlah"
+      "amount_tax_header": "Pajak Jumlah"
     },
     "sales_report": {
       "invoice_header": "Faktur",
       "date_header": "Tanggal",
       "currency_header": "Mata Uang",
-      "amount_header": "Jumlah",
-      "subtotal_header": "Subtotal"
+      "amount_header": "Jumlah"
     },
     "sales_report_2": {
       "invoice_header": "Faktur",
       "date_header": "Tanggal",
       "currency_header": "Mata Uang",
-      "amount_header": "Jumlah",
-      "subtotal_header": "Subtotal"
+      "amount_header": "Jumlah"
     },
     "sales_analyst_report": {
       "stock_id_header": "ID Stok",
@@ -99,9 +90,7 @@
       "qty_header": "Jumlah",
       "currency_header": "Mata Uang",
       "amount_header": "Jumlah",
-      "amount_tax_header": "Pajak Jumlah",
-      "subtotal_header": "Subtotal",
-      "amount_tax_total_header": "Total Pajak Jumlah"
+      "amount_tax_header": "Pajak Jumlah"
     },
     "sales_analyst_report_2": {
       "stock_id_header": "ID Stok",
@@ -109,9 +98,7 @@
       "qty_header": "Jumlah",
       "currency_header": "Mata Uang",
       "amount_header": "Jumlah",
-      "amount_tax_header": "Pajak Jumlah",
-      "subtotal_header": "Subtotal",
-      "amount_tax_total_header": "Total Pajak Jumlah"
+      "amount_tax_header": "Pajak Jumlah"
     }
   }
   

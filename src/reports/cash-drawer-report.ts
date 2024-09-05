@@ -16,7 +16,7 @@ export class CashDrawerReport implements ReportStrategy {
     public async generateReport(...params: any): Promise<ApiResponse<any>> {
         let query = `
 SELECT
-    Date as date_header,
+    Date as date_drawer_header,
     FORMAT(Opening,0) as opening_header,
     FORMAT(@running_opening := @running_opening + Opening,0) AS running_opening_header,
     FORMAT(DP,0) AS dp_header,

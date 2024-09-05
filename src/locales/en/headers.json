@@ -1,6 +1,6 @@
 {
   "cash_drawer_report": {
-    "date_header": "Date",
+    "date_drawer_header": "Date",
     "opening_header": "Opening",
     "dp_header": "DP",
     "voucher_header": "Voucher",
