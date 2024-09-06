@@ -35,6 +35,7 @@
     "unit_header": "Unit"
   },
   "stock_report": {
+    "item_header": "Item",
     "stock_id_header": "Stock ID",
     "stock_name_header": "Stock Name",
     "qty_header": "Qty",
@@ -99,5 +100,14 @@
     "currency_header": "Currency",
     "amount_header": "Amount",
     "amount_tax_header": "AmountTax"
+  },
+  "scan_barcode_report": {
+    "item_header": "Item",
+    "stock_id_header": "Stock ID",
+    "stock_name_header": "Stock Name",
+    "qty_header": "Qty",
+    "price_header": "Price",
+    "location_header": "Location",
+    "balance_header": "Balance"
   }
 }

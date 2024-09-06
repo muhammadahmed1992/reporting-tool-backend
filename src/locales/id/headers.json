@@ -35,6 +35,7 @@
       "unit_header": "Unit"
     },
     "stock_report": {
+      "item_header": "Item",
       "stock_id_header": "ID Stok",
       "stock_name_header": "Nama Stok",
       "qty_header": "Jumlah",
@@ -99,6 +100,15 @@
       "currency_header": "Mata Uang",
       "amount_header": "Jumlah",
       "amount_tax_header": "Pajak Jumlah"
+    },
+    "scan_barcode_report": {
+      "item_header": "Item",
+      "stock_id_header": "ID Stok",
+      "stock_name_header": "Nama Stok",
+      "qty_header": "Jumlah",
+      "price_header": "Harga",
+      "location_header": "Lokasi",
+      "balance_header": "Saldo"
     }
   }
   
