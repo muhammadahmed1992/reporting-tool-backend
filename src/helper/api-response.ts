@@ -5,6 +5,7 @@ export default class ApiResponse<T> {
     message: string,
     response: T,
     statusCode: number,
+    meta?: any
   ) {
     this.message = message;
     this.data = response;
@@ -14,10 +15,12 @@ export default class ApiResponse<T> {
       this.success = true;
     }
     this.statusCode = statusCode;
+    this.meta = meta;
   }
 
   public statusCode: number = HttpStatus.OK;
   public data: T;
   public message: string = '';
   public success: boolean;
+  public meta: any;
 }

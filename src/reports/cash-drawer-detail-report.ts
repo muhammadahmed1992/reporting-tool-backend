@@ -3,20 +3,24 @@ import { Injectable, HttpStatus } from '@nestjs/common';
 import { ReportStrategy } from '../interfaces-strategy/report-strategy';
 import { GenericRepository } from '../repository/generic.repository'
 
-import { CashDrawerDTO } from '../dto/cashdrawer.dto';
 import ApiResponse from 'src/helper/api-response';
 import ResponseHelper from 'src/helper/response-helper';
 import { ReportName } from 'src/helper/enums/report-names.enum';
 import Constants from 'src/helper/constants';
+import { CashDrawerDetailDTO } from 'src/dto/cashdrawer-detail.dto';
+import { LocalizationService } from 'src/services/localization.service';
 
 @Injectable()
-export class CashDrawerReport implements ReportStrategy {
-    constructor(private readonly genericRepository: GenericRepository) {}
+export class CashDrawerDetailReport implements ReportStrategy {
+    constructor(private readonly genericRepository: GenericRepository,
+                private readonly localizationService: LocalizationService
+    ) {}
 
     public async generateReport(...params: any): Promise<ApiResponse<any>> {
         let query = `
 SELECT
-    Date as date_drawer_header,
+    Cashier as cashier_header,
+    Date as date_header,
     FORMAT(Opening,0) as opening_header,
     FORMAT(@running_opening := @running_opening + Opening,0) AS running_opening_header,
     FORMAT(DP,0) AS dp_header,
@@ -41,6 +45,7 @@ SELECT
     FORMAT(@running_balance := @running_balance + Balance,0) AS running_balance_header
 FROM (        
         SELECT 
+        LTRIM(RTRIM(a.cinvuser)) as Cashier,
         DATE_FORMAT(a.dinvdate,'%d-%m-%y') AS Date,
         IF(nopen IS NULL, 0, nopen) AS Opening,
         mdp AS DP,
@@ -56,6 +61,7 @@ FROM (
         - IF(batal IS NULL, 0, batal) + IF(nopen IS NULL, 0, nopen) - IF(ndraw IS NULL, 0, ndraw) AS Balance
     FROM
         (SELECT 
+            cinvuser,
             dINVdate, 
             SUM(nINVdp) AS mdp, 
             SUM(nINVvoucher) AS mvoucher,  
@@ -74,11 +80,13 @@ FROM (
             cINVspecial = 'PS'
             AND dinvdate >= ? 
             AND dinvdate <= ?
-         GROUP BY 
-            dINVdate
+         GROUP BY
+            dINVdate,
+            cinvuser
         ) AS a
     LEFT JOIN
         (SELECT 
+            cinvuser,
             dINVdate, 
             SUM(nINVdp + nINVvoucher + nINVtunai + nINVpiutang + nINVccard_nilai + nINVdebit + ninvmobile) AS batal,
             SUM(ninvccard_nilai - ninvcredit) AS bextrac,
@@ -88,7 +96,7 @@ FROM (
          WHERE 
             cINVspecial = 'RS'
          GROUP BY 
-            dINVdate
+            dINVdate, cinvuser
         ) AS b
     ON 
         b.dinvdate = a.dinvdate
@@ -100,12 +108,12 @@ FROM (
          FROM 
             drawer
          GROUP BY 
-            ddradate
+            cdrauser,ddradate
         ) AS c
     ON 
         c.ddradate = a.dinvdate
     ORDER BY 
-        Date)  AS subquery,
+        Date, Cashier)  AS subquery,
 (SELECT 
     @running_opening := 0,
     @running_dp := 0,
@@ -129,15 +137,15 @@ FROM (
         parameters.push(startDate);
         parameters.push(endDate);
         console.log(`query: ${query}`);
-        console.log(`Report Name: ${ReportName.Cash_Drawer}`);
+        console.log(`Report Name: ${ReportName.Cash_Drawer_Detail}`);
         console.log(`startDate: ${startDate}`);
         console.log(`endDate: ${endDate}`);
         console.log('=============================');
-        const response = await this.genericRepository.query<CashDrawerDTO>(query, parameters);
+        const response = await this.genericRepository.query<CashDrawerDetailDTO>(query, parameters);
         if (response?.length) {
-            return ResponseHelper.CreateResponse<CashDrawerDTO[]>(response, HttpStatus.OK, Constants.DATA_SUCCESS);
+            return ResponseHelper.CreateResponse<CashDrawerDetailDTO[]>(response, HttpStatus.OK, Constants.DATA_SUCCESS);
         } else {
-            return ResponseHelper.CreateResponse<CashDrawerDTO[]>([], HttpStatus.NOT_FOUND, Constants.DATA_NOT_FOUND);
+            return ResponseHelper.CreateResponse<CashDrawerDetailDTO[]>([], HttpStatus.NOT_FOUND, Constants.DATA_NOT_FOUND);
         }
     }
 }

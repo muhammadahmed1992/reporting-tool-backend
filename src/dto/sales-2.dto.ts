@@ -2,6 +2,6 @@ export interface Sales2DTO {
     Invoice: string;
     Date: Date;
     Customer: string;
-    Curr: string;
+    Currency: string;
     Amount: number;
 }

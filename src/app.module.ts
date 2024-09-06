@@ -26,15 +26,21 @@ import { SchemaInfoController } from './controller/database.schema.controller';
 import { SchemaInformationService } from './services/schema.information.service';
 import { HeartBeatController } from './controller/heart.beat.controller';
 import { Andriod2Controller } from './auth/controller/andriod2.controller';
-
-const environment = process.env.NODE_ENV || 'development';
+import { PurchaseReport } from './reports/purchasing-report';
+import { PurchaseReportNoDisc } from './reports/purchasing-report-no-disc';
+import { PurchaseAnalystReport } from './reports/purchasing-analyst-report';
+import { PurchaseAnalystReportNoDisc } from './reports/purchasing-analyst-report-no-disc';
+import { CashDrawerDetailReport } from './reports/cash-drawer-detail-report';
+import { LocalizationService } from './services/localization.service';
+import { LocalizationController } from './controller/translate.controller';
 
 @Module({
   imports: [
     AuthModule,
   ],
-  controllers: [ReportsController, SchemaInfoController, HeartBeatController],
+  controllers: [ReportsController, SchemaInfoController, HeartBeatController, LocalizationController],
   providers: [
+    LocalizationService,
     ReportService,
     SchemaInformationService,
     ReportFactory,
@@ -46,7 +52,12 @@ const environment = process.env.NODE_ENV || 'development';
     SalesAnalyst2Report,
     Sales2Report,
     StockBalanceReport,
-    SearchStockIDReport
+    SearchStockIDReport,
+    PurchaseReport,
+    PurchaseReportNoDisc,
+    PurchaseAnalystReport,
+    PurchaseAnalystReportNoDisc,
+    CashDrawerDetailReport
   ]
 })
 export class AppModule {
@@ -56,25 +67,5 @@ export class AppModule {
       .forRoutes(
         Andriod2Controller, SchemaInfoController, ReportsController
       );
-  }
-  static forRoot(): DynamicModule {
-    return {
-      module: AppModule,
-      imports: [
-        TypeOrmModule.forRootAsync({
-          useFactory: (req: Request) => {
-            const connectionString = req['connection-string'];
-            console.log(`connection string initialized by typeorm: ${connectionString}`);
-            return {
-              type: 'mysql',
-              url: connectionString,
-              autoLoadEntities: true,
-              synchronize: true,
-            };
-          },
-          inject: [REQUEST],
-        }),
-      ],
-    };
   }
 }

@@ -1,7 +1,7 @@
-export interface SalesDTO {
+export interface PurchasingReportNoDiscDTO {
     Invoice: string;
     Date: Date;
-    Customer: string;
+    Supplier: string;
     Currency: string;
     Amount: number;
-  }
+}

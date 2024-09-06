@@ -12,6 +12,11 @@ import { SalesAnalystReport } from '../reports/sales-analyst-report';
 import { SalesAnalyst2Report } from './../reports/sales-analyst-2-report';
 import { Sales2Report } from './../reports/sales-2-report';
 import { SearchStockIDReport } from 'src/reports/search-stockid-report';
+import { PurchaseReport } from 'src/reports/purchasing-report';
+import { PurchaseReportNoDisc } from 'src/reports/purchasing-report-no-disc';
+import { PurchaseAnalystReport } from 'src/reports/purchasing-analyst-report';
+import { PurchaseAnalystReportNoDisc } from 'src/reports/purchasing-analyst-report-no-disc';
+import { CashDrawerDetailReport } from 'src/reports/cash-drawer-detail-report';
 
 @Injectable()
 export class ReportFactory {
@@ -23,27 +28,42 @@ export class ReportFactory {
         private readonly salesAnalyst2Report: SalesAnalyst2Report,
         private readonly sales2Report: Sales2Report,
         private readonly stockBalanceReport: StockBalanceReport,
-        private readonly stockBalanceBarCodeReport: SearchStockIDReport
+        private readonly stockBalanceBarCodeReport: SearchStockIDReport,
+        private readonly purchaseReport: PurchaseReport,
+        private readonly purchaseReportNoDisc: PurchaseReportNoDisc,
+        private readonly purchaseAnaylystReport: PurchaseAnalystReport,
+        private readonly purchaseAnalystReportNoDisc: PurchaseAnalystReportNoDisc,
+        private readonly cashDrawerDetailReport: CashDrawerDetailReport
     ) {}
 
     getStrategy(reportType: string): ReportStrategy {
         switch (reportType) {
-            case ReportName.CashDrawer:
+            case ReportName.Cash_Drawer:
                 return this.cashDrawerReport;
-            case ReportName.PriceList:
+            case ReportName.Price_List:
                     return this.priceListReport;
             case ReportName.Sales:
                 return this.salesReport;
             case ReportName.Sales_Analyst:
                 return this.salesAnalystReport;
-            case ReportName.Sales_Analyst2:
+            case ReportName.Sales_Analyst_No_Disc:
                 return this.salesAnalyst2Report;
-            case ReportName.Sales2:
+            case ReportName.Sales_No_Disc:
                 return this.sales2Report;
             case ReportName.Stock_Balance:
                 return this.stockBalanceReport;
             case ReportName.Stock_Balance_BarCode:
                 return this.stockBalanceBarCodeReport;
+            case ReportName.Purchase_Report:
+                return this.purchaseReport;
+            case ReportName.Purchase_Report_No_Disc:
+                return this.purchaseReportNoDisc;
+            case ReportName.Purchase_Analyst_Report: 
+                return this.purchaseAnaylystReport;
+            case ReportName.Purchase_Analyst_Report_No_Disc:
+                return this.purchaseAnalystReportNoDisc;
+            case ReportName.Cash_Drawer_Detail:
+                return this.cashDrawerDetailReport;
             default:
                 throw new Error(`Report type '${reportType}' not supported`);
         }

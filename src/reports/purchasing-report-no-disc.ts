@@ -2,15 +2,15 @@ import { Injectable, HttpStatus } from '@nestjs/common';
 
 import { ReportStrategy } from '../interfaces-strategy/report-strategy';
 import { GenericRepository } from '../repository/generic.repository'
-import { Sales2DTO } from './../dto/sales-2.dto';
 
 import ApiResponse from 'src/helper/api-response';
 import ResponseHelper from 'src/helper/response-helper';
 import { ReportName } from 'src/helper/enums/report-names.enum';
 import Constants from 'src/helper/constants';
+import { PurchasingReportNoDiscDTO } from 'src/dto/purchasing-report-no-disc.dto';
 
 @Injectable()
-export class Sales2Report implements ReportStrategy {
+export class PurchaseReportNoDisc implements ReportStrategy {
     constructor(private readonly genericRepository: GenericRepository) {}
 
     public async generateReport(...params: any): Promise<ApiResponse<any>> {
@@ -23,7 +23,7 @@ export class Sales2Report implements ReportStrategy {
         parameters.push(startDate);
         parameters.push(endDate);
         let query = `
-        SELECT Invoice as invoice_header, Date as date_header, Currency as currency_header,
+        SELECT Invoice as invoice_header, Date as date_header, IFNULL(Supplier, '') as supplier_header, Currency as currency_header,
             FORMAT(Amount,0) AS amount_header,
             FORMAT(IF(@currentGroup <> Currency, 
                 IF(@currentGroup:= Currency, @currentSum:= 0, @currentSum:= Amount), 
@@ -33,14 +33,14 @@ export class Sales2Report implements ReportStrategy {
         select 
         LTRIM(RTRIM(cinvrefno)) as Invoice,
         DATE_FORMAT(dinvdate,'%d-%m-%Y') as Date,
-        LTRIM(RTRIM(centdesc)) as Customer,
+        LTRIM(RTRIM(centdesc)) as Supplier,
         cexcdesc as Currency,
-        sum(if(cinvspecial='RJ' or cinvspecial='RS',-nIVDAmount,nIVDAmount)*(1-nInvDisc1/100)*(1-nInvDisc2/100)*(1-nInvDisc3/100)*(if(nivdstkppn=1,1+ninvtax/100,1)))+if(cinvspecial='RJ' or cinvspecial='RS',-ninvfreight,ninvfreight) as Amount
+        sum(if(cinvspecial='RB',-nIVDAmount,nIVDAmount)*(1-nInvDisc1/100)*(1-nInvDisc2/100)*(1-nInvDisc3/100)*(if(nivdstkppn=1,1+ninvtax/100,1)))+if(cinvspecial='RB',-ninvfreight,ninvfreight) as Amount
         from invoice
         inner join invoicedetail on cinvpk=civdfkinv
         inner join exchange on cinvfkexc=cexcpk
         left join entity on cinvfkent=centpk
-        where (cinvspecial='JL' or cinvspecial='RJ' or cinvspecial='PS' or cinvspecial='RS') 
+        where (cinvspecial='BL' or cinvspecial='RB' or cinvspecial='KS') 
         and dinvdate>=? and dinvdate<=? `
         if (warehouse) {
             query+= `and (IFNULL(?, cinvfkwhs) = cinvfkwhs or cinvfkwhs is null) `;
@@ -52,14 +52,14 @@ export class Sales2Report implements ReportStrategy {
         order by currency,date,invoice) AS c, (SELECT @currentGroup := '', @currentSum := 0) r `;
 
         console.log(`query: ${query}`);
-        console.log(`Report Name: ${ReportName.Sales_No_Disc}`);
+        console.log(`Report Name: ${ReportName.Purchase_Report_No_Disc}`);
         console.log('warehouse: ', decodeURIComponent(warehouse));
         console.log(`=============================================`);   
-        const response = await this.genericRepository.query<Sales2DTO>(query, parameters);
+        const response = await this.genericRepository.query<PurchasingReportNoDiscDTO>(query, parameters);
         if (response?.length) {
-            return ResponseHelper.CreateResponse<Sales2DTO[]>(response, HttpStatus.OK, Constants.DATA_SUCCESS);
+            return ResponseHelper.CreateResponse<PurchasingReportNoDiscDTO[]>(response, HttpStatus.OK, Constants.DATA_SUCCESS);
         } else {
-            return ResponseHelper.CreateResponse<Sales2DTO[]>([], HttpStatus.NOT_FOUND, Constants.DATA_NOT_FOUND);
+            return ResponseHelper.CreateResponse<PurchasingReportNoDiscDTO[]>([], HttpStatus.NOT_FOUND, Constants.DATA_NOT_FOUND);
         }
     }
 }

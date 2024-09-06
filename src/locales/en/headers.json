@@ -1,0 +1,113 @@
+{
+  "cash_drawer_report": {
+    "date_drawer_header": "Date",
+    "opening_header": "Opening",
+    "dp_header": "DP",
+    "voucher_header": "Voucher",
+    "cash_header": "Cash",
+    "payroll_header": "Payroll",
+    "credit_card_header": "CreditCard",
+    "debit_card_header": "DebitCard",
+    "online_header": "Online",
+    "withdrawn_header": "Withdrawn",
+    "cancel_header": "Cancel",
+    "balance_header": "Balance"
+  },
+  "cash_drawer_report_detail": {
+    "cashier_header": "Cashier",
+    "date_header": "Date",
+    "opening_header": "Opening",
+    "dp_header": "DP",
+    "voucher_header": "Voucher",
+    "cash_header": "Cash",
+    "payroll_header": "Payroll",
+    "credit_card_header": "CreditCard",
+    "debit_card_header": "DebitCard",
+    "online_header": "Online",
+    "withdrawn_header": "Withdrawn",
+    "cancel_header": "Cancel",
+    "balance_header": "Balance"
+  },
+  "price_report": {
+    "stock_id_header": "Stock ID",
+    "stock_name_header": "Stock Name",
+    "price_header": "Price",
+    "unit_header": "Unit"
+  },
+  "stock_report": {
+    "item_header": "Item",
+    "stock_id_header": "Stock ID",
+    "stock_name_header": "Stock Name",
+    "qty_header": "Qty",
+    "price_header": "Price",
+    "location_header": "Location",
+    "balance_header": "Balance"
+  },
+  "purchasing_report": {
+    "invoice_header": "Invoice",
+    "date_header": "Date",
+    "supplier_header": "Supplier",
+    "currency_header": "Currency",
+    "amount_header": "Amount"
+  },
+  "purchasing_report_no_disc": {
+    "invoice_header": "Invoice",
+    "date_header": "Date",
+    "supplier_header": "Supplier",
+    "currency_header": "Currency",
+    "amount_header": "Amount"
+  },
+  "purchasing_analyst_report": {
+    "stock_id_header": "StockID",
+    "stock_name_header": "StockName",
+    "qty_header": "Qty",
+    "currency_header": "Currency",
+    "amount_header": "Amount",
+    "amount_tax_header": "AmountTax"
+  },
+  "purchasing_analyst_report_no_disc": {
+    "stock_id_header": "StockID",
+    "stock_name_header": "StockName",
+    "qty_header": "Qty",
+    "currency_header": "Currency",
+    "amount_header": "Amount",
+    "amount_tax_header": "AmountTax"
+  },
+  "sales_report": {
+    "invoice_header": "Invoice",
+    "date_header": "Date",
+    "currency_header": "Currency",
+    "amount_header": "Amount"
+  },
+  "sales_report_2": {
+    "invoice_header": "Invoice",
+    "date_header": "Date",
+    "currency_header": "Currency",
+    "amount_header": "Amount"
+  },
+  "sales_analyst_report": {
+    "stock_id_header": "StockID",
+    "stock_name_header": "StockName",
+    "qty_header": "Qty",
+    "currency_header": "Currency",
+    "amount_header": "Amount",
+    "amount_tax_header": "AmountTax"
+  },
+  "sales_analyst_report_2": {
+    "stock_id_header": "StockID",
+    "stock_name_header": "StockName",
+    "qty_header": "Qty",
+    "currency_header": "Currency",
+    "amount_header": "Amount",
+    "amount_tax_header": "AmountTax"
+  },
+  "scan_barcode_report": {
+    "item_header": "Item",
+    "stock_id_header": "Stock ID",
+    "stock_name_header": "Stock Name",
+    "qty_header": "Qty",
+    "price_header": "Price",
+    "location_header": "Location",
+    "balance_header": "Balance"
+  }
+}

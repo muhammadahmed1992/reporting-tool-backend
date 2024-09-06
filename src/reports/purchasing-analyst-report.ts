@@ -12,7 +12,7 @@ import { ReportName } from 'src/helper/enums/report-names.enum';
 import Constants from 'src/helper/constants';
 
 @Injectable()
-export class SalesAnalystReport implements ReportStrategy {
+export class PurchaseAnalystReport implements ReportStrategy {
     constructor(private readonly genericRepository: GenericRepository) {}
 
     public async generateReport(...params: any): Promise<ApiResponse<any>> {
@@ -44,8 +44,8 @@ export class SalesAnalystReport implements ReportStrategy {
         LTRIM(RTRIM(cstkdesc)) as StockName,
         sum(tqty) as Qty,
         cexcdesc as Currency,
-        sum(semua-if(cinvspecial='RJ' or cinvspecial='RS',-ninvdisc,ninvdisc)/rows2) as Amount,
-        sum((semua-if(cinvspecial='RJ' or cinvspecial='RS',-ninvdisc,ninvdisc)/rows2)*(1+if(nivdstkppn=1,ninvtax/100,0))) as Amount_Tax
+        sum(semua-if(cinvspecial='RB' or cinvspecial='RS',-ninvdisc,ninvdisc)/rows2) as Amount,
+        sum((semua-if(cinvspecial='RB' or cinvspecial='RS',-ninvdisc,ninvdisc)/rows2)*(1+if(nivdstkppn=1,ninvtax/100,0))) as Amount_Tax
         
         from
         
@@ -55,8 +55,8 @@ export class SalesAnalystReport implements ReportStrategy {
         ) as a
         inner join
         (SELECT nstkppn,cinvspecial,civdfkinv,cstdcode, cstkdesc, cexcdesc,ninvdisc,nivdstkppn,ninvtax,
-          sum(-nIVDzqtyin+nIVDzqtyout) as tqty,
-          sum(if(cinvspecial='RJ' OR cinvspecial='RS',-nIVDAmount,nivdamount)*(1-nINVdisc1/100)*(1-nINVdisc2/100)*(1-nINVdisc3/100)) as semua
+          sum(nivdzqtyin-nivdzqtyout) as tqty,
+          sum(if(cinvspecial='RB' OR cinvspecial='RS',-nIVDAmount,nivdamount)*(1-nINVdisc1/100)*(1-nINVdisc2/100)*(1-nINVdisc3/100)) as semua
          FROM invoice
             INNER JOIN invoicedetail
            ON  cINVpk = cIVDfkINV
@@ -66,7 +66,7 @@ export class SalesAnalystReport implements ReportStrategy {
            ON  cIVDfkSTK = cSTKpk
             INNER JOIN stockdetail
            ON  cSTKpk = cSTDfkSTK
-         WHERE nstdkey = 1 and nIVDkirim=1 AND (cINVspecial='JL' or cINVspecial='RJ' or cINVspecial='PS' or cINVspecial='RS')
+         WHERE nstdkey = 1 and nIVDkirim=1 AND (cINVspecial='BL' or cINVspecial='RB' or cINVspecial='KS')
             and dinvdate>= ? and dinvdate<= ? `
         if (warehouse) {
             query+= ` and (IFNULL(?, cinvfkwhs) = cinvfkwhs or cinvfkwhs is null) `
@@ -85,7 +85,7 @@ export class SalesAnalystReport implements ReportStrategy {
         group by cstdcode,cstkdesc,cexcdesc
         order by cexcdesc,cstdcode ASC ) AS c, (SELECT @currentGroup := '', @currentSum := 0, @currentGroupAmountTax := '', @currentSumAmountTax := 0) r`;
         console.log(`query: ${query}`);
-        console.log(`Report Name: ${ReportName.Sales_Analyst}`);
+        console.log(`Report Name: ${ReportName.Purchase_Analyst_Report}`);
         console.log('warehouse: ', decodeURIComponent(warehouse));
         console.log('stockGroup: ', decodeURIComponent(stockGroup));
         console.log(`=============================================`);

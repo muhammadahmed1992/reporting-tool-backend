@@ -17,11 +17,11 @@ export class StockBalanceReport implements ReportStrategy {
         const [stockGroup, warehouse] = params;
         let query = `
         select
-        Kode, Nama, Lokasi,
-                FORMAT(d.Qty, 0) Qty,
-                Format(d.Price, 0) Price,
-                Format(d.Balance, 0) Balance,
-        Format(@totalBalance:= @totalBalance + Balance, 0) AS TotalBalance
+        Kode as stock_id_header, Nama as stock_name_header, Lokasi as location_header,
+                FORMAT(d.Qty, 0) as qty_header,
+                Format(d.Price, 0) as price_header,
+                Format(d.Balance, 0) as balance_header,
+        Format(@totalBalance:= @totalBalance + Balance, 0) AS total_balance_header
         from (
 
         select LTRIM(RTRIM(cSTDcode)) as Kode,LTRIM(RTRIM(cSTKdesc)) as Nama,

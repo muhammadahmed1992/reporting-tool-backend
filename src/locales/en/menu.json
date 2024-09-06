@@ -1,0 +1,23 @@
+{
+    "scan_barcode": "Scan Barcode",
+    "switch_database": "Switch Database",
+    "stock_report": "Stock Report",
+    "price_report": "Price Report",
+    "purchasing_report": "Purchasing Report",
+    "purchasing_report_no_disc": "Purchasing Report (No Disc)",
+    "purchasing_analyst_report": "Purchasing Analyst Report",
+    "purchasing_analyst_report_no_disc": "Purchasing Analyst Report (No Disc)",
+    "sales_report": "Sales Report",
+    "sales_report_2": "Sales Report (No Disc)",
+    "sales_analyst_report": "Sales Analyst Report",
+    "sales_analyst_report_2": "Sales Analyst Report (No Disc)",
+    "cash_drawer_report": "Cash Drawer Report",
+    "cash_drawer_report_detail": "Cash Drawer Report (Detail)",
+    "select_stock_group": "Select a Stock group",
+    "select_warehouse": "Select a Warehouse",
+    "select_date": "Select Date",
+    "select_database": "Select Database",
+    "connect": "Connect",
+    "filter": "Filter",
+    "clear": "Clear"
+}
