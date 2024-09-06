@@ -21,7 +21,7 @@ export default class ResponseHandlerInterceptor<T>
     next: CallHandler,
   ): Observable<ApiResponse<T>> {
     const request = context.switchToHttp().getRequest<Request>();
-    const locale = request.headers['accept-language'] || 'en';
+    const locale = request.headers['accept-language'] || 'id';
 
     return next.handle().pipe(
       switchMap((data) => {
