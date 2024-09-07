@@ -26,7 +26,7 @@ export class SchemaInformationService {
 
     async getStockGroupList(): Promise<ApiResponse<any>> {
         let query = `
-                select cgrppk, cgrpdesc from stockgroup order by cgrpdesc;
+                select cgrppk, LTRIM(RTRIM(cgrpdesc)) as cgrpdesc from stockgroup order by cgrpdesc;
         `;
 
         const response = await this.genericRepository.query<any>(query);
@@ -39,7 +39,7 @@ export class SchemaInformationService {
 
     async getWarehouseList(): Promise<ApiResponse<any>> {
         let query = `
-                select cwhspk, cwhsdesc from warehouse order by cwhsdesc;
+                select cwhspk, LTRIM(RTRIM(cwhsdesc)) as cwhsdesc from warehouse order by cwhsdesc;
         `;
 
         const response = await this.genericRepository.query<any>(query);

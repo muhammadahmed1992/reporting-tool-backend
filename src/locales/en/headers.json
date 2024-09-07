@@ -35,12 +35,11 @@
     "unit_header": "Unit"
   },
   "stock_report": {
-    "item_header": "Item",
-    "stock_id_header": "Stock ID",
+    "stock_id_header": "Stock Code",
     "stock_name_header": "Stock Name",
-    "qty_header": "Qty",
-    "price_header": "Price",
     "location_header": "Location",
+    "qty_header": "Quantity",
+    "price_header": "Price",
     "balance_header": "Balance"
   },
   "purchasing_report": {

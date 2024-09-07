@@ -35,12 +35,11 @@
       "unit_header": "Unit"
     },
     "stock_report": {
-      "item_header": "Item",
       "stock_id_header": "ID Stok",
       "stock_name_header": "Nama Stok",
+      "location_header": "Lokasi",
       "qty_header": "Jumlah",
       "price_header": "Harga",
-      "location_header": "Lokasi",
       "balance_header": "Saldo"
     },
     "purchasing_report": {
