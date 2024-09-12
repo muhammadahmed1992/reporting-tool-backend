@@ -46,7 +46,7 @@ SELECT
 FROM (        
         SELECT 
         LTRIM(RTRIM(a.cinvuser)) as Cashier,
-        DATE_FORMAT(a.dinvdate,'%d-%m-%y') AS Date,
+        DATE_FORMAT(a.dinvdate,'%d-%m-%Y') AS Date,
         IF(nopen IS NULL, 0, nopen) AS Opening,
         mdp AS DP,
         mvoucher AS Voucher,
@@ -102,7 +102,7 @@ FROM (
         b.dinvdate = a.dinvdate
     LEFT JOIN
         (SELECT 
-            ddradate, 
+            ddradate, cdrauser,
             SUM(ndraopen) AS nopen, 
             SUM(ndradraw + ndradraw1) AS ndraw
          FROM 

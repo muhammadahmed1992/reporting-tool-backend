@@ -41,7 +41,7 @@ SELECT
     FORMAT(@running_balance := @running_balance + Balance,0) AS running_balance_header
 FROM (        
         SELECT 
-        DATE_FORMAT(a.dinvdate,'%d-%m-%y') AS Date,
+        DATE_FORMAT(a.dinvdate,'%d-%m-%Y') AS Date,
         IF(nopen IS NULL, 0, nopen) AS Opening,
         mdp AS DP,
         mvoucher AS Voucher,
