@@ -9,13 +9,14 @@ import ApiResponse from 'src/helper/api-response';
 import ResponseHelper from 'src/helper/response-helper';
 import { ReportName } from 'src/helper/enums/report-names.enum';
 import Constants from 'src/helper/constants';
-
+import { QueryStringDTO } from 'src/dto/query-string.dto';
 @Injectable()
 export class SalesReport implements ReportStrategy {
     constructor(private readonly genericRepository: GenericRepository) {}
 
-    public async generateReport(...param: any): Promise<ApiResponse<any>> {
-        let [startDate, endDate, warehouse] = param;
+    public async generateReport(queryString: QueryStringDTO): Promise<ApiResponse<any>> {
+        let {startDate, endDate, warehouse} = queryString;
+        
         const parameters = [];
         if (!startDate)
             startDate = new Date();
@@ -67,7 +68,7 @@ export class SalesReport implements ReportStrategy {
         console.log(`Report Name: ${ReportName.Sales}`);
         console.log('warehouse: ', decodeURIComponent(warehouse));
         console.log(`==================================================`);
-
+        console.log({queryString});
         if (warehouse)
             parameters.push(decodeURIComponent(warehouse));
 

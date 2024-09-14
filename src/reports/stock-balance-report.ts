@@ -8,13 +8,13 @@ import ApiResponse from 'src/helper/api-response';
 import ResponseHelper from 'src/helper/response-helper';
 import { ReportName } from 'src/helper/enums/report-names.enum';
 import Constants from 'src/helper/constants';
-
+import { QueryStringDTO } from 'src/dto/query-string.dto';
 @Injectable()
 export class StockBalanceReport implements ReportStrategy {
     constructor(private readonly genericRepository: GenericRepository) {}
 
-    public async generateReport(...params: any): Promise<ApiResponse<any>> {
-        const [stockGroup, warehouse] = params;
+    public async generateReport(queryString: QueryStringDTO): Promise<ApiResponse<any>> {
+        const {stockGroup, warehouse} = queryString;
         let query = `
         select
         Kode as stock_id_header, Nama as stock_name_header, Lokasi as location_header,
