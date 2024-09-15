@@ -16,8 +16,8 @@ export class SearchStockIDReport implements ReportStrategy {
     constructor(private readonly genericRepository: GenericRepository) {}
 
     public async generateReport(queryString: QueryStringDTO): Promise<ApiResponse<any>> {
-        const {stockCode, pageSize} = queryString;
-        const parameters = [];
+        const {stockCode, pageSize, pageNumber} = queryString;
+        const parameters = []; const countParameters = [];
         
         let count = `
         select COUNT(1) as total_rows
@@ -102,17 +102,20 @@ export class SearchStockIDReport implements ReportStrategy {
         on cIvdFkStk=CSTKPK and nstksuspend=0 and nstkservice=0
         INNER JOIN stockdetail sdt 
         on cIvdFkStk=cSTDfkSTK And nSTDfactor=1 and nstdkey=1 
-        INNER JOIN unit ON cSTDfkUNI=cUNIpk `
+        INNER JOIN unit ON cSTDfkUNI=cUNIpk `;
         
         if (stockCode) {
-            query+= ` where cstdcode=? `
+            query+= ` where cstdcode=? `;
         }
         
         query+= `group by StockId,StockName,Location
-        order by Location asc`
+        order by Location asc LIMIT ? OFFSET ?`;
         if (stockCode) {
             parameters.push(decodeURIComponent(stockCode));
         }
+        const offset = (pageNumber - 1) * pageSize;
+        parameters.push(pageSize);
+        parameters.push(offset);
         console.log(`query: ${query}`);
         console.log(`Report Name: ${ReportName.Stock_Balance_BarCode}`);
         console.log(`stockCode ${decodeURIComponent(stockCode)}`);

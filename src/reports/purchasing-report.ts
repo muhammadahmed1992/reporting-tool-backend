@@ -17,14 +17,13 @@ export class PurchaseReport implements ReportStrategy {
     constructor(private readonly genericRepository: GenericRepository) {}
 
     public async generateReport(queryString: QueryStringDTO): Promise<ApiResponse<any>> {
-        let {startDate, endDate, warehouse, pageSize} = queryString;
-        const parameters = [];
+        let {startDate, endDate, warehouse, pageSize, pageNumber, searchValue, columnsToFilter} = queryString;
+        const filterColumns = columnsToFilter ? columnsToFilter.toString().split(',').map(item => item.trim()) : [];
+        const parameters = []; const countParameters = [];
         if (!startDate)
             startDate = new Date();
         if (!endDate)
             endDate = new Date();
-        console.log(`startDate: ${startDate}`);
-        console.log(`endDate: ${endDate}`);
         parameters.push(startDate);
         parameters.push(endDate);
 
@@ -35,9 +34,15 @@ export class PurchaseReport implements ReportStrategy {
             FROM invoicedetail
             INNER JOIN invoice ON civdfkinv = cinvpk
             WHERE dinvdate >= ? AND dinvdate <= ? `;
-        
+            if (searchValue) {
+                count += ' AND (';
+                count += filterColumns.map(column => `${column} LIKE ?`).join(' OR ');
+                count += ')';
+                countParameters.push(...filterColumns.map(() => `%${searchValue}%`));
+            }
         if (warehouse) {
             count += ` AND (IFNULL(?, cinvfkwhs) = cinvfkwhs OR cinvfkwhs IS NULL) `;
+            countParameters.push(decodeURIComponent(warehouse));
         }
         
         count += ` 
@@ -89,6 +94,12 @@ export class PurchaseReport implements ReportStrategy {
         (select civdfkinv,count(1) as rows2 from invoicedetail
         inner join invoice on civdfkinv=cinvpk
         and dinvdate>=? and dinvdate<=? `
+        if (searchValue) {
+            query += ' AND (';
+            query += filterColumns.map(column => `${column} LIKE ?`).join(' OR ');
+            query += ')';
+            parameters.push(...filterColumns.map(() => `%${searchValue}%`));
+        }
         if (warehouse) {
             query+= ` and (IFNULL(?, cinvfkwhs) = cinvfkwhs or cinvfkwhs is null) `;
         } 
@@ -108,7 +119,7 @@ export class PurchaseReport implements ReportStrategy {
 
         on a.civdfkinv=b.civdfkinv
         group by cinvrefno,dinvdate,centdesc,cexcdesc,nfreight
-        order by currency,date,invoice) AS a, (SELECT @currentGroup := '', @currentSum := 0) r; `;
+        order by currency,date,invoice) AS a, (SELECT @currentGroup := '', @currentSum := 0) r LIMIT ? OFFSET ?; `;
 
         console.log(`query: ${query}`);
         console.log(`Report Name: ${ReportName.Purchase_Report}`);
@@ -117,10 +128,12 @@ export class PurchaseReport implements ReportStrategy {
 
         if (warehouse)
             parameters.push(decodeURIComponent(warehouse));
-
+        const offset = (pageNumber - 1) * pageSize;
+        parameters.push(pageSize);
+        parameters.push(offset);
         const [response, totalRows] = await Promise.all([
             this.genericRepository.query<PurchasingDTO>(query, parameters),
-            this.genericRepository.query<number>(count, parameters)
+            this.genericRepository.query<number>(count, countParameters)
         ]);
         const totalPages = Math.ceil((totalRows[0] as any).total_rows / pageSize);
         if (response?.length) {

@@ -173,16 +173,21 @@ FROM (
     @running_withdrawn := 0,
     @running_cancel := 0,
     @running_balance := 0
-) AS vars;
+) AS vars LIMIT ? OFFSET ?;
 `;
-        let {startDate, endDate, pageSize} = queryString;
+        let {startDate, endDate, pageSize, pageNumber} = queryString;
+        const offset = (pageNumber - 1) * pageSize;
+        console.log({offset});
         if (!startDate)
             startDate = new Date();
         if (!endDate)
             endDate = new Date();
-        const parameters = [];
+        const parameters = []; const countParameters = [];
         parameters.push(startDate);
         parameters.push(endDate);
+        parameters.push(pageSize);
+        parameters.push(offset);
+        console.log(`parameters: ${parameters}`)
         console.log(`query: ${query}`);
         console.log(`Report Name: ${ReportName.Cash_Drawer}`);
         console.log(`startDate: ${startDate}`);
@@ -190,7 +195,7 @@ FROM (
         console.log('=============================');
         const [response, totalRows] = await Promise.all([
             this.genericRepository.query<CashDrawerDTO>(query, parameters),
-            this.genericRepository.query<number>(count, parameters)
+            this.genericRepository.query<number>(count, countParameters)
         ]);
         const totalPages = Math.ceil((totalRows[0] as any).total_rows / pageSize);
         if (response?.length) {

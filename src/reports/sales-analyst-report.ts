@@ -17,14 +17,13 @@ export class SalesAnalystReport implements ReportStrategy {
 
     public async generateReport(queryString: QueryStringDTO): Promise<ApiResponse<any>> {
 
-        let {startDate, endDate, warehouse, stockGroup, pageSize} = queryString;
- 
+        let {startDate, endDate, warehouse, stockGroup, pageSize, pageNumber, searchValue, columnsToFilter} = queryString;
+        const filterColumns = columnsToFilter ? columnsToFilter.toString().split(',').map(item => item.trim()) : [];
+        const parameters = []; const countParameters = [];
         if (!startDate)
             startDate = new Date();
         if (!endDate)
             endDate = new Date();
-        
-        const parameters = [];
         parameters.push(startDate);
         parameters.push(endDate);
         
@@ -57,13 +56,21 @@ export class SalesAnalystReport implements ReportStrategy {
             AND (cINVspecial = 'JL' OR cINVspecial = 'RJ' OR cINVspecial = 'PS' OR cINVspecial = 'RS')
             AND dinvdate >= ? 
             AND dinvdate <= ? `;
+            if (searchValue) {
+                count += ' AND (';
+                count += filterColumns.map(column => `${column} LIKE ?`).join(' OR ');
+                count += ')';
+                countParameters.push(...filterColumns.map(() => `%${searchValue}%`));
+            }
     
             if (warehouse) {
                 count += ` AND (IFNULL(?, cinvfkwhs) = cinvfkwhs OR cinvfkwhs IS NULL) `;
+                countParameters.push(decodeURIComponent(warehouse));
             }
             
             if (stockGroup) {
                 count += ` AND (IFNULL(?, cstkfkgrp) = cstkfkgrp OR cstkfkgrp IS NULL) `;
+                countParameters.push(decodeURIComponent(stockGroup));
             }
             count += ` ) as b ON a.civdfkinv = b.civdfkinv`;
     
@@ -109,6 +116,12 @@ export class SalesAnalystReport implements ReportStrategy {
            ON  cSTKpk = cSTDfkSTK
          WHERE nstdkey = 1 and nIVDkirim=1 AND (cINVspecial='JL' or cINVspecial='RJ' or cINVspecial='PS' or cINVspecial='RS')
             and dinvdate>= ? and dinvdate<= ? `
+            if (searchValue) {
+                query += ' AND (';
+                query += filterColumns.map(column => `${column} LIKE ?`).join(' OR ');
+                query += ')';
+                parameters.push(...filterColumns.map(() => `%${searchValue}%`));
+            }
         if (warehouse) {
             query+= ` and (IFNULL(?, cinvfkwhs) = cinvfkwhs or cinvfkwhs is null) `
             parameters.push(decodeURIComponent(warehouse));
@@ -124,7 +137,8 @@ export class SalesAnalystReport implements ReportStrategy {
         
         on a.civdfkinv=b.civdfkinv
         group by cstdcode,cstkdesc,cexcdesc
-        order by cexcdesc,cstdcode ASC ) AS c, (SELECT @currentGroup := '', @currentSum := 0, @currentGroupAmountTax := '', @currentSumAmountTax := 0) r`;
+        order by cexcdesc,cstdcode ASC ) AS c, (SELECT @currentGroup := '', @currentSum := 0, @currentGroupAmountTax := '', @currentSumAmountTax := 0) r
+        LIMIT ? OFFSET ?`;
         console.log(`query: ${query}`);
         console.log(`Report Name: ${ReportName.Sales_Analyst}`);
         console.log('warehouse: ', decodeURIComponent(warehouse));
@@ -133,9 +147,11 @@ export class SalesAnalystReport implements ReportStrategy {
 
         const [response, totalRows] = await Promise.all([
             this.genericRepository.query<SalesAnalystDTO>(query, parameters),
-            this.genericRepository.query<number>(count, parameters)
+            this.genericRepository.query<number>(count, countParameters)
         ]);
-
+        const offset = (pageNumber - 1) * pageSize;
+        parameters.push(pageSize);
+        parameters.push(offset);
         const totalPages = Math.ceil((totalRows[0] as any).total_rows / pageSize);
         if (response?.length) {
             return ResponseHelper.CreateResponse<SalesAnalystDTO[]>(response, HttpStatus.OK, Constants.DATA_SUCCESS, {

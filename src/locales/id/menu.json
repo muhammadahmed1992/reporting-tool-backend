@@ -18,6 +18,11 @@
     "select_date": "Pilih Tanggal",
     "select_database": "Pilih Basis Data",
     "connect": "Hubungkan",
-    "filter": "Filter",
-    "clear": "Bersihkan"
+    "filter": "Saring",
+    "clear": "Bersihkan",
+    "page": "Halaman",
+    "of": "dari",
+    "search": "Cari di",
+    "next": "Berikutnya",
+    "previous": "Sebelumnya"
 }

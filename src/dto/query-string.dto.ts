@@ -1,11 +1,13 @@
-import { IsOptional, IsNumberString, IsDateString } from 'class-validator';
+import { IsOptional, IsNumber, IsDateString, Min, IsArray } from 'class-validator';
 
 export class QueryStringDTO {
-  @IsOptional()
-  pageSize?: number;
+  @IsNumber()
+  @Min(1, { message: 'pageSize must be greater than 0' })
+  pageSize: number;
 
-  @IsOptional()
-  pageNumber?: number;
+  @IsNumber()
+  @Min(1, { message: 'pageNumber must be greater than 0' })
+  pageNumber: number;
 
   @IsOptional()
   stockCode?: string;
@@ -21,4 +23,10 @@ export class QueryStringDTO {
 
   @IsOptional()
   endDate?: Date;
+
+  @IsOptional()
+  searchValue?: string;
+
+  @IsOptional()
+  columnsToFilter?: string[];
 }

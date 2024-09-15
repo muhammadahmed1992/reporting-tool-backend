@@ -19,5 +19,10 @@
     "select_database": "Select Database",
     "connect": "Connect",
     "filter": "Filter",
-    "clear": "Clear"
+    "clear": "Clear",
+    "page": "Page",
+    "of": "of",
+    "search": "Search in",
+    "next": "Next",
+    "previous": "Previous"
 }

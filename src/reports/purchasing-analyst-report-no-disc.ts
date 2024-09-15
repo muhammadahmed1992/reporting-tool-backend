@@ -16,12 +16,18 @@ export class PurchaseAnalystReportNoDisc implements ReportStrategy {
     constructor(private readonly genericRepository: GenericRepository) {}
 
     public async generateReport(queryString: QueryStringDTO): Promise<ApiResponse<any>> {
-        let {startDate, endDate, warehouse, stockGroup, pageSize} = queryString;
+        let {startDate, endDate, warehouse, stockGroup, pageSize, pageNumber, searchValue, columnsToFilter} = queryString;
+        const filterColumns = columnsToFilter ? columnsToFilter.toString().split(',').map(item => item.trim()) : [];
+        const parameters = []; 
+        const countParameters = [];
         if (!startDate)
             startDate = new Date();
         if (!endDate)
             endDate = new Date();
-        
+        parameters.push(startDate);
+        parameters.push(endDate);
+        countParameters.push(startDate);
+        countParameters.push(endDate);
         let count = `
         SELECT COUNT(1) as total_rows
         FROM invoice
@@ -35,13 +41,21 @@ export class PurchaseAnalystReportNoDisc implements ReportStrategy {
         ON  cSTKpk = cSTDfkSTK
         WHERE nstdkey = 1 and nIVDkirim=1 AND (cINVspecial='BL' or cINVspecial='RB' or cINVspecial='KS' or cINVspecial='RS')
         and dinvdate>=? and dinvdate<=? `;
+        if (searchValue) {
+            count += ' AND (';
+            count += filterColumns.map(column => `${column} LIKE ?`).join(' OR ');
+            count += ')';
+            countParameters.push(...filterColumns.map(() => `%${searchValue}%`));
+        }
         if (stockGroup) {
             count+= ` and (IFNULL(?, cstkfkgrp) = cstkfkgrp or cstkfkgrp is null) `;
+            countParameters.push(decodeURIComponent(stockGroup));
         }
         if (warehouse){
             count+= ` and (IFNULL(?, cinvfkwhs) = cinvfkwhs or cinvfkwhs is null)`;
+            countParameters.push(decodeURIComponent(warehouse));
         }
-
+        
         let query = 
         `
         SELECT StockID as stock_id_header, StockName as stock_name_header, FORMAT(Qty,0) as qty_header, Currency as currency_header, FORMAT(Amount, 0) as amount_header, FORMAT(Amount_Tax, 0) as amount_tax_header,
@@ -69,6 +83,12 @@ export class PurchaseAnalystReportNoDisc implements ReportStrategy {
         ON  cSTKpk = cSTDfkSTK
         WHERE nstdkey = 1 and nIVDkirim=1 AND (cINVspecial='BL' or cINVspecial='RB' or cINVspecial='KS' or cINVspecial='RS')
         and dinvdate>=? and dinvdate<=? `;
+        if (searchValue) {
+            query += ' AND (';
+            query += filterColumns.map(column => `${column} LIKE ?`).join(' OR ');
+            query += ')';
+            parameters.push(...filterColumns.map(() => `%${searchValue}%`));
+        }
     if (stockGroup) {
         query+= ` and (IFNULL(?, cstkfkgrp) = cstkfkgrp or cstkfkgrp is null) `;
     }
@@ -78,18 +98,16 @@ export class PurchaseAnalystReportNoDisc implements ReportStrategy {
     query+= `
   group by cstdcode, cstkdesc, cexcdesc
  order by cexcdesc,cstdcode ASC) AS c, (SELECT @currentGroup := '', @currentSum := 0, @currentGroupAmountTax := '', @currentSumAmountTax := 0) r 
-        `; 
-
-        const parameters = [];
-        parameters.push(startDate);
-        parameters.push(endDate);
+       LIMIT ? OFFSET ? `; 
+       const offset = (pageNumber - 1) * pageSize;
         if (stockGroup){
             parameters.push(decodeURIComponent(stockGroup));
         }
         if (warehouse) {
             parameters.push(decodeURIComponent(warehouse));
         }
-        
+        parameters.push(pageSize);
+        parameters.push(offset);
         console.log(`query: ${query}`);
         console.log(`Report Name: ${ReportName.Purchase_Analyst_Report_No_Disc}`);
         console.log(`start Date: ${startDate}`);
@@ -99,7 +117,7 @@ export class PurchaseAnalystReportNoDisc implements ReportStrategy {
         console.log(`=============================================`);
         const [response, totalRows] = await Promise.all([
             this.genericRepository.query<SalesAnalystDTO>(query, parameters), 
-            this.genericRepository.query<number>(count, parameters)]);
+            this.genericRepository.query<number>(count, countParameters)]);
         
             const totalPages = Math.ceil((totalRows[0] as any).total_rows / pageSize);
         

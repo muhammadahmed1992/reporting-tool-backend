@@ -14,8 +14,9 @@ export class Sales2Report implements ReportStrategy {
     constructor(private readonly genericRepository: GenericRepository) {}
 
     public async generateReport(queryString: QueryStringDTO): Promise<ApiResponse<any>> {
-        let {startDate, endDate, warehouse, pageSize} = queryString;
-        const parameters = [];
+        let {startDate, endDate, warehouse, pageSize, pageNumber, searchValue, columnsToFilter} = queryString;
+        const filterColumns = columnsToFilter ? columnsToFilter.toString().split(',').map(item => item.trim()) : [];
+        const parameters = []; const countParameters = [];
         if (!startDate)
             startDate = new Date();
         if (!endDate)
@@ -31,9 +32,15 @@ export class Sales2Report implements ReportStrategy {
             WHERE (cinvspecial = 'JL' OR cinvspecial = 'RJ' OR cinvspecial = 'PS' OR cinvspecial = 'RS') 
               AND dinvdate >= ? 
               AND dinvdate <= ? `;
-        
+              if (searchValue) {
+                count += ' AND (';
+                count += filterColumns.map(column => `${column} LIKE ?`).join(' OR ');
+                count += ')';
+                countParameters.push(...filterColumns.map(() => `%${searchValue}%`));
+            }
         if (warehouse) {
             count += ` AND (IFNULL(?, cinvfkwhs) = cinvfkwhs OR cinvfkwhs IS NULL) `;
+            countParameters.push(decodeURIComponent(warehouse));
         }        
 
         let query = `
@@ -56,6 +63,12 @@ export class Sales2Report implements ReportStrategy {
         left join entity on cinvfkent=centpk
         where (cinvspecial='JL' or cinvspecial='RJ' or cinvspecial='PS' or cinvspecial='RS') 
         and dinvdate>=? and dinvdate<=? `
+        if (searchValue) {
+            query += ' AND (';
+            query += filterColumns.map(column => `${column} LIKE ?`).join(' OR ');
+            query += ')';
+            parameters.push(...filterColumns.map(() => `%${searchValue}%`));
+        }
         if (warehouse) {
             query+= `and (IFNULL(?, cinvfkwhs) = cinvfkwhs or cinvfkwhs is null) `;
             parameters.push(decodeURIComponent(warehouse));
@@ -63,8 +76,10 @@ export class Sales2Report implements ReportStrategy {
 
         query += `
         group by cinvrefno,dinvdate,centdesc,cexcdesc,ninvdisc1,ninvdisc2,ninvdisc3,ninvtax,ninvfreight,cinvspecial
-        order by currency,date,invoice) AS c, (SELECT @currentGroup := '', @currentSum := 0) r `;
-
+        order by currency,date,invoice) AS c, (SELECT @currentGroup := '', @currentSum := 0) r LIMIT ? OFFSET ?`;
+        const offset = (pageNumber - 1) * pageSize;
+        parameters.push(pageSize);
+        parameters.push(offset);
         console.log(`query: ${query}`);
         console.log(`Report Name: ${ReportName.Sales_No_Disc}`);
         console.log('warehouse: ', decodeURIComponent(warehouse));
