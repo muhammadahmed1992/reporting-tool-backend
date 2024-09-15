@@ -6,6 +6,6 @@ export default class ResponseHelper<T> {
     message?: string,
     meta?: any
   ) {
-    return new ApiResponse<T>(message, data, statusCode);
+    return new ApiResponse<T>(message, data, statusCode, meta);
   }
 }

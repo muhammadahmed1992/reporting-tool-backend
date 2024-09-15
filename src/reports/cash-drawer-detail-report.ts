@@ -9,6 +9,7 @@ import { ReportName } from 'src/helper/enums/report-names.enum';
 import Constants from 'src/helper/constants';
 import { CashDrawerDetailDTO } from 'src/dto/cashdrawer-detail.dto';
 import { LocalizationService } from 'src/services/localization.service';
+import { QueryStringDTO } from 'src/dto/query-string.dto';
 
 @Injectable()
 export class CashDrawerDetailReport implements ReportStrategy {
@@ -16,7 +17,8 @@ export class CashDrawerDetailReport implements ReportStrategy {
                 private readonly localizationService: LocalizationService
     ) {}
 
-    public async generateReport(...params: any): Promise<ApiResponse<any>> {
+    public async generateReport(queryString: QueryStringDTO): Promise<ApiResponse<any>> {
+        
         let query = `
 SELECT
     Cashier as cashier_header,
@@ -128,7 +130,7 @@ FROM (
     @running_balance := 0
 ) AS vars;
 `;
-        let [startDate, endDate] = params;
+        let {startDate, endDate} = queryString;
         if (!startDate)
             startDate = new Date();
         if (!endDate)

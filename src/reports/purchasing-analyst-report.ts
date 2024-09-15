@@ -10,14 +10,15 @@ import ResponseHelper from 'src/helper/response-helper';
 import { SalesAnalystDTO } from '../dto/sales-analyst.dto';
 import { ReportName } from 'src/helper/enums/report-names.enum';
 import Constants from 'src/helper/constants';
+import { QueryStringDTO } from 'src/dto/query-string.dto';
 
 @Injectable()
 export class PurchaseAnalystReport implements ReportStrategy {
     constructor(private readonly genericRepository: GenericRepository) {}
 
-    public async generateReport(...params: any): Promise<ApiResponse<any>> {
+    public async generateReport(queryString: QueryStringDTO): Promise<ApiResponse<any>> {
 
-        let [startDate, endDate, warehouse, stockGroup] = params;
+        let {startDate, endDate, warehouse, stockGroup} = queryString;
  
         if (!startDate)
             startDate = new Date();
