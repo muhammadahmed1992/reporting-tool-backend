@@ -99,7 +99,7 @@ FROM (
             dINVdate, cinvuser
         ) AS b
     ON 
-        b.dinvdate = a.dinvdate
+        b.dinvdate = a.dinvdate and b.cinvuser=a.cinvuser
     LEFT JOIN
         (SELECT 
             ddradate, cdrauser,
@@ -111,7 +111,7 @@ FROM (
             cdrauser,ddradate
         ) AS c
     ON 
-        c.ddradate = a.dinvdate
+        c.ddradate = a.dinvdate and c.cdrauser=a.cinvuser
     ORDER BY 
         Date, Cashier)  AS subquery,
 (SELECT 
