@@ -14,7 +14,7 @@ export class Sales2Report implements ReportStrategy {
     constructor(private readonly genericRepository: GenericRepository) {}
 
     public async generateReport(queryString: QueryStringDTO): Promise<ApiResponse<any>> {
-        let {startDate, endDate, warehouse} = queryString;
+        let {startDate, endDate, warehouse, pageSize} = queryString;
         const parameters = [];
         if (!startDate)
             startDate = new Date();
@@ -22,6 +22,20 @@ export class Sales2Report implements ReportStrategy {
             endDate = new Date();
         parameters.push(startDate);
         parameters.push(endDate);
+        let count = `
+        SELECT COUNT(1) as total_rows
+            FROM invoice
+            INNER JOIN invoicedetail ON cinvpk = civdfkinv
+            INNER JOIN exchange ON cinvfkexc = cexcpk
+            LEFT JOIN entity ON cinvfkent = centpk
+            WHERE (cinvspecial = 'JL' OR cinvspecial = 'RJ' OR cinvspecial = 'PS' OR cinvspecial = 'RS') 
+              AND dinvdate >= ? 
+              AND dinvdate <= ? `;
+        
+        if (warehouse) {
+            count += ` AND (IFNULL(?, cinvfkwhs) = cinvfkwhs OR cinvfkwhs IS NULL) `;
+        }        
+
         let query = `
         SELECT Invoice as invoice_header, Date as date_header, Currency as currency_header,
             FORMAT(Amount,0) AS amount_header,
@@ -55,11 +69,23 @@ export class Sales2Report implements ReportStrategy {
         console.log(`Report Name: ${ReportName.Sales_No_Disc}`);
         console.log('warehouse: ', decodeURIComponent(warehouse));
         console.log(`=============================================`);   
-        const response = await this.genericRepository.query<Sales2DTO>(query, parameters);
+        const [response, totalRows] = await Promise.all([
+            this.genericRepository.query<Sales2DTO>(query, parameters), 
+            this.genericRepository.query<Sales2DTO>(count, parameters)
+        ]);
+        const totalPages = Math.ceil((totalRows[0] as any).total_rows / pageSize);
         if (response?.length) {
-            return ResponseHelper.CreateResponse<Sales2DTO[]>(response, HttpStatus.OK, Constants.DATA_SUCCESS);
+            return ResponseHelper.CreateResponse<Sales2DTO[]>(response, HttpStatus.OK, Constants.DATA_SUCCESS, {
+                paging: {
+                    totalPages
+                }
+            });
         } else {
-            return ResponseHelper.CreateResponse<Sales2DTO[]>([], HttpStatus.NOT_FOUND, Constants.DATA_NOT_FOUND);
+            return ResponseHelper.CreateResponse<Sales2DTO[]>([], HttpStatus.NOT_FOUND, Constants.DATA_NOT_FOUND, {
+                paging: {
+                    totalPages: 1
+                }
+            });
         }
     }
 }

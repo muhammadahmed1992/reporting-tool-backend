@@ -18,6 +18,62 @@ export class CashDrawerDetailReport implements ReportStrategy {
     ) {}
 
     public async generateReport(queryString: QueryStringDTO): Promise<ApiResponse<any>> {
+        let count = `
+SELECT
+    COUNT(1) as total_rows
+    FROM
+        (SELECT 
+            cinvuser,
+            dINVdate, 
+            SUM(nINVdp) AS mdp, 
+            SUM(nINVvoucher) AS mvoucher,  
+            SUM(nINVtunai) AS mtunai,  
+            SUM(nINVpiutang) AS mpiutang,
+            SUM(nINVCredit) AS mcredit, 
+            SUM(nINVdebit) AS mdebit,
+            SUM(ninvmobile) AS mmobile,
+            SUM(nINVccard_nilai) AS mcard,
+            SUM((ninvvalue - ninvfreight) / (1 + ninvtax / 100)) AS mnetto, 
+            COUNT(1) AS tstruk, 
+            SUM(ninvccard_nilai - ninvcredit) AS extrac
+         FROM 
+            invoice
+         WHERE 
+            cINVspecial = 'PS'
+            AND dinvdate >= ? 
+            AND dinvdate <= ?
+         GROUP BY
+            dINVdate,
+            cinvuser
+        ) AS a
+    LEFT JOIN
+        (SELECT 
+            cinvuser,
+            dINVdate, 
+            SUM(nINVdp + nINVvoucher + nINVtunai + nINVpiutang + nINVccard_nilai + nINVdebit + ninvmobile) AS batal,
+            SUM(ninvccard_nilai - ninvcredit) AS bextrac,
+            COUNT(1) AS btstruk
+         FROM 
+            invoice 
+         WHERE 
+            cINVspecial = 'RS'
+         GROUP BY 
+            dINVdate, cinvuser
+        ) AS b
+    ON 
+        b.dinvdate = a.dinvdate and b.cinvuser=a.cinvuser
+    LEFT JOIN
+        (SELECT 
+            ddradate, cdrauser,
+            SUM(ndraopen) AS nopen, 
+            SUM(ndradraw + ndradraw1) AS ndraw
+         FROM 
+            drawer
+         GROUP BY 
+            cdrauser,ddradate
+        ) AS c
+    ON 
+        c.ddradate = a.dinvdate and c.cdrauser=a.cinvuser `;
         
         let query = `
 SELECT
@@ -130,7 +186,7 @@ FROM (
     @running_balance := 0
 ) AS vars;
 `;
-        let {startDate, endDate} = queryString;
+        let {startDate, endDate, pageSize} = queryString;
         if (!startDate)
             startDate = new Date();
         if (!endDate)
@@ -143,11 +199,23 @@ FROM (
         console.log(`startDate: ${startDate}`);
         console.log(`endDate: ${endDate}`);
         console.log('=============================');
-        const response = await this.genericRepository.query<CashDrawerDetailDTO>(query, parameters);
+        const [response, totalRows] = await Promise.all([
+            this.genericRepository.query<CashDrawerDetailDTO>(query, parameters),
+            this.genericRepository.query<CashDrawerDetailDTO>(count, parameters)
+        ]);
+        const totalPages = Math.ceil((totalRows[0] as any).total_rows / pageSize);
         if (response?.length) {
-            return ResponseHelper.CreateResponse<CashDrawerDetailDTO[]>(response, HttpStatus.OK, Constants.DATA_SUCCESS);
+            return ResponseHelper.CreateResponse<CashDrawerDetailDTO[]>(response, HttpStatus.OK, Constants.DATA_SUCCESS, {
+                paging: {
+                    totalPages
+                }
+            });
         } else {
-            return ResponseHelper.CreateResponse<CashDrawerDetailDTO[]>([], HttpStatus.NOT_FOUND, Constants.DATA_NOT_FOUND);
+            return ResponseHelper.CreateResponse<CashDrawerDetailDTO[]>([], HttpStatus.NOT_FOUND, Constants.DATA_NOT_FOUND, {
+                paging: {
+                    totalPages: 1
+                }
+            });
         }
     }
 }

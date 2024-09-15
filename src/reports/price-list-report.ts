@@ -44,9 +44,11 @@ export class PriceListReport implements ReportStrategy {
         console.log(`Report Name: ${ReportName.Price_List}`);
         console.log('parameter: stockGroup: ', decodeURIComponent(stockGroup));
         console.log('=====================================');
-        const [response, totalRows] = await Promise.all([this.genericRepository.query<PriceListDTO>(query, [decodeURIComponent(stockGroup)]), 
-        this.genericRepository.query<number>(count, [decodeURIComponent(stockGroup)])]);
-        const totalPages = Math.ceil((totalRows[0] as any).total_rows / pageSize); 
+        const [response, totalRows] = await Promise.all([
+            this.genericRepository.query<PriceListDTO>(query, [decodeURIComponent(stockGroup)]), 
+            this.genericRepository.query<number>(count, [decodeURIComponent(stockGroup)])
+        ]);
+        const totalPages = Math.ceil((totalRows[0] as any).total_rows / pageSize);
         if (response?.length) {
             return ResponseHelper.CreateResponse<PriceListDTO[]>(response, HttpStatus.OK, Constants.DATA_SUCCESS, {
                 paging: {

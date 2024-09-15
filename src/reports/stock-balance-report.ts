@@ -14,7 +14,61 @@ export class StockBalanceReport implements ReportStrategy {
     constructor(private readonly genericRepository: GenericRepository) {}
 
     public async generateReport(queryString: QueryStringDTO): Promise<ApiResponse<any>> {
-        const {stockGroup, warehouse} = queryString;
+        const {stockGroup, warehouse, pageSize} = queryString;
+        let count = `
+        select
+        COUNT(1) as total_rows
+        from (
+
+        select LTRIM(RTRIM(cSTDcode)) as Kode,LTRIM(RTRIM(cSTKdesc)) as Nama,
+        LTRIM(RTRIM(warehouse.cwhsdesc)) as Lokasi,
+        SUM(zqtyin - zqtyout) as Qty,
+        (sdt.nSTDprice) as Price,
+        SUM(zqtyin - zqtyout) * (sdt.nSTDprice) as Balance
+        from
+        (
+        
+        SELECT cIvdFkStk, cInvFkWhs as pkWhs,
+        SUM(nIVDzqtyIn) as zQtyIn, SUM(nIVDzqtyout) as zQtyOut, 
+        'a' as detailType FROM Invoicedetail
+        INNER JOIN Invoice ON cIVDfkINV = cINVpk
+        WHERE cinvspecial<>'KS'  
+        and nIVDkirim=1
+        and nivdaccqty>=0
+        and cinvspecial<>'02'
+        group by cIvdFkStk, cInvFkWhs 
+        
+        union 
+        
+        SELECT cIvdFkStk, cInvTransfer as pkWhs,
+        SUM(nIVDzqtyOut) as zQtyIn,SUM(nIVDzqtyIn) as zQtyOut,
+        't' as detailType FROM Invoicedetail
+        INNER JOIN Invoice ON cIVDfkINV = cINVpk
+        WHERE cinvspecial<>'KS'  
+        and nIVDkirim=1
+        and nivdaccqty>=0
+        and cinvspecial<>'02'
+        group by cIvdFkStk, cInvTransfer 
+        
+        ) as c
+        
+        inner join warehouse 
+        on warehouse.cwhspk=c.pkwhs
+        INNER JOIN stock 
+        on cIvdFkStk=CSTKPK and nstksuspend=0 and nstkservice=0
+        INNER JOIN stockdetail sdt 
+        on cIvdFkStk=cSTDfkSTK And nSTDfactor=1 and nstdkey=1 
+        INNER JOIN unit ON cSTDfkUNI=cUNIpk
+        where 1=1 `
+        if (warehouse) {
+            count+= ` and (IFNULL(?, cwhspk) = cwhspk or cwhspk is null) `;
+        }
+        if (stockGroup) {
+            count+= ` and (IFNULL(?, cstkfkgrp) = cstkfkgrp or cstkfkgrp is null) `;
+        }
+        
+        count+= ` ) d `
+
         let query = `
         select
         Kode as stock_id_header, Nama as stock_name_header, Lokasi as location_header,
@@ -84,11 +138,24 @@ export class StockBalanceReport implements ReportStrategy {
             parameters.push(decodeURIComponent(warehouse));
         if (stockGroup)
             parameters.push(decodeURIComponent(stockGroup));
-        const response = await this.genericRepository.query<StocBalancekDTO>(query, parameters);
+        
+        const [response, totalRows] = await Promise.all([
+            this.genericRepository.query<StocBalancekDTO>(query, parameters),
+            this.genericRepository.query<number>(count, parameters)
+        ]);
+        const totalPages = Math.ceil((totalRows[0] as any).total_rows / pageSize);
         if (response?.length) {
-            return ResponseHelper.CreateResponse<StocBalancekDTO[]>(response, HttpStatus.OK, Constants.DATA_SUCCESS);
+            return ResponseHelper.CreateResponse<StocBalancekDTO[]>(response, HttpStatus.OK, Constants.DATA_SUCCESS, {
+                paging: {
+                    totalPages
+                }
+            });
         } else {
-            return ResponseHelper.CreateResponse<StocBalancekDTO[]>([], HttpStatus.NOT_FOUND, Constants.DATA_NOT_FOUND);
+            return ResponseHelper.CreateResponse<StocBalancekDTO[]>([], HttpStatus.NOT_FOUND, Constants.DATA_NOT_FOUND, {
+                paging: {
+                    totalPages: 1
+                }
+            });
         }
     }
 }

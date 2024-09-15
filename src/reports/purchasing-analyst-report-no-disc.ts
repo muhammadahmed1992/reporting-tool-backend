@@ -16,16 +16,14 @@ export class PurchaseAnalystReportNoDisc implements ReportStrategy {
     constructor(private readonly genericRepository: GenericRepository) {}
 
     public async generateReport(queryString: QueryStringDTO): Promise<ApiResponse<any>> {
-        let {startDate, endDate, warehouse, stockGroup} = queryString;
+        let {startDate, endDate, warehouse, stockGroup, pageSize} = queryString;
         if (!startDate)
             startDate = new Date();
         if (!endDate)
             endDate = new Date();
-        let count = `Select Count(1) as total_rows FROM (
-        SELECT cstdcode as StockID, LTRIM(RTRIM(cstkdesc)) as StockName,
-        sum(nivdzqtyin-nivdzqtyout) as Qty, cexcdesc as Currency,
-        sum(if(cinvspecial='RB',-nIVDAmount,nivdamount)*(1-nINVdisc1/100)*(1-nINVdisc2/100)*(1-nINVdisc3/100)) as Amount,
-        sum(if(cinvspecial='RB',-nIVDAmount,nivdamount)*(1-nINVdisc1/100)*(1-nINVdisc2/100)*(1-nINVdisc3/100)*(1+if(nivdstkppn=1,ninvtax/100,0))) as Amount_Tax
+        
+        let count = `
+        SELECT COUNT(1) as total_rows
         FROM invoice
             INNER JOIN invoicedetail
         ON  cINVpk = cIVDfkINV
@@ -37,13 +35,13 @@ export class PurchaseAnalystReportNoDisc implements ReportStrategy {
         ON  cSTKpk = cSTDfkSTK
         WHERE nstdkey = 1 and nIVDkirim=1 AND (cINVspecial='BL' or cINVspecial='RB' or cINVspecial='KS' or cINVspecial='RS')
         and dinvdate>=? and dinvdate<=? `;
-    if (stockGroup) {
-        count+= ` and (IFNULL(?, cstkfkgrp) = cstkfkgrp or cstkfkgrp is null) `;
-    }
-	if (warehouse){
-        count+= ` and (IFNULL(?, cinvfkwhs) = cinvfkwhs or cinvfkwhs is null)`;
-    }
-    count += ` group by cstdcode, cstkdesc, cexcdesc`;
+        if (stockGroup) {
+            count+= ` and (IFNULL(?, cstkfkgrp) = cstkfkgrp or cstkfkgrp is null) `;
+        }
+        if (warehouse){
+            count+= ` and (IFNULL(?, cinvfkwhs) = cinvfkwhs or cinvfkwhs is null)`;
+        }
+
         let query = 
         `
         SELECT StockID as stock_id_header, StockName as stock_name_header, FORMAT(Qty,0) as qty_header, Currency as currency_header, FORMAT(Amount, 0) as amount_header, FORMAT(Amount_Tax, 0) as amount_tax_header,
@@ -99,13 +97,24 @@ export class PurchaseAnalystReportNoDisc implements ReportStrategy {
         console.log('warehouse: ', decodeURIComponent(warehouse));
         console.log('stockGroup: ', decodeURIComponent(stockGroup));
         console.log(`=============================================`);
-        const [response, totalRows] = await Promise.all([this.genericRepository.query<SalesAnalystDTO>(query, parameters), 
+        const [response, totalRows] = await Promise.all([
+            this.genericRepository.query<SalesAnalystDTO>(query, parameters), 
             this.genericRepository.query<number>(count, parameters)]);
-        console.log(totalRows);
+        
+            const totalPages = Math.ceil((totalRows[0] as any).total_rows / pageSize);
+        
         if (response?.length) {
-            return ResponseHelper.CreateResponse<SalesAnalystDTO[]>(response, HttpStatus.OK, Constants.DATA_SUCCESS);
+            return ResponseHelper.CreateResponse<SalesAnalystDTO[]>(response, HttpStatus.OK, Constants.DATA_SUCCESS, {
+                paging: {
+                    totalPages
+                }
+            });
         } else {
-            return ResponseHelper.CreateResponse<SalesAnalystDTO[]>([], HttpStatus.NOT_FOUND, Constants.DATA_NOT_FOUND);
+            return ResponseHelper.CreateResponse<SalesAnalystDTO[]>([], HttpStatus.NOT_FOUND, Constants.DATA_NOT_FOUND, {
+                paging: {
+                    totalPages: 1
+                }
+            });
         }
     }
 }

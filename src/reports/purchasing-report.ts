@@ -17,7 +17,7 @@ export class PurchaseReport implements ReportStrategy {
     constructor(private readonly genericRepository: GenericRepository) {}
 
     public async generateReport(queryString: QueryStringDTO): Promise<ApiResponse<any>> {
-        let {startDate, endDate, warehouse} = queryString;
+        let {startDate, endDate, warehouse, pageSize} = queryString;
         const parameters = [];
         if (!startDate)
             startDate = new Date();
@@ -27,6 +27,51 @@ export class PurchaseReport implements ReportStrategy {
         console.log(`endDate: ${endDate}`);
         parameters.push(startDate);
         parameters.push(endDate);
+
+        let count = `
+        SELECT COUNT(1) as total_rows
+        FROM (
+            SELECT civdfkinv, COUNT(1) as rows2 
+            FROM invoicedetail
+            INNER JOIN invoice ON civdfkinv = cinvpk
+            WHERE dinvdate >= ? AND dinvdate <= ? `;
+        
+        if (warehouse) {
+            count += ` AND (IFNULL(?, cinvfkwhs) = cinvfkwhs OR cinvfkwhs IS NULL) `;
+        }
+        
+        count += ` 
+            GROUP BY civdfkinv
+        ) as a
+        
+        INNER JOIN (
+            SELECT 
+                civdfkstk, 
+                civdfkinv, 
+                ninvdisc, 
+                nivdstkppn, 
+                ninvtax, 
+                cinvrefno, 
+                dinvdate, 
+                centdesc, 
+                cexcdesc,
+                SUM(
+                    IF(cinvspecial = 'RB', -nIVDAmount, nIVDAmount) *
+                    (1 - nInvDisc1 / 100) *
+                    (1 - nInvDisc2 / 100) *
+                    (1 - nInvDisc3 / 100)
+                ) as sumdetails,
+                IF(cinvspecial = 'RB', -nINVfreight, nINVfreight) as nfreight,
+                IF(cinvspecial = 'RB', -nINVdisc, nINVdisc) as ndisc
+            FROM invoice
+            INNER JOIN invoicedetail ON civdfkinv = cinvpk
+            INNER JOIN exchange ON cinvfkexc = cexcpk
+            LEFT JOIN entity ON cinvfkent = centpk
+            WHERE (cinvspecial = 'BL' OR cinvspecial = 'RB' OR cinvspecial = 'KS')
+            GROUP BY civdfkstk, civdfkinv, ninvdisc, nivdstkppn, ninvtax, cinvrefno, dinvdate, centdesc, cexcdesc, nINVfreight, nINVdisc
+        ) as b ON a.civdfkinv = b.civdfkinv `;
+        
+
         let query = `
         SELECT Invoice as invoice_header, Date as date_header, IFNULL(Supplier, '') as supplier_header, Currency as currency_header,
             FORMAT(Amount,0) AS amount_header,
@@ -73,11 +118,23 @@ export class PurchaseReport implements ReportStrategy {
         if (warehouse)
             parameters.push(decodeURIComponent(warehouse));
 
-        const response = await this.genericRepository.query<PurchasingDTO>(query, parameters);
+        const [response, totalRows] = await Promise.all([
+            this.genericRepository.query<PurchasingDTO>(query, parameters),
+            this.genericRepository.query<number>(count, parameters)
+        ]);
+        const totalPages = Math.ceil((totalRows[0] as any).total_rows / pageSize);
         if (response?.length) {
-            return ResponseHelper.CreateResponse<PurchasingDTO[]>(response, HttpStatus.OK, Constants.DATA_SUCCESS);
+            return ResponseHelper.CreateResponse<PurchasingDTO[]>(response, HttpStatus.OK, Constants.DATA_SUCCESS, {
+                paging: {
+                    totalPages
+                }
+            });
         } else {
-            return ResponseHelper.CreateResponse<PurchasingDTO[]>([], HttpStatus.NOT_FOUND, Constants.DATA_NOT_FOUND);
+            return ResponseHelper.CreateResponse<PurchasingDTO[]>([], HttpStatus.NOT_FOUND, Constants.DATA_NOT_FOUND, {
+                paging: {
+                    totalPages: 1
+                }
+            });
         }
     }
 }

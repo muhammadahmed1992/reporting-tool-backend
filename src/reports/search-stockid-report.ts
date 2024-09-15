@@ -16,8 +16,51 @@ export class SearchStockIDReport implements ReportStrategy {
     constructor(private readonly genericRepository: GenericRepository) {}
 
     public async generateReport(queryString: QueryStringDTO): Promise<ApiResponse<any>> {
-        const {stockCode} = queryString;
+        const {stockCode, pageSize} = queryString;
         const parameters = [];
+        
+        let count = `
+        select COUNT(1) as total_rows
+        from
+        (
+        
+        SELECT cIvdFkStk, cInvFkWhs as pkWhs,
+        SUM(nIVDzqtyIn) as zQtyIn, SUM(nIVDzqtyout) as zQtyOut, 
+        'a' as detailType FROM Invoicedetail
+        INNER JOIN Invoice ON cIVDfkINV = cINVpk
+        WHERE cinvspecial<>'KS' 
+        and nivdaccqty>=0
+        and cinvspecial<>'02' 
+        group by cIvdFkStk, cInvFkWhs 
+        
+        union 
+        
+        SELECT cIvdFkStk, cInvTransfer as pkWhs,
+        SUM(nIVDzqtyOut) as zQtyIn,
+        SUM(nIVDzqtyIn) as zQtyOut, 
+        't' as detailType FROM Invoicedetail
+        INNER JOIN Invoice ON cIVDfkINV = cINVpk
+        WHERE cinvspecial<>'KS'  
+        and cInvTransfer <> 'n/a'
+        and nIVDkirim=1 and cInvTransfer is not null
+        and nivdaccqty>=0
+        and cinvspecial<>'02'
+        group by cIvdFkStk, cInvTransfer 
+        
+        ) as c
+        
+        inner join warehouse 
+        on warehouse.cwhspk=c.pkwhs
+        INNER JOIN stock 
+        on cIvdFkStk=CSTKPK and nstksuspend=0 and nstkservice=0
+        INNER JOIN stockdetail sdt 
+        on cIvdFkStk=cSTDfkSTK And nSTDfactor=1 and nstdkey=1 
+        INNER JOIN unit ON cSTDfkUNI=cUNIpk `
+        
+        if (stockCode) {
+            count+= ` where cstdcode=? `
+        }
+
         let query = `
         select LTRIM(RTRIM(cSTDcode)) as StockID,
         LTRIM(RTRIM(cSTKdesc)) as StockName,
@@ -74,11 +117,23 @@ export class SearchStockIDReport implements ReportStrategy {
         console.log(`Report Name: ${ReportName.Stock_Balance_BarCode}`);
         console.log(`stockCode ${decodeURIComponent(stockCode)}`);
         console.log(`==================================================`);
-        const response = await this.genericRepository.query<StocBalancekDTO>(query, parameters);
+        const [response, totalRows] = await Promise.all([
+            this.genericRepository.query<StocBalancekDTO>(query, parameters),
+            this.genericRepository.query<StocBalancekDTO>(count, parameters)
+        ]);
+        const totalPages = Math.ceil((totalRows[0] as any).total_rows / pageSize);
         if (response?.length) {
-            return ResponseHelper.CreateResponse<StocBalancekDTO[]>(response, HttpStatus.OK, Constants.DATA_SUCCESS);
+            return ResponseHelper.CreateResponse<StocBalancekDTO[]>(response, HttpStatus.OK, Constants.DATA_SUCCESS, {
+                paging: {
+                    totalPages
+                }
+            });
         } else {
-            return ResponseHelper.CreateResponse<StocBalancekDTO[]>([], HttpStatus.NOT_FOUND, Constants.DATA_NOT_FOUND);
+            return ResponseHelper.CreateResponse<StocBalancekDTO[]>([], HttpStatus.NOT_FOUND, Constants.DATA_NOT_FOUND, {
+                paging: {
+                    totalPages: 1
+                }
+            });
         }
     }
 }
