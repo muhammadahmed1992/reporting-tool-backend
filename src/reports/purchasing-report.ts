@@ -17,7 +17,7 @@ export class PurchaseReport implements ReportStrategy {
     constructor(private readonly genericRepository: GenericRepository) {}
 
     public async generateReport(queryString: QueryStringDTO): Promise<ApiResponse<any>> {
-        let {startDate, endDate, warehouse, pageSize, pageNumber, searchValue, columnsToFilter} = queryString;
+        let {startDate, endDate, warehouse, pageSize, pageNumber, searchValue, columnsToFilter, sortColumn, sortDirection} = queryString;
         const filterColumns = columnsToFilter ? columnsToFilter.toString().split(',').map(item => item.trim()) : [];
         const parameters = []; const countParameters = [];
         if (!startDate)
@@ -26,14 +26,17 @@ export class PurchaseReport implements ReportStrategy {
             endDate = new Date();
         parameters.push(startDate);
         parameters.push(endDate);
-
+        countParameters.push(startDate);
+        countParameters.push(endDate);
         let count = `
-        SELECT COUNT(1) as total_rows
-        FROM (
-            SELECT civdfkinv, COUNT(1) as rows2 
-            FROM invoicedetail
-            INNER JOIN invoice ON civdfkinv = cinvpk
-            WHERE dinvdate >= ? AND dinvdate <= ? `;
+        SELECT COUNT(DISTINCT cinvrefno) as total_rows
+    FROM invoice
+    INNER JOIN invoicedetail ON civdfkinv = cinvpk
+    INNER JOIN exchange ON cinvfkexc = cexcpk
+    LEFT JOIN entity ON cinvfkent = centpk
+    WHERE dinvdate >= ? AND dinvdate <= ? 
+    AND (cinvspecial = 'BL' OR cinvspecial = 'RB' OR cinvspecial = 'KS')
+`;
             if (searchValue) {
                 count += ' AND (';
                 count += filterColumns.map(column => `${column} LIKE ?`).join(' OR ');
@@ -45,36 +48,6 @@ export class PurchaseReport implements ReportStrategy {
             countParameters.push(decodeURIComponent(warehouse));
         }
         
-        count += ` 
-            GROUP BY civdfkinv
-        ) as a
-        
-        INNER JOIN (
-            SELECT 
-                civdfkstk, 
-                civdfkinv, 
-                ninvdisc, 
-                nivdstkppn, 
-                ninvtax, 
-                cinvrefno, 
-                dinvdate, 
-                centdesc, 
-                cexcdesc,
-                SUM(
-                    IF(cinvspecial = 'RB', -nIVDAmount, nIVDAmount) *
-                    (1 - nInvDisc1 / 100) *
-                    (1 - nInvDisc2 / 100) *
-                    (1 - nInvDisc3 / 100)
-                ) as sumdetails,
-                IF(cinvspecial = 'RB', -nINVfreight, nINVfreight) as nfreight,
-                IF(cinvspecial = 'RB', -nINVdisc, nINVdisc) as ndisc
-            FROM invoice
-            INNER JOIN invoicedetail ON civdfkinv = cinvpk
-            INNER JOIN exchange ON cinvfkexc = cexcpk
-            LEFT JOIN entity ON cinvfkent = centpk
-            WHERE (cinvspecial = 'BL' OR cinvspecial = 'RB' OR cinvspecial = 'KS')
-            GROUP BY civdfkstk, civdfkinv, ninvdisc, nivdstkppn, ninvtax, cinvrefno, dinvdate, centdesc, cexcdesc, nINVfreight, nINVdisc
-        ) as b ON a.civdfkinv = b.civdfkinv `;
         
 
         let query = `
@@ -103,6 +76,8 @@ export class PurchaseReport implements ReportStrategy {
         if (warehouse) {
             query+= ` and (IFNULL(?, cinvfkwhs) = cinvfkwhs or cinvfkwhs is null) `;
         } 
+        const sortBy = sortColumn ? sortColumn : 'currency,date,invoice';  
+        const sortOrder = sortDirection ? sortDirection : 'ASC';
         query+= ` group by civdfkinv) as a
 
         inner join
@@ -119,7 +94,7 @@ export class PurchaseReport implements ReportStrategy {
 
         on a.civdfkinv=b.civdfkinv
         group by cinvrefno,dinvdate,centdesc,cexcdesc,nfreight
-        order by currency,date,invoice) AS a, (SELECT @currentGroup := '', @currentSum := 0) r LIMIT ? OFFSET ?; `;
+        order by ${sortBy} ${sortOrder}) AS a, (SELECT @currentGroup := '', @currentSum := 0) r LIMIT ? OFFSET ?; `;
 
         console.log(`query: ${query}`);
         console.log(`Report Name: ${ReportName.Purchase_Report}`);

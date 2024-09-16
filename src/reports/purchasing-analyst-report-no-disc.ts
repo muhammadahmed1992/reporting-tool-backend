@@ -16,7 +16,7 @@ export class PurchaseAnalystReportNoDisc implements ReportStrategy {
     constructor(private readonly genericRepository: GenericRepository) {}
 
     public async generateReport(queryString: QueryStringDTO): Promise<ApiResponse<any>> {
-        let {startDate, endDate, warehouse, stockGroup, pageSize, pageNumber, searchValue, columnsToFilter} = queryString;
+        let {startDate, endDate, warehouse, stockGroup, pageSize, pageNumber, searchValue, columnsToFilter, sortColumn, sortDirection} = queryString;
         const filterColumns = columnsToFilter ? columnsToFilter.toString().split(',').map(item => item.trim()) : [];
         const parameters = []; 
         const countParameters = [];
@@ -30,17 +30,26 @@ export class PurchaseAnalystReportNoDisc implements ReportStrategy {
         countParameters.push(endDate);
         let count = `
         SELECT COUNT(1) as total_rows
-        FROM invoice
-            INNER JOIN invoicedetail
-        ON  cINVpk = cIVDfkINV
-            INNER JOIN exchange
-        ON  cINVfkexc = cexcpk
-            INNER JOIN stock
-        ON  cIVDfkSTK = cSTKpk
-            INNER JOIN stockdetail
-        ON  cSTKpk = cSTDfkSTK
-        WHERE nstdkey = 1 and nIVDkirim=1 AND (cINVspecial='BL' or cINVspecial='RB' or cINVspecial='KS' or cINVspecial='RS')
-        and dinvdate>=? and dinvdate<=? `;
+FROM (
+    SELECT cstdcode as StockID, LTRIM(RTRIM(cstkdesc)) as StockName,
+    sum(nivdzqtyin-nivdzqtyout) as Qty, cexcdesc as Currency,
+    sum(if(cinvspecial='RB',-nIVDAmount,nivdamount)*(1-nINVdisc1/100)*(1-nINVdisc2/100)*(1-nINVdisc3/100)) as Amount,
+    sum(if(cinvspecial='RB',-nIVDAmount,nivdamount)*(1-nINVdisc1/100)*(1-nINVdisc2/100)*(1-nINVdisc3/100)*(1+if(nivdstkppn=1,ninvtax/100,0))) as Amount_Tax
+    FROM invoice
+        INNER JOIN invoicedetail
+    ON  cINVpk = cIVDfkINV
+        INNER JOIN exchange
+    ON  cINVfkexc = cexcpk
+        INNER JOIN stock
+    ON  cIVDfkSTK = cSTKpk
+        INNER JOIN stockdetail
+    ON  cSTKpk = cSTDfkSTK
+    WHERE nstdkey = 1 and nIVDkirim=1 AND (cINVspecial='BL' or cINVspecial='RB' or cINVspecial='KS' or cINVspecial='RS')
+    and dinvdate>=? and dinvdate<=?  
+    /* Add filters if needed */
+    GROUP BY cstdcode, cstkdesc, cexcdesc
+) AS subquery;
+`;
         if (searchValue) {
             count += ' AND (';
             count += filterColumns.map(column => `${column} LIKE ?`).join(' OR ');
@@ -95,9 +104,11 @@ export class PurchaseAnalystReportNoDisc implements ReportStrategy {
 	if (warehouse){
         query+= ` and (IFNULL(?, cinvfkwhs) = cinvfkwhs or cinvfkwhs is null)`;
     }
+    const sortBy = sortColumn ? sortColumn : 'cexcdesc,cstdcode';  
+    const sortOrder = sortDirection ? sortDirection : 'ASC'; 
     query+= `
   group by cstdcode, cstkdesc, cexcdesc
- order by cexcdesc,cstdcode ASC) AS c, (SELECT @currentGroup := '', @currentSum := 0, @currentGroupAmountTax := '', @currentSumAmountTax := 0) r 
+ order by ${sortBy} ${sortOrder}) AS c, (SELECT @currentGroup := '', @currentSum := 0, @currentGroupAmountTax := '', @currentSumAmountTax := 0) r 
        LIMIT ? OFFSET ? `; 
        const offset = (pageNumber - 1) * pageSize;
         if (stockGroup){

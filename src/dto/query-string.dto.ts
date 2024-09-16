@@ -29,4 +29,10 @@ export class QueryStringDTO {
 
   @IsOptional()
   columnsToFilter?: string[];
+
+  @IsOptional()
+  sortColumn?: string;
+
+  @IsOptional()
+  sortDirection?: 'desc' | 'asc';
 }

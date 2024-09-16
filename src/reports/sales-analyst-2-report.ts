@@ -16,7 +16,7 @@ export class SalesAnalyst2Report implements ReportStrategy {
     constructor(private readonly genericRepository: GenericRepository) {}
 
     public async generateReport(queryString: QueryStringDTO): Promise<ApiResponse<any>> {
-        let {startDate, endDate, warehouse, stockGroup, pageSize, pageNumber, searchValue, columnsToFilter} = queryString;
+        let {startDate, endDate, warehouse, stockGroup, pageSize, pageNumber, searchValue, columnsToFilter, sortColumn, sortDirection} = queryString;
         const filterColumns = columnsToFilter ? columnsToFilter.toString().split(',').map(item => item.trim()) : [];
         const parameters = []; const countParameters = [];
         if (!startDate)
@@ -25,32 +25,38 @@ export class SalesAnalyst2Report implements ReportStrategy {
             endDate = new Date();
         parameters.push(startDate);
         parameters.push(endDate);
-        
+        countParameters.push(startDate);
+        countParameters.push(endDate);
         let count = 
         ` SELECT COUNT(1) as total_rows
-        FROM invoice
-            INNER JOIN invoicedetail
-        ON  cINVpk = cIVDfkINV
-            INNER JOIN exchange
-        ON  cINVfkexc = cexcpk
-            INNER JOIN stock
-        ON  cIVDfkSTK = cSTKpk
-            INNER JOIN stockdetail
-        ON  cSTKpk = cSTDfkSTK
-        WHERE nstdkey = 1 and nIVDkirim=1 AND (cINVspecial='JL' or cINVspecial='RJ' or cINVspecial='PS' or cINVspecial='RS')
-        and dinvdate>=? and dinvdate<=? `;
+FROM (
+    SELECT DISTINCT cstdcode
+    FROM invoice
+    INNER JOIN invoicedetail ON cINVpk = cIVDfkINV
+    INNER JOIN exchange ON cINVfkexc = cexcpk
+    INNER JOIN stock ON cIVDfkSTK = cSTKpk
+    INNER JOIN stockdetail ON cSTKpk = cSTDfkSTK
+    WHERE nstdkey = 1 
+      AND nIVDkirim = 1 
+      AND (cINVspecial = 'JL' OR cINVspecial = 'RJ' OR cINVspecial = 'PS' OR cINVspecial = 'RS')
+      AND dinvdate >= ? 
+      AND dinvdate <= ?
+      ${searchValue ? `AND (${filterColumns.map(column => `${column} LIKE ?`).join(' OR ')})` : ''}
+      ${stockGroup ? `AND (IFNULL(?, cstkfkgrp) = cstkfkgrp OR cstkfkgrp IS NULL)` : ''}
+      ${warehouse ? `AND (IFNULL(?, cinvfkwhs) = cinvfkwhs OR cinvfkwhs IS NULL)` : ''}
+) AS count_query
+`;
+
         if (searchValue) {
-            count += ' AND (';
-            count += filterColumns.map(column => `${column} LIKE ?`).join(' OR ');
-            count += ')';
+            count += ' AND (' + filterColumns.map(column => `${column} LIKE ?`).join(' OR ') + ')';
             countParameters.push(...filterColumns.map(() => `%${searchValue}%`));
         }
         if (stockGroup) {
-            count+= ` and (IFNULL(?, cstkfkgrp) = cstkfkgrp or cstkfkgrp is null) `;
+            count += ` AND (IFNULL(?, cstkfkgrp) = cstkfkgrp OR cstkfkgrp IS NULL)`;
             countParameters.push(decodeURIComponent(stockGroup));
         }
-        if (warehouse){
-            count+= ` and (IFNULL(?, cinvfkwhs) = cinvfkwhs or cinvfkwhs is null)`;
+        if (warehouse) {
+            count += ` AND (IFNULL(?, cinvfkwhs) = cinvfkwhs OR cinvfkwhs IS NULL)`;
             countParameters.push(decodeURIComponent(warehouse));
         }
 
@@ -93,9 +99,11 @@ export class SalesAnalyst2Report implements ReportStrategy {
 	if (warehouse){
         query+= ` and (IFNULL(?, cinvfkwhs) = cinvfkwhs or cinvfkwhs is null)`;
     }
+    const sortBy = sortColumn ? sortColumn : 'cexcdesc,cstdcode';  
+    const sortOrder = sortDirection ? sortDirection : 'ASC';
     query+= `
   group by cstdcode, cstkdesc, cexcdesc
- order by cexcdesc,cstdcode ASC) AS c, (SELECT @currentGroup := '', @currentSum := 0, @currentGroupAmountTax := '', @currentSumAmountTax := 0) r 
+ order by ${sortBy} ${sortOrder}) AS c, (SELECT @currentGroup := '', @currentSum := 0, @currentGroupAmountTax := '', @currentSumAmountTax := 0) r 
         LIMIT ? OFFSET ?`; 
 
         const offset = (pageNumber - 1) * pageSize;
@@ -119,6 +127,7 @@ export class SalesAnalyst2Report implements ReportStrategy {
             this.genericRepository.query<SalesAnalystDTO>(query, parameters),
             this.genericRepository.query<SalesAnalystDTO>(count, parameters)
         ]);
+        console.log({totalRows});
         const totalPages = Math.ceil((totalRows[0] as any).total_rows / pageSize);
         if (response?.length) {
             return ResponseHelper.CreateResponse<SalesAnalystDTO[]>(response, HttpStatus.OK, Constants.DATA_SUCCESS, {

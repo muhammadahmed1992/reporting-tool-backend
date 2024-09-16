@@ -17,7 +17,7 @@ export class SalesAnalystReport implements ReportStrategy {
 
     public async generateReport(queryString: QueryStringDTO): Promise<ApiResponse<any>> {
 
-        let {startDate, endDate, warehouse, stockGroup, pageSize, pageNumber, searchValue, columnsToFilter} = queryString;
+        let {startDate, endDate, warehouse, stockGroup, pageSize, pageNumber, searchValue, columnsToFilter, sortColumn, sortDirection} = queryString;
         const filterColumns = columnsToFilter ? columnsToFilter.toString().split(',').map(item => item.trim()) : [];
         const parameters = []; const countParameters = [];
         if (!startDate)
@@ -26,7 +26,8 @@ export class SalesAnalystReport implements ReportStrategy {
             endDate = new Date();
         parameters.push(startDate);
         parameters.push(endDate);
-        
+        countParameters.push(startDate);
+        countParameters.push(endDate);
         let count = `
         SELECT COUNT(1) as total_rows
         FROM (
@@ -130,14 +131,15 @@ export class SalesAnalystReport implements ReportStrategy {
             query+= ` and (IFNULL(?, cstkfkgrp) = cstkfkgrp or cstkfkgrp is null)  `;
             parameters.push(decodeURIComponent(stockGroup));
         }
-                               
+        const sortBy = sortColumn ? sortColumn : 'cexcdesc,cstdcode';  
+        const sortOrder = sortDirection ? sortDirection : 'ASC';                       
         query+= ` group by nstkppn,cinvspecial,civdfkinv,cstdcode, cstkdesc, cexcdesc,ninvdisc,nivdstkppn,ninvtax 
          order by cexcdesc,cstdcode
         ) as b
         
         on a.civdfkinv=b.civdfkinv
         group by cstdcode,cstkdesc,cexcdesc
-        order by cexcdesc,cstdcode ASC ) AS c, (SELECT @currentGroup := '', @currentSum := 0, @currentGroupAmountTax := '', @currentSumAmountTax := 0) r
+        order by ${sortBy} ${sortOrder} ) AS c, (SELECT @currentGroup := '', @currentSum := 0, @currentGroupAmountTax := '', @currentSumAmountTax := 0) r
         LIMIT ? OFFSET ?`;
         console.log(`query: ${query}`);
         console.log(`Report Name: ${ReportName.Sales_Analyst}`);
@@ -145,13 +147,14 @@ export class SalesAnalystReport implements ReportStrategy {
         console.log('stockGroup: ', decodeURIComponent(stockGroup));
         console.log(`=============================================`);
 
+        
+        const offset = (pageNumber - 1) * pageSize;
+        parameters.push(pageSize);
+        parameters.push(offset);
         const [response, totalRows] = await Promise.all([
             this.genericRepository.query<SalesAnalystDTO>(query, parameters),
             this.genericRepository.query<number>(count, countParameters)
         ]);
-        const offset = (pageNumber - 1) * pageSize;
-        parameters.push(pageSize);
-        parameters.push(offset);
         const totalPages = Math.ceil((totalRows[0] as any).total_rows / pageSize);
         if (response?.length) {
             return ResponseHelper.CreateResponse<SalesAnalystDTO[]>(response, HttpStatus.OK, Constants.DATA_SUCCESS, {

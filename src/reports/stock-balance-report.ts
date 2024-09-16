@@ -14,7 +14,7 @@ export class StockBalanceReport implements ReportStrategy {
     constructor(private readonly genericRepository: GenericRepository) {}
 
     public async generateReport(queryString: QueryStringDTO): Promise<ApiResponse<any>> {
-        const {stockGroup, warehouse, pageSize, pageNumber, searchValue, columnsToFilter} = queryString;
+        const {stockGroup, warehouse, pageSize, pageNumber, searchValue, columnsToFilter, sortColumn, sortDirection} = queryString;
         const filterColumns = columnsToFilter ? columnsToFilter.toString().split(',').map(item => item.trim()) : [];
         const parameters = []; const countParameters = [];
         let count = `
@@ -140,9 +140,10 @@ export class StockBalanceReport implements ReportStrategy {
         if (stockGroup) {
             query+= ` and (IFNULL(?, cstkfkgrp) = cstkfkgrp or cstkfkgrp is null) `;
         }
-        
+        const sortBy = sortColumn ? sortColumn : 'Kode,Nama,Lokasi';  
+        const sortOrder = sortDirection ? sortDirection : 'ASC';
         query+= ` group by Kode,Nama,Lokasi
-        order by Kode,Nama,Lokasi asc ) d
+        order by ${sortBy} ${sortOrder} ) d
         JOIN (SELECT @totalBalance := 0) r LIMIT ? OFFSET ?`;
         console.log(`query: ${query} `);
         console.log(`Report Name: ${ReportName.Stock_Balance}`);

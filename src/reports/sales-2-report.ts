@@ -14,7 +14,7 @@ export class Sales2Report implements ReportStrategy {
     constructor(private readonly genericRepository: GenericRepository) {}
 
     public async generateReport(queryString: QueryStringDTO): Promise<ApiResponse<any>> {
-        let {startDate, endDate, warehouse, pageSize, pageNumber, searchValue, columnsToFilter} = queryString;
+        let {startDate, endDate, warehouse, pageSize, pageNumber, searchValue, columnsToFilter, sortColumn, sortDirection} = queryString;
         const filterColumns = columnsToFilter ? columnsToFilter.toString().split(',').map(item => item.trim()) : [];
         const parameters = []; const countParameters = [];
         if (!startDate)
@@ -23,15 +23,17 @@ export class Sales2Report implements ReportStrategy {
             endDate = new Date();
         parameters.push(startDate);
         parameters.push(endDate);
+        countParameters.push(startDate);
+        countParameters.push(endDate);
         let count = `
-        SELECT COUNT(1) as total_rows
-            FROM invoice
-            INNER JOIN invoicedetail ON cinvpk = civdfkinv
-            INNER JOIN exchange ON cinvfkexc = cexcpk
-            LEFT JOIN entity ON cinvfkent = centpk
-            WHERE (cinvspecial = 'JL' OR cinvspecial = 'RJ' OR cinvspecial = 'PS' OR cinvspecial = 'RS') 
-              AND dinvdate >= ? 
-              AND dinvdate <= ? `;
+        SELECT COUNT(DISTINCT cinvrefno) as total_rows
+FROM invoice
+INNER JOIN invoicedetail ON cinvpk = civdfkinv
+INNER JOIN exchange ON cinvfkexc = cexcpk
+LEFT JOIN entity ON cinvfkent = centpk
+WHERE (cinvspecial = 'JL' OR cinvspecial = 'RJ' OR cinvspecial = 'PS' OR cinvspecial = 'RS')
+AND dinvdate >= ? AND dinvdate <= ?
+`;
               if (searchValue) {
                 count += ' AND (';
                 count += filterColumns.map(column => `${column} LIKE ?`).join(' OR ');
@@ -73,10 +75,11 @@ export class Sales2Report implements ReportStrategy {
             query+= `and (IFNULL(?, cinvfkwhs) = cinvfkwhs or cinvfkwhs is null) `;
             parameters.push(decodeURIComponent(warehouse));
         }
-
+        const sortBy = sortColumn ? sortColumn : 'currency,date,invoice';  
+        const sortOrder = sortDirection ? sortDirection : 'ASC';
         query += `
         group by cinvrefno,dinvdate,centdesc,cexcdesc,ninvdisc1,ninvdisc2,ninvdisc3,ninvtax,ninvfreight,cinvspecial
-        order by currency,date,invoice) AS c, (SELECT @currentGroup := '', @currentSum := 0) r LIMIT ? OFFSET ?`;
+        order by ${sortBy} ${sortOrder}) AS c, (SELECT @currentGroup := '', @currentSum := 0) r LIMIT ? OFFSET ?`;
         const offset = (pageNumber - 1) * pageSize;
         parameters.push(pageSize);
         parameters.push(offset);

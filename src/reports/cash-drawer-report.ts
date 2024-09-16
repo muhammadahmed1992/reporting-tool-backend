@@ -185,6 +185,8 @@ FROM (
         const parameters = []; const countParameters = [];
         parameters.push(startDate);
         parameters.push(endDate);
+        countParameters.push(startDate);
+        countParameters.push(endDate);
         parameters.push(pageSize);
         parameters.push(offset);
         console.log(`parameters: ${parameters}`)

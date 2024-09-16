@@ -15,7 +15,7 @@ export class SalesReport implements ReportStrategy {
     constructor(private readonly genericRepository: GenericRepository) {}
 
     public async generateReport(queryString: QueryStringDTO): Promise<ApiResponse<any>> {
-        let {startDate, endDate, warehouse, pageSize, pageNumber, searchValue, columnsToFilter} = queryString;
+        let {startDate, endDate, warehouse, pageSize, pageNumber, searchValue, columnsToFilter, sortColumn, sortDirection} = queryString;
         const filterColumns = columnsToFilter ? columnsToFilter.toString().split(',').map(item => item.trim()) : [];
         const parameters = []; const countParameters = [];
         if (!startDate)
@@ -24,7 +24,8 @@ export class SalesReport implements ReportStrategy {
             endDate = new Date();
         parameters.push(startDate);
         parameters.push(endDate);
-        
+        countParameters.push(startDate);
+        countParameters.push(endDate);
         let count = `
        SELECT COUNT(1) as total_rows
         FROM (
@@ -91,6 +92,8 @@ export class SalesReport implements ReportStrategy {
          if (warehouse) {
              query+= ` and (IFNULL(?, cinvfkwhs) = cinvfkwhs or cinvfkwhs is null) `;
          } 
+         const sortBy = sortColumn ? sortColumn : 'date,invoice';  
+        const sortOrder = sortDirection ? sortDirection : 'ASC'; 
          query+= ` group by civdfkinv) as a
  
          inner join
@@ -107,7 +110,7 @@ export class SalesReport implements ReportStrategy {
  
          on a.civdfkinv=b.civdfkinv
          group by cinvrefno,dinvdate,centdesc,cexcdesc,nfreight
-         order by currency,date,invoice) AS a, (SELECT @currentGroup := '', @currentSum := 0) r
+         order by currency, ${sortBy} ${sortOrder}) AS a, (SELECT @currentGroup := '', @currentSum := 0) r
          LIMIT ? OFFSET ?; `;
         console.log(`query: ${query}`);
         console.log(`Report Name: ${ReportName.Sales}`);
