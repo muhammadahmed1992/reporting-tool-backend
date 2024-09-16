@@ -90,11 +90,13 @@ export class PurchaseReportNoDisc implements ReportStrategy {
             query+= `and (IFNULL(?, cinvfkwhs) = cinvfkwhs or cinvfkwhs is null) `;
             parameters.push(decodeURIComponent(warehouse));
         }
-        const sortBy = sortColumn ? sortColumn : 'currency,date,invoice';  
+        const sortBy = sortColumn ? sortColumn : 'currency_header,date_header,invoice_header';  
         const sortOrder = sortDirection ? sortDirection : 'ASC';
         query += `
         group by cinvrefno,dinvdate,centdesc,cexcdesc,ninvdisc1,ninvdisc2,ninvdisc3,ninvtax,ninvfreight,cinvspecial
-        order by ${sortBy} ${sortOrder}) AS c, (SELECT @currentGroup := '', @currentSum := 0) r LIMIT ? OFFSET ?`;
+        ) AS c, (SELECT @currentGroup := '', @currentSum := 0) r 
+         order by ${sortBy} ${sortOrder}
+         LIMIT ? OFFSET ?`;
         const offset = (pageNumber - 1) * pageSize;
         parameters.push(pageSize);
         parameters.push(offset);

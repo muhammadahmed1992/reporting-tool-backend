@@ -67,6 +67,7 @@ export class SalesReport implements ReportStrategy {
         order by currency,date,invoice) AS a, (SELECT @currentGroup := '', @currentSum := 0) r; `;
         
         let query = `
+        
         SELECT Invoice as invoice_header, Date as date_header, Currency as currency_header,
              FORMAT(Amount,0) AS amount_header,
              FORMAT(IF(@currentGroup <> Currency, 

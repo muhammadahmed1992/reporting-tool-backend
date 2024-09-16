@@ -99,12 +99,12 @@ FROM (
 	if (warehouse){
         query+= ` and (IFNULL(?, cinvfkwhs) = cinvfkwhs or cinvfkwhs is null)`;
     }
-    const sortBy = sortColumn ? sortColumn : 'cexcdesc,cstdcode';  
+    const sortBy = sortColumn ? sortColumn : 'stock_name_header,stock_id_header';  
     const sortOrder = sortDirection ? sortDirection : 'ASC';
     query+= `
   group by cstdcode, cstkdesc, cexcdesc
- order by ${sortBy} ${sortOrder}) AS c, (SELECT @currentGroup := '', @currentSum := 0, @currentGroupAmountTax := '', @currentSumAmountTax := 0) r 
-        LIMIT ? OFFSET ?`; 
+ ) AS c, (SELECT @currentGroup := '', @currentSum := 0, @currentGroupAmountTax := '', @currentSumAmountTax := 0) r 
+        order by ${sortBy} ${sortOrder} LIMIT ? OFFSET ?`; 
 
         const offset = (pageNumber - 1) * pageSize;
         

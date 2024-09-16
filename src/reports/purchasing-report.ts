@@ -76,7 +76,7 @@ export class PurchaseReport implements ReportStrategy {
         if (warehouse) {
             query+= ` and (IFNULL(?, cinvfkwhs) = cinvfkwhs or cinvfkwhs is null) `;
         } 
-        const sortBy = sortColumn ? sortColumn : 'currency,date,invoice';  
+        const sortBy = sortColumn ? sortColumn : 'currency_header,date_header,invoice_header';  
         const sortOrder = sortDirection ? sortDirection : 'ASC';
         query+= ` group by civdfkinv) as a
 
@@ -94,7 +94,9 @@ export class PurchaseReport implements ReportStrategy {
 
         on a.civdfkinv=b.civdfkinv
         group by cinvrefno,dinvdate,centdesc,cexcdesc,nfreight
-        order by ${sortBy} ${sortOrder}) AS a, (SELECT @currentGroup := '', @currentSum := 0) r LIMIT ? OFFSET ?; `;
+        ) AS a, (SELECT @currentGroup := '', @currentSum := 0) r
+        order by ${sortBy} ${sortOrder}
+        LIMIT ? OFFSET ?; `;
 
         console.log(`query: ${query}`);
         console.log(`Report Name: ${ReportName.Purchase_Report}`);

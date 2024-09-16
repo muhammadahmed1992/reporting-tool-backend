@@ -128,7 +128,7 @@ if (searchValue) {
             query+= ` and (IFNULL(?, cstkfkgrp) = cstkfkgrp or cstkfkgrp is null)  `;
             parameters.push(decodeURIComponent(stockGroup));
         }
-        const sortBy = sortColumn ? sortColumn : 'cexcdesc,cstdcode';  
+        const sortBy = sortColumn ? sortColumn : 'stock_name_header,stock_id_header';  
         const sortOrder = sortDirection ? sortDirection : 'ASC';                        
         query+= ` group by nstkppn,cinvspecial,civdfkinv,cstdcode, cstkdesc, cexcdesc,ninvdisc,nivdstkppn,ninvtax 
          order by cexcdesc,cstdcode
@@ -136,7 +136,8 @@ if (searchValue) {
         
         on a.civdfkinv=b.civdfkinv
         group by cstdcode,cstkdesc,cexcdesc
-        order by ${sortBy} ${sortOrder} ) AS c, (SELECT @currentGroup := '', @currentSum := 0, @currentGroupAmountTax := '', @currentSumAmountTax := 0) r
+       ) AS c, (SELECT @currentGroup := '', @currentSum := 0, @currentGroupAmountTax := '', @currentSumAmountTax := 0) r
+         order by ${sortBy} ${sortOrder} 
         LIMIT ? OFFSET ? `;
         console.log(`query: ${query}`);
         console.log(`Report Name: ${ReportName.Purchase_Analyst_Report}`);
