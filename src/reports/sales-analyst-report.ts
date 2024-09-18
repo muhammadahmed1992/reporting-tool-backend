@@ -10,14 +10,16 @@ import ResponseHelper from 'src/helper/response-helper';
 import { SalesAnalystDTO } from '../dto/sales-analyst.dto';
 import { ReportName } from 'src/helper/enums/report-names.enum';
 import Constants from 'src/helper/constants';
-
+import { QueryStringDTO } from 'src/dto/query-string.dto';
 @Injectable()
 export class SalesAnalystReport implements ReportStrategy {
     constructor(private readonly genericRepository: GenericRepository) {}
 
-    public async generateReport(...params: any): Promise<ApiResponse<any>> {
+    public async generateReport(queryString: QueryStringDTO): Promise<ApiResponse<any>> {
 
-        let [startDate, endDate, warehouse, stockGroup] = params;
+        let {startDate, endDate, warehouse, stockGroup, sortColumn, sortDirection, searchValue, columnsToFilter } = queryString;
+        const sortBy = sortColumn ? sortColumn : 'stock_id_header, stock_name_header';  
+        const sortOrder = sortDirection ? sortDirection : 'ASC';
  
         if (!startDate)
             startDate = new Date();
@@ -67,7 +69,14 @@ export class SalesAnalystReport implements ReportStrategy {
             INNER JOIN stockdetail
            ON  cSTKpk = cSTDfkSTK
          WHERE nstdkey = 1 and nIVDkirim=1 AND (cINVspecial='JL' or cINVspecial='RJ' or cINVspecial='PS' or cINVspecial='RS')
-            and dinvdate>= ? and dinvdate<= ? `
+            and dinvdate>= ? and dinvdate<= ? `;
+            const filterColumns = columnsToFilter ? columnsToFilter.toString().split(',').map(item => item.trim()) : [];
+            if (searchValue) {
+                query += ' AND (';
+                query += filterColumns.map(column => `${column} LIKE ?`).join(' OR ');
+                query += ')';
+                parameters.push(...filterColumns.map(() => `%${searchValue}%`));
+            }
         if (warehouse) {
             query+= ` and (IFNULL(?, cinvfkwhs) = cinvfkwhs or cinvfkwhs is null) `
             parameters.push(decodeURIComponent(warehouse));
@@ -83,7 +92,8 @@ export class SalesAnalystReport implements ReportStrategy {
         
         on a.civdfkinv=b.civdfkinv
         group by cstdcode,cstkdesc,cexcdesc
-        order by cexcdesc,cstdcode ASC ) AS c, (SELECT @currentGroup := '', @currentSum := 0, @currentGroupAmountTax := '', @currentSumAmountTax := 0) r`;
+         ) AS c, (SELECT @currentGroup := '', @currentSum := 0, @currentGroupAmountTax := '', @currentSumAmountTax := 0) r
+        order by ${sortBy} ${sortOrder}`;
         console.log(`query: ${query}`);
         console.log(`Report Name: ${ReportName.Sales_Analyst}`);
         console.log('warehouse: ', decodeURIComponent(warehouse));

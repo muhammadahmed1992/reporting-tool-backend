@@ -8,13 +8,16 @@ import ResponseHelper from 'src/helper/response-helper';
 import { ReportName } from 'src/helper/enums/report-names.enum';
 import Constants from 'src/helper/constants';
 import { PurchasingReportNoDiscDTO } from 'src/dto/purchasing-report-no-disc.dto';
-
+import { QueryStringDTO } from 'src/dto/query-string.dto';
 @Injectable()
+
 export class PurchaseReportNoDisc implements ReportStrategy {
     constructor(private readonly genericRepository: GenericRepository) {}
 
-    public async generateReport(...params: any): Promise<ApiResponse<any>> {
-        let [startDate, endDate, warehouse] = params;
+    public async generateReport(queryString: QueryStringDTO): Promise<ApiResponse<any>> {
+        let {startDate, endDate, warehouse, sortColumn, sortDirection, searchValue, columnsToFilter } = queryString;
+        const sortBy = sortColumn ? sortColumn : 'currency_header,date_header,invoice_header';  
+        const sortOrder = sortDirection ? sortDirection : 'ASC';
         const parameters = [];
         if (!startDate)
             startDate = new Date();
@@ -41,7 +44,14 @@ export class PurchaseReportNoDisc implements ReportStrategy {
         inner join exchange on cinvfkexc=cexcpk
         left join entity on cinvfkent=centpk
         where (cinvspecial='BL' or cinvspecial='RB' or cinvspecial='KS') 
-        and dinvdate>=? and dinvdate<=? `
+        and dinvdate>=? and dinvdate<=? `;
+        const filterColumns = columnsToFilter ? columnsToFilter.toString().split(',').map(item => item.trim()) : [];
+        if (searchValue) {
+            query += ' AND (';
+            query += filterColumns.map(column => `${column} LIKE ?`).join(' OR ');
+            query += ')';
+            parameters.push(...filterColumns.map(() => `%${searchValue}%`));
+        }
         if (warehouse) {
             query+= `and (IFNULL(?, cinvfkwhs) = cinvfkwhs or cinvfkwhs is null) `;
             parameters.push(decodeURIComponent(warehouse));
@@ -49,7 +59,8 @@ export class PurchaseReportNoDisc implements ReportStrategy {
 
         query += `
         group by cinvrefno,dinvdate,centdesc,cexcdesc,ninvdisc1,ninvdisc2,ninvdisc3,ninvtax,ninvfreight,cinvspecial
-        order by currency,date,invoice) AS c, (SELECT @currentGroup := '', @currentSum := 0) r `;
+        ) AS c, (SELECT @currentGroup := '', @currentSum := 0) r 
+        order by ${sortBy} ${sortOrder}`;
 
         console.log(`query: ${query}`);
         console.log(`Report Name: ${ReportName.Purchase_Report_No_Disc}`);

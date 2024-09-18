@@ -9,18 +9,24 @@ import ResponseHelper from 'src/helper/response-helper';
 
 import { SalesAnalystDTO } from '../dto/sales-analyst.dto';
 import { ReportName } from 'src/helper/enums/report-names.enum';
+import { QueryStringDTO } from 'src/dto/query-string.dto';
 import Constants from 'src/helper/constants';
 
 @Injectable()
 export class PurchaseAnalystReportNoDisc implements ReportStrategy {
     constructor(private readonly genericRepository: GenericRepository) {}
 
-    public async generateReport(...params: any): Promise<ApiResponse<any>> {
-        let [startDate, endDate, warehouse, stockGroup] = params;
+    public async generateReport(queryString: QueryStringDTO): Promise<ApiResponse<any>> {
+        let {startDate, endDate, warehouse, stockGroup, sortColumn, sortDirection, searchValue, columnsToFilter } = queryString;
+        const sortBy = sortColumn ? sortColumn : 'stock_id_header,stock_name_header';  
+        const sortOrder = sortDirection ? sortDirection : 'ASC';
         if (!startDate)
             startDate = new Date();
         if (!endDate)
             endDate = new Date();
+        const parameters = [];
+        parameters.push(startDate);
+        parameters.push(endDate);
         let query = 
         `
         SELECT StockID as stock_id_header, StockName as stock_name_header, FORMAT(Qty,0) as qty_header, Currency as currency_header, FORMAT(Amount, 0) as amount_header, FORMAT(Amount_Tax, 0) as amount_tax_header,
@@ -48,6 +54,13 @@ export class PurchaseAnalystReportNoDisc implements ReportStrategy {
         ON  cSTKpk = cSTDfkSTK
         WHERE nstdkey = 1 and nIVDkirim=1 AND (cINVspecial='BL' or cINVspecial='RB' or cINVspecial='KS' or cINVspecial='RS')
         and dinvdate>=? and dinvdate<=? `;
+        const filterColumns = columnsToFilter ? columnsToFilter.toString().split(',').map(item => item.trim()) : [];
+        if (searchValue) {
+            query += ' AND (';
+            query += filterColumns.map(column => `${column} LIKE ?`).join(' OR ');
+            query += ')';
+            parameters.push(...filterColumns.map(() => `%${searchValue}%`));
+        }
     if (stockGroup) {
         query+= ` and (IFNULL(?, cstkfkgrp) = cstkfkgrp or cstkfkgrp is null) `;
     }
@@ -56,12 +69,10 @@ export class PurchaseAnalystReportNoDisc implements ReportStrategy {
     }
     query+= `
   group by cstdcode, cstkdesc, cexcdesc
- order by cexcdesc,cstdcode ASC) AS c, (SELECT @currentGroup := '', @currentSum := 0, @currentGroupAmountTax := '', @currentSumAmountTax := 0) r 
-        `; 
+ ) AS c, (SELECT @currentGroup := '', @currentSum := 0, @currentGroupAmountTax := '', @currentSumAmountTax := 0) r 
+      order by ${sortBy} ${sortOrder}  `; 
 
-        const parameters = [];
-        parameters.push(startDate);
-        parameters.push(endDate);
+        
         if (stockGroup){
             parameters.push(decodeURIComponent(stockGroup));
         }

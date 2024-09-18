@@ -8,12 +8,12 @@ import ApiResponse from 'src/helper/api-response';
 import ResponseHelper from 'src/helper/response-helper';
 import { ReportName } from 'src/helper/enums/report-names.enum';
 import Constants from 'src/helper/constants';
-
+import { QueryStringDTO } from 'src/dto/query-string.dto';
 @Injectable()
 export class CashDrawerReport implements ReportStrategy {
     constructor(private readonly genericRepository: GenericRepository) {}
 
-    public async generateReport(...params: any): Promise<ApiResponse<any>> {
+    public async generateReport(queryString: QueryStringDTO): Promise<ApiResponse<any>> {
         let query = `
 SELECT
     Date as date_drawer_header,
@@ -120,7 +120,7 @@ FROM (
     @running_balance := 0
 ) AS vars;
 `;
-        let [startDate, endDate] = params;
+        let {startDate, endDate} = queryString;
         if (!startDate)
             startDate = new Date();
         if (!endDate)

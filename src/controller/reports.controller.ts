@@ -1,98 +1,86 @@
 import { Controller, Get, Query } from '@nestjs/common';
-
 import { ReportService } from './../services/report.service';
 import { ReportName } from 'src/helper/enums/report-names.enum';
+import { QueryStringDTO } from 'src/dto/query-string.dto';
 
 @Controller('reports')
 export class ReportsController {
   constructor(private readonly reportService: ReportService) {}
 
   @Get('/price-list')
-  async pricelist(@Query('stockGroup') stockGroup: string): Promise<any> {
-    const result = await this.reportService.generateReport(ReportName.Price_List, stockGroup);
+  async pricelist(@Query() query: QueryStringDTO): Promise<any> {
+    const result = await this.reportService.generateReport(ReportName.Price_List, query);
     return result;
   }
   @Get('/cash-drawer')
-  async cashdrawer(@Query('startDate') startDate: Date, @Query('endDate') endDate: Date): Promise<any> {
-    const result = await this.reportService.generateReport(ReportName.Cash_Drawer, startDate, endDate);
+  async cashdrawer(@Query() query: QueryStringDTO): Promise<any> {
+    const result = await this.reportService.generateReport(ReportName.Cash_Drawer, query);
     return result;
   }
   
   @Get('/sales')
-  async sales(@Query('startDate') startDate: Date, @Query('endDate') endDate: Date, @Query('warehouse') warehouse: string): Promise<any> {
-    const result = await this.reportService.generateReport(ReportName.Sales, startDate, endDate, warehouse);
+  async sales(@Query() query: QueryStringDTO): Promise<any> {
+    const result = await this.reportService.generateReport(ReportName.Sales, query);
     return result;
   }
   
   @Get('/sales-analyst')
-  async salesanalyst(@Query('startDate') startDate: Date, 
-                     @Query('endDate') endDate: Date, 
-                    @Query('warehouse') warehouse: string, 
-                    @Query('stockGroup') stockGroup: string): Promise<any> {
-    const result = await this.reportService.generateReport(ReportName.Sales_Analyst, startDate, endDate, warehouse, stockGroup);
+  async salesanalyst(@Query() query: QueryStringDTO): Promise<any> {
+    const result = await this.reportService.generateReport(ReportName.Sales_Analyst, query);
     return result;
   }
   
   @Get('/sales-analyst-2')
-  async salesanalyst2(@Query('startDate') startDate: Date, 
-  @Query('endDate') endDate: Date, 
- @Query('warehouse') warehouse: string, 
- @Query('stockGroup') stockGroup: string): Promise<any> {
-    const result = await this.reportService.generateReport(ReportName.Sales_Analyst_No_Disc, startDate, endDate, warehouse, stockGroup);
+  async salesanalyst2(@Query() query: QueryStringDTO): Promise<any> {
+    const result = await this.reportService.generateReport(ReportName.Sales_Analyst_No_Disc, query);
     return result;
   }
   
   @Get('/sales-2')
-  async sales2(@Query('startDate') startDate: Date, @Query('endDate') endDate: Date, @Query('warehouse') warehouse: string): Promise<any> {
-    const result = await this.reportService.generateReport(ReportName.Sales_No_Disc, startDate, endDate, warehouse);
+  async sales2(@Query() query: QueryStringDTO): Promise<any> {
+    const result = await this.reportService.generateReport(ReportName.Sales_No_Disc, query);
     return result;
   } 
 
   @Get('/stock-balance')
-  async stockBalance(@Query('stockGroup') stockGroup: string, @Query('warehouse') warehouse: Date): Promise<any> {
-    const result = await this.reportService.generateReport(ReportName.Stock_Balance, stockGroup, warehouse);
+  async stockBalance(@Query() query: QueryStringDTO): Promise<any> {
+    const result = await this.reportService.generateReport(ReportName.Stock_Balance, query);
     return result;
   }
 
   @Get('/stock-search-barcode')
-  async stockSearchBarCode(@Query('stockId') stockId: string): Promise<any> {
-    const result = await this.reportService.generateReport(ReportName.Stock_Balance_BarCode, stockId);
+  async stockSearchBarCode(@Query() query: QueryStringDTO): Promise<any> {
+    const result = await this.reportService.generateReport(ReportName.Stock_Balance_BarCode, query);
     return result;
   }
   
   @Get('/purchase')
-  async purchasing(@Query('startDate') startDate: Date, @Query('endDate') endDate: Date, @Query('warehouse') warehouse: string): Promise<any> {
-    const result = await this.reportService.generateReport(ReportName.Purchase_Report, startDate, endDate, warehouse);
+  async purchasing(@Query() query: QueryStringDTO): Promise<any> {
+    const result = await this.reportService.generateReport(ReportName.Purchase_Report, query);
     return result;
   }
   
   @Get('/purchase-analyst')
-  async purchaseanalyst(@Query('startDate') startDate: Date, 
-                     @Query('endDate') endDate: Date, 
-                    @Query('warehouse') warehouse: string, 
-                    @Query('stockGroup') stockGroup: string): Promise<any> {
-    const result = await this.reportService.generateReport(ReportName.Purchase_Analyst_Report, startDate, endDate, warehouse, stockGroup);
+  async purchaseanalyst(@Query() query: QueryStringDTO): Promise<any> {
+    const result = await this.reportService.generateReport(ReportName.Purchase_Analyst_Report, query);
     return result;
   }
   
   @Get('/purchase-analyst-no-disc')
-  async purchaseAnalystNoDisc(@Query('startDate') startDate: Date, 
-  @Query('endDate') endDate: Date, 
- @Query('warehouse') warehouse: string, 
- @Query('stockGroup') stockGroup: string): Promise<any> {
-    const result = await this.reportService.generateReport(ReportName.Purchase_Analyst_Report_No_Disc, startDate, endDate, warehouse, stockGroup);
+  async purchaseAnalystNoDisc(@Query() query: QueryStringDTO): Promise<any> {
+    const result = await this.reportService.generateReport(ReportName.Purchase_Analyst_Report_No_Disc, query);
     return result;
   }
   
   @Get('/purchase-no-disc')
-  async purcahseNoDisc(@Query('startDate') startDate: Date, @Query('endDate') endDate: Date, @Query('warehouse') warehouse: string): Promise<any> {
-    const result = await this.reportService.generateReport(ReportName.Purchase_Report_No_Disc, startDate, endDate, warehouse);
+  async purcahseNoDisc(@Query() query: QueryStringDTO): Promise<any> {
+    const result = await this.reportService.generateReport(ReportName.Purchase_Report_No_Disc, query);
     return result;
   }
   
   @Get('/cash-drawer-detail')
-  async cashDrawerDetails(@Query('startDate') startDate: Date, @Query('endDate') endDate: Date): Promise<any> {
-    const result = await this.reportService.generateReport(ReportName.Cash_Drawer_Detail, startDate, endDate);
+  async cashDrawerDetails(@Query() query: QueryStringDTO): Promise<any> {
+    const result = await this.reportService.generateReport(ReportName.Cash_Drawer_Detail, query);
     return result;
   }
 }

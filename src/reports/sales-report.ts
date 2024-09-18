@@ -9,13 +9,17 @@ import ApiResponse from 'src/helper/api-response';
 import ResponseHelper from 'src/helper/response-helper';
 import { ReportName } from 'src/helper/enums/report-names.enum';
 import Constants from 'src/helper/constants';
+import { QueryStringDTO } from 'src/dto/query-string.dto';
+import { QueryResult } from 'typeorm';
 
 @Injectable()
 export class SalesReport implements ReportStrategy {
     constructor(private readonly genericRepository: GenericRepository) {}
 
-    public async generateReport(...param: any): Promise<ApiResponse<any>> {
-        let [startDate, endDate, warehouse] = param;
+    public async generateReport(queryString: QueryStringDTO): Promise<ApiResponse<any>> {
+        let {startDate, endDate, warehouse, sortColumn, sortDirection, searchValue, columnsToFilter } = queryString;
+        const sortBy = sortColumn ? sortColumn : 'currency_header,date_header,invoice_header';  
+        const sortOrder = sortDirection ? sortDirection : 'ASC';
         const parameters = [];
         if (!startDate)
             startDate = new Date();
@@ -41,7 +45,14 @@ export class SalesReport implements ReportStrategy {
         sum((sumdetails-ndisc/rows2)*(if(nivdstkppn=1,1+ninvtax/100,1)))+nfreight as 'Amount' from
         (select civdfkinv,count(1) as rows2 from invoicedetail
         inner join invoice on civdfkinv=cinvpk
-        and dinvdate>=? and dinvdate<=? `
+        and dinvdate>=? and dinvdate<=? `;
+        const filterColumns = columnsToFilter ? columnsToFilter.toString().split(',').map(item => item.trim()) : [];
+        if (searchValue) {
+            query += ' AND (';
+            query += filterColumns.map(column => `${column} LIKE ?`).join(' OR ');
+            query += ')';
+            parameters.push(...filterColumns.map(() => `%${searchValue}%`));
+        }
         if (warehouse) {
             query+= ` and (IFNULL(?, cinvfkwhs) = cinvfkwhs or cinvfkwhs is null) `;
         } 
@@ -61,7 +72,8 @@ export class SalesReport implements ReportStrategy {
 
         on a.civdfkinv=b.civdfkinv
         group by cinvrefno,dinvdate,centdesc,cexcdesc,nfreight
-        order by currency,date,invoice) AS a, (SELECT @currentGroup := '', @currentSum := 0) r; `;
+        ) AS a, (SELECT @currentGroup := '', @currentSum := 0) r 
+        order by ${sortBy} ${sortOrder}`;
 
         console.log(`query: ${query}`);
         console.log(`Report Name: ${ReportName.Sales}`);
