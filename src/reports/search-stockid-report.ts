@@ -18,6 +18,9 @@ export class SearchStockIDReport implements ReportStrategy {
 
     public async generateReport(queryString: QueryStringDTO): Promise<ApiResponse<any>> {
         const {stockCode} = queryString;
+        if (!stockCode) {
+            return ResponseHelper.CreateResponse<StocBalancekDTO[]>([], HttpStatus.NOT_FOUND, Constants.STOCK_CODE_EMPTY);
+        }
         const parameters = [];
         let query = `
         select LTRIM(RTRIM(cSTDcode)) as StockID,
@@ -64,13 +67,12 @@ export class SearchStockIDReport implements ReportStrategy {
         
         if (stockCode) {
             query+= ` where cstdcode=? `
+            parameters.push(decodeURIComponent(stockCode));
         }
         
         query+= `group by StockId,StockName,Location
         order by Location asc`
-        if (stockCode) {
-            parameters.push(decodeURIComponent(stockCode));
-        }
+
         console.log(`query: ${query}`);
         console.log(`Report Name: ${ReportName.Stock_Balance_BarCode}`);
         console.log(`stockCode ${decodeURIComponent(stockCode)}`);

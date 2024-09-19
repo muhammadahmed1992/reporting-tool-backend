@@ -4,5 +4,6 @@
     "data_found": "Data berhasil diambil!",
     "connection_string_not_found": "Harap tentukan string koneksi",
     "bad_connection_string_format": "String koneksi yang diberikan tidak dalam format yang benar",
-    "unauthorized_user": "Pengguna tidak diizinkan untuk login"
+    "unauthorized_user": "Pengguna tidak diizinkan untuk login",
+    "stock_code_empty": "Stock code is not selected. Please try again"
 }
