@@ -16,8 +16,15 @@ export class PurchaseReportNoDisc implements ReportStrategy {
 
     public async generateReport(queryString: QueryStringDTO): Promise<ApiResponse<any>> {
         let {startDate, endDate, warehouse, sortColumn, sortDirection, searchValue, columnsToFilter } = queryString;
-        const sortBy = sortColumn ? sortColumn : 'currency_header,date_header,invoice_header';  
-        const sortOrder = sortDirection ? sortDirection : 'ASC';
+        let sortBy;
+
+        if(!sortColumn || sortColumn === 'currency_header' || sortColumn === 'invoice_header') {
+            sortBy = `currency_header,invoice_header`;
+        } else {
+            sortBy = `currency_header,${sortColumn},invoice_header`;
+        }
+     
+        const sortOrder = !sortDirection ? 'ASC' : sortDirection;
         const parameters = [];
         if (!startDate)
             startDate = new Date();

@@ -100,19 +100,20 @@ FROM (
             dINVdate, cinvuser
         ) AS b
     ON 
-        b.dinvdate = a.dinvdate
+        b.dinvdate = a.dinvdate and b.cinvuser=a.cinvuser
     LEFT JOIN
         (SELECT 
-            ddradate, 
+            ddradate, cdrauser,
             SUM(ndraopen) AS nopen, 
             SUM(ndradraw + ndradraw1) AS ndraw
+            
          FROM 
             drawer
          GROUP BY 
             cdrauser,ddradate
         ) AS c
     ON 
-        c.ddradate = a.dinvdate
+        c.ddradate = a.dinvdate and c.cdrauser=a.cinvuser
     ORDER BY 
         Date, Cashier)  AS subquery,
 (SELECT 

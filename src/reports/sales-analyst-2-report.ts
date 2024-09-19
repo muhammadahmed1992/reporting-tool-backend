@@ -18,8 +18,18 @@ export class SalesAnalyst2Report implements ReportStrategy {
 
     public async generateReport(queryString: QueryStringDTO): Promise<ApiResponse<any>> {
         let {startDate, endDate, warehouse, stockGroup, sortColumn, sortDirection, searchValue, columnsToFilter } = queryString;
-        const sortBy = sortColumn ? sortColumn : 'stock_id_header, stock_name_header';  
-        const sortOrder = sortDirection ? sortDirection : 'ASC';
+        let sortBy;
+
+        if(!sortColumn || sortColumn === 'currency_header' || sortColumn === 'stock_id_header') {
+            sortBy = `currency_header,stock_id_header`;
+        } else if (sortColumn === 'stock_name_header') {
+            sortBy = `currency_header,stock_name_header`;
+        } 
+        else {
+            sortBy = `currency_header,${sortColumn},stock_id_header`;
+        }
+     
+        const sortOrder = !sortDirection ? 'ASC' : sortDirection;
         if (!startDate)
             startDate = new Date();
         if (!endDate)
