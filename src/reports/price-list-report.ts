@@ -17,8 +17,13 @@ export class PriceListReport implements ReportStrategy {
 
     public async generateReport(queryString: QueryStringDTO): Promise<ApiResponse<any>> {
         const {stockGroup, sortColumn, sortDirection, searchValue, columnsToFilter } = queryString;
-        const sortBy = sortColumn ? sortColumn : 'stock_id_header';  
-        const sortOrder = sortDirection ? sortDirection : 'ASC';
+        let sortBy;
+        const sortOrder = !sortDirection ? 'ASC' : sortDirection;
+        if(sortColumn === 'price_header') {
+            sortBy = `CAST(REPLACE(${sortColumn}, ',', '') AS SIGNED)`
+        } else {
+            sortBy = !sortColumn ? 'stock_id_header' : sortColumn;
+        }
         const parameters = [];
         let query = `
         SELECT cSTDcode as stock_id_header, LTRIM(RTRIM(cSTKdesc)) as stock_name_header,

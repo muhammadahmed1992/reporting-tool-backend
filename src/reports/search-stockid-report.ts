@@ -17,8 +17,8 @@ export class SearchStockIDReport implements ReportStrategy {
     constructor(private readonly genericRepository: GenericRepository) {}
 
     public async generateReport(queryString: QueryStringDTO): Promise<ApiResponse<any>> {
-        const {stockCode} = queryString;
-        if (!stockCode) {
+        const {stockId} = queryString;
+        if (!stockId) {
             return ResponseHelper.CreateResponse<StocBalancekDTO[]>([], HttpStatus.NOT_FOUND, Constants.STOCK_CODE_EMPTY);
         }
         const parameters = [];
@@ -65,9 +65,9 @@ export class SearchStockIDReport implements ReportStrategy {
         on cIvdFkStk=cSTDfkSTK And nSTDfactor=1 and nstdkey=1 
         INNER JOIN unit ON cSTDfkUNI=cUNIpk `
         
-        if (stockCode) {
+        if (stockId) {
             query+= ` where cstdcode=? `
-            parameters.push(decodeURIComponent(stockCode));
+            parameters.push(decodeURIComponent(stockId));
         }
         
         query+= `group by StockId,StockName,Location
@@ -75,7 +75,7 @@ export class SearchStockIDReport implements ReportStrategy {
 
         console.log(`query: ${query}`);
         console.log(`Report Name: ${ReportName.Stock_Balance_BarCode}`);
-        console.log(`stockCode ${decodeURIComponent(stockCode)}`);
+        console.log(`stockCode ${decodeURIComponent(stockId)}`);
         console.log(`==================================================`);
         const response = await this.genericRepository.query<StocBalancekDTO>(query, parameters);
         if (response?.length) {

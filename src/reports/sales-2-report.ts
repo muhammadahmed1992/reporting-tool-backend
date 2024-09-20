@@ -17,13 +17,19 @@ export class Sales2Report implements ReportStrategy {
         let {startDate, endDate, warehouse, sortColumn, sortDirection, searchValue, columnsToFilter } = queryString;
         let sortBy;
 
+        const sortOrder = !sortDirection ? 'ASC' : sortDirection;
+
         if(!sortColumn || sortColumn === 'currency_header' || sortColumn === 'invoice_header') {
-            sortBy = `currency_header,invoice_header`;
-        } else {
-            sortBy = `currency_header,${sortColumn},invoice_header`;
+            if(sortColumn === 'currency_header')
+                sortBy = ` currency_header ${sortOrder},invoice_header`;
+            else 
+                sortBy = ` currency_header ,invoice_header ${sortOrder}`;
+        }else if (sortColumn === 'date_header') {
+            sortBy = ` currency_header, STR_TO_DATE(date_header, '%d-%m-%Y') ${sortOrder}, invoice_header `;
+        }else {
+            sortBy = ` currency_header, CAST(REPLACE(${sortColumn}, ',', '') AS SIGNED) ${sortOrder} ,invoice_header`;
         }
      
-        const sortOrder = !sortDirection ? 'ASC' : sortDirection;
         const parameters = [];
         if (!startDate)
             startDate = new Date();
@@ -66,7 +72,7 @@ export class Sales2Report implements ReportStrategy {
         query += `
         group by cinvrefno,dinvdate,centdesc,cexcdesc,ninvdisc1,ninvdisc2,ninvdisc3,ninvtax,ninvfreight,cinvspecial
         ) AS c, (SELECT @currentGroup := '', @currentSum := 0) r 
-         order by ${sortBy} ${sortOrder}`;
+         order by ${sortBy}`;
 
         console.log(`query: ${query}`);
         console.log(`Report Name: ${ReportName.Sales_No_Disc}`);

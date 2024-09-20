@@ -21,16 +21,20 @@ export class PurchaseAnalystReport implements ReportStrategy {
         let {startDate, endDate, warehouse, stockGroup, sortColumn, sortDirection, searchValue, columnsToFilter } = queryString;
         let sortBy;
 
+        const sortOrder = !sortDirection ? 'ASC' : sortDirection;
+
         if(!sortColumn || sortColumn === 'currency_header' || sortColumn === 'stock_id_header') {
-            sortBy = `currency_header,stock_id_header`;
+            if(sortColumn === 'currency_header')
+                sortBy = `currency_header ${sortOrder},stock_id_header`;
+            else    
+                sortBy = `currency_header ,stock_id_header ${sortOrder}`;
         } else if (sortColumn === 'stock_name_header') {
             sortBy = `currency_header,stock_name_header`;
         } 
         else {
-            sortBy = `currency_header,${sortColumn},stock_id_header`;
+            sortBy = `currency_header,CAST(REPLACE(${sortColumn}, ',', '') AS SIGNED) ${sortOrder},stock_id_header`;
         }
-     
-        const sortOrder = !sortDirection ? 'ASC' : sortDirection;
+
         if (!startDate)
             startDate = new Date();
         if (!endDate)
@@ -103,7 +107,7 @@ export class PurchaseAnalystReport implements ReportStrategy {
         on a.civdfkinv=b.civdfkinv
         group by cstdcode,cstkdesc,cexcdesc
          ) AS c, (SELECT @currentGroup := '', @currentSum := 0, @currentGroupAmountTax := '', @currentSumAmountTax := 0) r
-        order by ${sortBy} ${sortOrder}`;
+        order by ${sortBy}`;
         console.log(`query: ${query}`);
         console.log(`Report Name: ${ReportName.Purchase_Analyst_Report}`);
         console.log('warehouse: ', decodeURIComponent(warehouse));

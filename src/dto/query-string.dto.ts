@@ -2,7 +2,7 @@ import { IsOptional, IsNumber, IsDateString, Min, IsArray } from 'class-validato
 
 export class QueryStringDTO {
   @IsOptional()
-  stockCode?: string;
+  stockId?: string;
 
   @IsOptional()
   stockGroup?: string;
