@@ -10,7 +10,6 @@ import ResponseHelper from 'src/helper/response-helper';
 import { ReportName } from 'src/helper/enums/report-names.enum';
 import Constants from 'src/helper/constants';
 import { QueryStringDTO } from 'src/dto/query-string.dto';
-import { QueryResult } from 'typeorm';
 
 @Injectable()
 export class SalesReport implements ReportStrategy {
@@ -31,7 +30,7 @@ export class SalesReport implements ReportStrategy {
         }else {
             sortBy = ` currency_header, CAST(REPLACE(${sortColumn}, ',', '') AS SIGNED) ${sortOrder} ,invoice_header`;
         }
-       
+        let {startDate, endDate, warehouse} = queryString;
         const parameters = [];
         console.log(`startDate: ${startDate}`);
         console.log(`endDate: ${endDate}`);
@@ -87,7 +86,7 @@ export class SalesReport implements ReportStrategy {
         console.log(`Report Name: ${ReportName.Sales}`);
         console.log('warehouse: ', decodeURIComponent(warehouse));
         console.log(`==================================================`);
-
+        console.log({queryString});
         if (warehouse)
             parameters.push(decodeURIComponent(warehouse));
 

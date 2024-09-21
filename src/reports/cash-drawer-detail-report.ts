@@ -130,8 +130,7 @@ FROM (
     @running_balance := 0
 ) AS vars;
 `;
-        let {startDate, endDate} = queryString;
-
+        const {startDate, endDate} = queryString;
         const parameters = [];
         parameters.push(startDate);
         parameters.push(endDate);

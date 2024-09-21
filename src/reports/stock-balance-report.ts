@@ -9,7 +9,6 @@ import ResponseHelper from 'src/helper/response-helper';
 import { ReportName } from 'src/helper/enums/report-names.enum';
 import Constants from 'src/helper/constants';
 import { QueryStringDTO } from 'src/dto/query-string.dto';
-
 @Injectable()
 export class StockBalanceReport implements ReportStrategy {
     constructor(private readonly genericRepository: GenericRepository) {}
@@ -24,6 +23,7 @@ export class StockBalanceReport implements ReportStrategy {
             sortBy = !sortColumn ? 'stock_name_header,stock_id_header,location_header' : sortColumn;
         }
         const parameters = [];
+        const {stockGroup, warehouse} = queryString;
         let query = `
         select
         Kode as stock_id_header, Nama as stock_name_header, Lokasi as location_header,

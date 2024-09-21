@@ -11,7 +11,6 @@ import { StocBalancekDTO } from 'src/dto/stock-balance.dto';
 import { ReportName } from 'src/helper/enums/report-names.enum';
 import Constants from 'src/helper/constants';
 import { QueryStringDTO } from 'src/dto/query-string.dto';
-
 @Injectable()
 export class SearchStockIDReport implements ReportStrategy {
     constructor(private readonly genericRepository: GenericRepository) {}

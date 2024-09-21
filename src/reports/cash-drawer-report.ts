@@ -9,6 +9,7 @@ import ResponseHelper from 'src/helper/response-helper';
 import { ReportName } from 'src/helper/enums/report-names.enum';
 import Constants from 'src/helper/constants';
 import { QueryStringDTO } from 'src/dto/query-string.dto';
+
 @Injectable()
 export class CashDrawerReport implements ReportStrategy {
     constructor(private readonly genericRepository: GenericRepository) {}
@@ -120,8 +121,7 @@ FROM (
     @running_balance := 0
 ) AS vars;
 `;
-        let {startDate, endDate} = queryString;
-
+        const {startDate, endDate} = queryString;
         const parameters = [];
         parameters.push(startDate);
         parameters.push(endDate);

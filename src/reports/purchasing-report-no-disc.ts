@@ -32,6 +32,7 @@ export class PurchaseReportNoDisc implements ReportStrategy {
             ${sortColumn === 'supplier_header' ? `${sortColumn}` : `CAST(REPLACE(${sortColumn}, ',', '') AS SIGNED)`} ${sortOrder} ,
             invoice_header`;
         }
+        let {startDate, endDate, warehouse} = queryString;
         const parameters = [];
 
         parameters.push(startDate);

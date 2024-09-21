@@ -45,8 +45,7 @@ export class PriceListReport implements ReportStrategy {
             query+= ` and (IFNULL(?, cstkfkgrp) = cstkfkgrp or cstkfkgrp is null) `;
             parameters.push(decodeURIComponent(stockGroup));
         }
-        query+= `  ORDER BY ${sortBy} ${sortOrder} `;
-        
+        query+= `  ORDER BY ${sortBy} ${sortOrder} `;        
         console.log(`query: ${query}`);
         console.log(`Report Name: ${ReportName.Price_List}`);
         console.log('parameter: stockGroup: ', decodeURIComponent(stockGroup));

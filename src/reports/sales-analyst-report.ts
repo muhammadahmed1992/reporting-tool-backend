@@ -16,7 +16,6 @@ export class SalesAnalystReport implements ReportStrategy {
     constructor(private readonly genericRepository: GenericRepository) {}
 
     public async generateReport(queryString: QueryStringDTO): Promise<ApiResponse<any>> {
-
         let {startDate, endDate, warehouse, stockGroup, sortColumn, sortDirection, searchValue, columnsToFilter } = queryString;
         let sortBy;
 
@@ -35,9 +34,7 @@ export class SalesAnalystReport implements ReportStrategy {
         else {
             sortBy = `currency_header,CAST(REPLACE(${sortColumn}, ',', '') AS SIGNED) ${sortOrder},stock_id_header`;
         }
- 
-
-        
+        let {startDate, endDate, warehouse, stockGroup} = queryString;
         const parameters = [];
         parameters.push(startDate);
         parameters.push(endDate);
