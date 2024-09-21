@@ -18,7 +18,6 @@ export class CashDrawerDetailReport implements ReportStrategy {
     ) {}
 
     public async generateReport(queryString: QueryStringDTO): Promise<ApiResponse<any>> {
-        
         let query = `
 SELECT
     Cashier as cashier_header,
@@ -107,6 +106,7 @@ FROM (
             ddradate, cdrauser,
             SUM(ndraopen) AS nopen, 
             SUM(ndradraw + ndradraw1) AS ndraw
+            
          FROM 
             drawer
          GROUP BY 
@@ -130,11 +130,7 @@ FROM (
     @running_balance := 0
 ) AS vars;
 `;
-        let {startDate, endDate} = queryString;
-        if (!startDate)
-            startDate = new Date();
-        if (!endDate)
-            endDate = new Date();
+        const {startDate, endDate} = queryString;
         const parameters = [];
         parameters.push(startDate);
         parameters.push(endDate);

@@ -16,14 +16,25 @@ export class SalesAnalystReport implements ReportStrategy {
     constructor(private readonly genericRepository: GenericRepository) {}
 
     public async generateReport(queryString: QueryStringDTO): Promise<ApiResponse<any>> {
+        let {startDate, endDate, warehouse, stockGroup, sortColumn, sortDirection, searchValue, columnsToFilter } = queryString;
+        let sortBy;
 
+        const sortOrder = !sortDirection ? 'ASC' : sortDirection;
+
+        if(!sortColumn || sortColumn === 'currency_header' || sortColumn === 'stock_id_header') {
+            if(sortColumn === 'currency_header')
+                sortBy = `currency_header ${sortOrder},stock_id_header`;
+            else    
+                sortBy = `currency_header ,stock_id_header ${sortOrder}`;
+        } else if (sortColumn === 'stock_name_header') {
+            sortBy = `currency_header,stock_name_header`;
+        } else if (sortColumn === 'date_header') {
+            sortBy = `currency_header, STR_TO_DATE(date_header, '%Y-%m-%d') ${sortOrder}, invoice_header `;
+        }
+        else {
+            sortBy = `currency_header,CAST(REPLACE(${sortColumn}, ',', '') AS SIGNED) ${sortOrder},stock_id_header`;
+        }
         let {startDate, endDate, warehouse, stockGroup} = queryString;
- 
-        if (!startDate)
-            startDate = new Date();
-        if (!endDate)
-            endDate = new Date();
-        
         const parameters = [];
         parameters.push(startDate);
         parameters.push(endDate);
@@ -67,7 +78,14 @@ export class SalesAnalystReport implements ReportStrategy {
             INNER JOIN stockdetail
            ON  cSTKpk = cSTDfkSTK
          WHERE nstdkey = 1 and nIVDkirim=1 AND (cINVspecial='JL' or cINVspecial='RJ' or cINVspecial='PS' or cINVspecial='RS')
-            and dinvdate>= ? and dinvdate<= ? `
+            and dinvdate>= ? and dinvdate<= ? `;
+            const filterColumns = columnsToFilter ? columnsToFilter.toString().split(',').map(item => item.trim()) : [];
+            if (searchValue) {
+                query += ' AND (';
+                query += filterColumns.map(column => `${column} LIKE ?`).join(' OR ');
+                query += ')';
+                parameters.push(...filterColumns.map(() => `%${searchValue}%`));
+            }
         if (warehouse) {
             query+= ` and (IFNULL(?, cinvfkwhs) = cinvfkwhs or cinvfkwhs is null) `
             parameters.push(decodeURIComponent(warehouse));
@@ -83,7 +101,8 @@ export class SalesAnalystReport implements ReportStrategy {
         
         on a.civdfkinv=b.civdfkinv
         group by cstdcode,cstkdesc,cexcdesc
-        order by cexcdesc,cstdcode ASC ) AS c, (SELECT @currentGroup := '', @currentSum := 0, @currentGroupAmountTax := '', @currentSumAmountTax := 0) r`;
+         ) AS c, (SELECT @currentGroup := '', @currentSum := 0, @currentGroupAmountTax := '', @currentSumAmountTax := 0) r
+        order by ${sortBy}`;
         console.log(`query: ${query}`);
         console.log(`Report Name: ${ReportName.Sales_Analyst}`);
         console.log('warehouse: ', decodeURIComponent(warehouse));

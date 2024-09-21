@@ -5,4 +5,5 @@ export default class Constants {
     static readonly CONNECTION_STRING_NOT_FOUND = 'connection_string_not_found';
     static readonly CONNECTION_STRING_BAD_FORMAT = 'bad_connection_string_format';
     static readonly UN_AUTHORIZED_USER = "unauthorized_user";
+    static readonly STOCK_CODE_EMPTY = "stock_code_empty";
 }

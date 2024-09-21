@@ -4,5 +4,6 @@
     "data_found": "Data retrieved successfully!",
     "connection_string_not_found": "Please specify connection string",
     "bad_connection_string_format": "Provided connection string is not in correct format",
-    "unauthorized_user": "User does not allowed to login"
+    "unauthorized_user": "User does not allowed to login",
+    "stock_code_empty": "Stock code is not selected. Please try again"
 }
