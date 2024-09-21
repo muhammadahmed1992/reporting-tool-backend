@@ -30,7 +30,6 @@ export class SalesReport implements ReportStrategy {
         }else {
             sortBy = ` currency_header, CAST(REPLACE(${sortColumn}, ',', '') AS SIGNED) ${sortOrder} ,invoice_header`;
         }
-        let {startDate, endDate, warehouse} = queryString;
         const parameters = [];
         console.log(`startDate: ${startDate}`);
         console.log(`endDate: ${endDate}`);

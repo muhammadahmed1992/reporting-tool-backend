@@ -39,7 +39,6 @@ export class SalesAnalyst2Report implements ReportStrategy {
         const parameters = [];
         parameters.push(startDate);
         parameters.push(endDate);
-        let {startDate, endDate, warehouse, stockGroup} = queryString;
         let query = 
         `
         SELECT StockID as stock_id_header, StockName as stock_name_header, FORMAT(Qty,0) as qty_header, Currency as currency_header, FORMAT(Amount, 0) as amount_header, FORMAT(Amount_Tax, 0) as amount_tax_header,

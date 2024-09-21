@@ -23,7 +23,6 @@ export class StockBalanceReport implements ReportStrategy {
             sortBy = !sortColumn ? 'stock_name_header,stock_id_header,location_header' : sortColumn;
         }
         const parameters = [];
-        const {stockGroup, warehouse} = queryString;
         let query = `
         select
         Kode as stock_id_header, Nama as stock_name_header, Lokasi as location_header,
