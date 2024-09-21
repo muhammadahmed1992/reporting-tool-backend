@@ -31,10 +31,7 @@ export class Sales2Report implements ReportStrategy {
         }
      
         const parameters = [];
-        if (!startDate)
-            startDate = new Date();
-        if (!endDate)
-            endDate = new Date();
+
         parameters.push(startDate);
         parameters.push(endDate);
         let query = `

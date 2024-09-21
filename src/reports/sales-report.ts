@@ -33,10 +33,6 @@ export class SalesReport implements ReportStrategy {
         }
        
         const parameters = [];
-        if (!startDate)
-            startDate = new Date();
-        if (!endDate)
-            endDate = new Date();
         console.log(`startDate: ${startDate}`);
         console.log(`endDate: ${endDate}`);
         parameters.push(startDate);

@@ -35,10 +35,7 @@ export class SalesAnalyst2Report implements ReportStrategy {
         else {
             sortBy = `currency_header,CAST(REPLACE(${sortColumn}, ',', '') AS SIGNED) ${sortOrder},stock_id_header`;
         }
-        if (!startDate)
-            startDate = new Date();
-        if (!endDate)
-            endDate = new Date();
+
         const parameters = [];
         parameters.push(startDate);
         parameters.push(endDate);

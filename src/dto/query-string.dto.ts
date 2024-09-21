@@ -1,4 +1,4 @@
-import { IsOptional, IsNumber, IsDateString, Min, IsArray } from 'class-validator';
+import { IsOptional } from 'class-validator';
 
 export class QueryStringDTO {
   @IsOptional()
@@ -11,10 +11,10 @@ export class QueryStringDTO {
   warehouse?: string;
 
   @IsOptional()
-  startDate?: Date;
+  startDate?: string;
 
   @IsOptional()
-  endDate?: Date;
+  endDate?: string;
 
   @IsOptional()
   searchValue?: string;

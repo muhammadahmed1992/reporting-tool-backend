@@ -33,10 +33,7 @@ export class PurchaseReportNoDisc implements ReportStrategy {
             invoice_header`;
         }
         const parameters = [];
-        if (!startDate)
-            startDate = new Date();
-        if (!endDate)
-            endDate = new Date();
+
         parameters.push(startDate);
         parameters.push(endDate);
         let query = `

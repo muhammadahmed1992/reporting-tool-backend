@@ -18,7 +18,7 @@ export class StockBalanceReport implements ReportStrategy {
         const {stockGroup, warehouse, sortColumn, sortDirection, searchValue, columnsToFilter } = queryString;
         let sortBy = sortColumn ? sortColumn : 'stock_name_header,stock_id_header,location_header'.includes(sortColumn);  
         const sortOrder = sortDirection ? sortDirection : 'ASC'; 
-        if(!sortColumn || !(sortColumn ==='stock_name_header' || sortColumn === 'stock_id_header' || sortColumn === 'location_header')) {
+        if(sortColumn && !(sortColumn ==='stock_name_header' || sortColumn === 'stock_id_header' || sortColumn === 'location_header')) {
             sortBy = `CAST(REPLACE(${sortColumn}, ',', '') AS SIGNED)`;
         } else {
             sortBy = !sortColumn ? 'stock_name_header,stock_id_header,location_header' : sortColumn;

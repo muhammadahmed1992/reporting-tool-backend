@@ -131,10 +131,7 @@ FROM (
 ) AS vars;
 `;
         let {startDate, endDate} = queryString;
-        if (!startDate)
-            startDate = new Date();
-        if (!endDate)
-            endDate = new Date();
+
         const parameters = [];
         parameters.push(startDate);
         parameters.push(endDate);
