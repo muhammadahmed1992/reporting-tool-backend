@@ -1,6 +1,5 @@
 // Nest Framework
 import { DynamicModule, MiddlewareConsumer, Module, RequestMethod } from '@nestjs/common';
-import { TypeOrmModule } from '@nestjs/typeorm';
 import { AuthModule } from './module/auth.module';
 
 // Controllers
@@ -33,16 +32,19 @@ import { PurchaseAnalystReportNoDisc } from './reports/purchasing-analyst-report
 import { CashDrawerDetailReport } from './reports/cash-drawer-detail-report';
 import { LocalizationService } from './services/localization.service';
 import { LocalizationController } from './controller/translate.controller';
+import { TransactionModuleController } from './controller/transaction.module.controller';
+import { TransactionModuleService } from './services/transaction.module.service';
 
 @Module({
   imports: [
     AuthModule,
   ],
-  controllers: [ReportsController, SchemaInfoController, HeartBeatController, LocalizationController],
+  controllers: [ReportsController, SchemaInfoController, HeartBeatController, LocalizationController, TransactionModuleController],
   providers: [
     LocalizationService,
     ReportService,
     SchemaInformationService,
+    TransactionModuleService,
     ReportFactory,
     GenericRepository,
     CashDrawerReport,
@@ -65,7 +67,7 @@ export class AppModule {
     consumer
       .apply(ConnectionStringMiddleware)
       .forRoutes(
-        Andriod2Controller, SchemaInfoController, ReportsController
+        Andriod2Controller, SchemaInfoController, ReportsController, TransactionModuleController
       );
   }
 }
