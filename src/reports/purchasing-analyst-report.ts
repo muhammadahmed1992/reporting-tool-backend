@@ -33,8 +33,6 @@ export class PurchaseAnalystReport implements ReportStrategy {
         else {
             sortBy = `currency_header,CAST(REPLACE(${sortColumn}, ',', '') AS SIGNED) ${sortOrder},stock_id_header`;
         }
-      
-        let {startDate, endDate, warehouse, stockGroup} = queryString;
         
         const parameters = [];
         parameters.push(startDate);

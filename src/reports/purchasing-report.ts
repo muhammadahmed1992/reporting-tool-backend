@@ -32,7 +32,6 @@ export class PurchaseReport implements ReportStrategy {
         }else {
             sortBy = ` currency_header, ${sortColumn === 'supplier_header' ? `${sortColumn}` : `CAST(REPLACE(${sortColumn}, ',', '') AS SIGNED)`} ${sortOrder} ,invoice_header`;
         }
-        let {startDate, endDate, warehouse} = queryString;
         const parameters = [];
 
         console.log(`startDate: ${startDate}`);

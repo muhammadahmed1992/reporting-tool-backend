@@ -29,7 +29,6 @@ export class Sales2Report implements ReportStrategy {
         }else {
             sortBy = ` currency_header, CAST(REPLACE(${sortColumn}, ',', '') AS SIGNED) ${sortOrder} ,invoice_header`;
         }
-        let {startDate, endDate, warehouse} = queryString;
         const parameters = [];
 
         parameters.push(startDate);
