@@ -11,35 +11,55 @@ import { TransactionSalesInvoiceDTO } from 'src/dto/transaction-sales-invoice.dt
 @Injectable({ scope: Scope.REQUEST })
 export class TransactionModuleService {
   constructor(private readonly genericRepository: GenericRepository) {}
-  async salesInvoice(queryParams: any) {
-    const { loggedInUser } = queryParams;
-    const query = `
-                SELECT
-                    (SELECT L_jual FROM ymk) AS InvoiceNo,
-                    DATE_FORMAT(CURDATE(), '%Y-%m-%d') AS 'Date',
-                    JSON_OBJECT('primaryKey', w.cwhspk, 'description', TRIM(w.cwhsdesc)) AS Warehouse,
-                    ('') AS Customer,
-                    ('') AS Salesman,
-                    (SELECT gst FROM ymk3) AS Tax
-                FROM
-                    android2 a
-                JOIN
-                    warehouse w ON w.cwhspk = a.candfkwhs
-                WHERE
-                    canddesc = '${loggedInUser}';
-            `;
 
-    const response = await this.genericRepository.query<any>(query);
+  async salesInvoice(user: string) {
+    console.log(user);
+    const query = `
+      SELECT
+          (SELECT L_jual FROM ymk) AS InvoiceNo,
+          DATE_FORMAT(CURDATE(), '%Y-%m-%d') AS 'Date',
+          w.cwhspk as primarykey,
+          (TRIM(w.cwhsdesc)) AS description,
+          ('') AS Customer,
+          ('') AS Salesman,
+          (SELECT gst FROM ymk3) AS Tax
+      FROM
+          android2 a
+      JOIN
+          warehouse w ON w.cwhspk = a.candfkwhs
+      WHERE
+          canddesc = ?;
+    `;
+
+    const response = await this.genericRepository.query<any>(query, [user]);
 
     // Parse the Warehouse JSON string into an object
+    const warehouse = {primaryKey: '', description: ''};
+    const finalResponse = {
+      InvoiceNo: '',
+      Date: '',
+      Warehouse: null,
+      Customer: '',
+      Salesman: '',
+      Tax: 0,
+    };
     if (response?.length) {
-      const parsedResponse = response.map((item) => ({
-        ...item,
-        Warehouse: JSON.parse(item.Warehouse), // Parsing the Warehouse field
-      }));
+      finalResponse.InvoiceNo = response[0].InvoiceNo;
+      finalResponse.Date = response[0].Date;
+      finalResponse.Customer = response[0].Customer;
+      finalResponse.Salesman = response[0].Salesman;
+      finalResponse.Tax = response[0].Tax;
+      console.log(finalResponse);
+      warehouse.primaryKey = response[0].primarykey;
+      warehouse.description = response[0].description;
+      finalResponse.Warehouse = warehouse;
+      // const parsedResponse = response.map((item) => ({
+      //   InvoiceNo : ,
+      //   Warehouse: warehouse
+      // }));
 
       return ResponseHelper.CreateResponse<any>(
-        parsedResponse,
+        finalResponse,
         HttpStatus.OK,
         Constants.DATA_SUCCESS,
       );
@@ -54,12 +74,25 @@ export class TransactionModuleService {
 
   async salesTable(queryParams: any) {
     const { stockId } = queryParams;
-    const query = `select cstkpk as pk, cstdcode as stock_id_header, Trim(cstkdesc) as stock_name, nstdprice as price, 1 as qty from stockdetail
-            d join stock s on s.cstkpk = d.cstdfkstk where cstdcode='${stockId}';
-            `;
-    const response =
-      await this.genericRepository.query<TransactionSalesTableDto>(query);
+    const query = `
+      SELECT 
+        nstkppn as taxable, 
+        cstkpk as pk, 
+        cstdcode as stock_id_header, 
+        TRIM(cstkdesc) as stock_name, 
+        nstdprice as price, 
+        1 as qty 
+      FROM 
+        stockdetail d 
+      JOIN 
+        stock s ON s.cstkpk = d.cstdfkstk 
+      WHERE 
+        cstdcode = ?;
+    `;
+    
+    const response = await this.genericRepository.query<TransactionSalesTableDto>(query, [stockId]);
     console.log(response);
+
     if (response?.length) {
       return ResponseHelper.CreateResponse<any>(
         response,
@@ -80,64 +113,70 @@ export class TransactionModuleService {
 
     // Insert invoice details first
     const invoiceQuery = `
-        INSERT INTO invoice (
-            cinvrefno, cinvfkwhs, dinvdate, dinvdue, dinvtaxdate, 
-            cinvfkent, cinvfkentcode, cinvhadiah, cinvfksam, cinvpk, 
-            ninvtax, cinvuser, oleh, ninvexpire, 
-            cinvspecial, cinvtransfer, cinvfkexc, kunci, ninvrate, 
-            ninvoption, ninvratep, cinvserie, cinvtaxinv, cinvpo, 
-            ninvno_card, ninvjenis_card, ninvccard_nama, ninvccard_oto, 
-            cinvdine, cinvmeja, cinvsedan, cinvsedancode, cinvepajak, 
-            cinvremark, cinvremark1, ninvkembali, ninvpoint, ninvpax, 
-            npostransfer, ninvpromov, ninvpromod, ninvpromos, ninvkm, 
-            ninvpawal, ninvcetak1, ninvpilih, ninvpersen, xkirim, ninvvalue
-        ) VALUES (
-            '${body.invoiceNo}', '${body.warehouse}', STR_TO_DATE('${body.date}', '%Y-%m-%d'), CURDATE(), 
-            STR_TO_DATE('${body.date}', '%Y-%m-%d'), '${body.customer.pk}', '${body.customer.desc}', NULL, 
-            '${body.salesman.pk}', LEFT(SHA1(UUID()), 23), ${body.tax}, '${body.loginUser}', 
-            CONCAT(DATE_FORMAT(NOW(), '%d-%m-%Y %H:%i'), ' ', '${body.loginUser}'), 
-            (SELECT soexpire FROM ymk2), -- ninvexpire
-            'JL', -- cinvspecial (Dummy value)
-            'n/a', -- cinvtransfer (Dummy value)
-            '..rupiah...............', -- cinvfkexc (Dummy value for exchange rate)
-            1, -- kunci (Dummy value)
-            1, -- ninvrate (Dummy value)
-            1, -- ninvoption (Dummy value)
-            1, -- ninvratep (Dummy value)
-            ' ', -- cinvserie (Empty string)
-            ' ', -- cinvtaxinv (Empty string)
-            ' ', -- cinvpo (Empty string)
-            ' ', -- ninvno_card (Empty string)
-            ' ', -- ninvjenis_card (Empty string)
-            ' ', -- ninvccard_nama (Empty string)
-            ' ', -- ninvccard_oto (Empty string)
-            ' ', -- cinvdine (Empty string)
-            ' ', -- cinvmeja (Empty string)
-            ' ', -- cinvsedan (Empty string)
-            ' ', -- cinvsedancode (Empty string)
-            ' ', -- cinvepajak (Empty string)
-            ' ', -- cinvremark (Empty string)
-            ' ', -- cinvremark1 (Empty string)
-            0, -- ninvkembali (Dummy value)
-            0, -- ninvpoint (Dummy value)
-            0, -- ninvpax (Dummy value)
-            0, -- npostransfer (Dummy value)
-            0, -- ninvpromov (Dummy value)
-            0, -- ninvpromod (Dummy value)
-            0, -- ninvpromos (Dummy value)
-            0, -- ninvkm (Dummy value)
-            0, -- ninvpawal (Dummy value)
-            0, -- ninvcetak1 (Dummy value)
-            0, -- ninvpilih (Dummy value)
-            0, -- ninvpersen (Dummy value)
-            0, -- xkirim (Dummy value)
-            ${body.invoiceNo - 10000} -- ninvvalue (Total invoice value)
-        );
-    `;
-    console.log(invoiceQuery);
+    INSERT INTO invoice (
+        cinvrefno, cinvfkwhs, dinvdate, dinvdue, dinvtaxdate, 
+        cinvfkent, cinvfkentcode, cinvhadiah, cinvfksam, cinvpk, 
+        ninvtax, cinvuser, oleh, ninvexpire, 
+        cinvspecial, cinvtransfer, cinvfkexc, kunci, ninvrate, 
+        ninvoption, ninvratep, cinvserie, cinvtaxinv, cinvpo, 
+        ninvno_card, ninvjenis_card, ninvccard_nama, ninvccard_oto, 
+        cinvdine, cinvmeja, cinvsedan, cinvsedancode, cinvepajak, 
+        cinvremark, cinvremark1, ninvkembali, ninvpoint, ninvpax, 
+        npostransfer, ninvpromov, ninvpromod, ninvpromos, ninvkm, 
+        ninvpawal, ninvcetak1, ninvpilih, ninvpersen, xkirim, ninvvalue
+    ) VALUES (
+        ?, ?, STR_TO_DATE(?, '%Y-%m-%d'), CURDATE(), 
+        STR_TO_DATE(?, '%Y-%m-%d'), ?, ?, NULL, 
+        ?, LEFT(SHA1(UUID()), 23), ?, ?, 
+        CONCAT(DATE_FORMAT(NOW(), '%d-%m-%Y %H:%i'), ' ', ?), 
+        (SELECT soexpire FROM ymk2), -- ninvexpire
+        'JL', -- cinvspecial
+        'n/a', -- cinvtransfer
+        '..rupiah...............', -- cinvfkexc
+        1, -- kunci
+        1, -- ninvrate
+        1, -- ninvoption
+        1, -- ninvratep
+        ' ', -- cinvserie
+        ' ', -- cinvtaxinv
+        ' ', -- cinvpo
+        ' ', -- ninvno_card
+        ' ', -- ninvjenis_card
+        ' ', -- ninvccard_nama
+        ' ', -- ninvccard_oto
+        ' ', -- cinvdine
+        ' ', -- cinvmeja
+        ' ', -- cinvsedan
+        ' ', -- cinvsedancode
+        ' ', -- cinvepajak
+        ' ', -- cinvremark
+        ' ', -- cinvremark1
+        0, -- ninvkembali (Default to 0 for decimal fields)
+        0, -- ninvpoint (Default to 0 for decimal fields)
+        0, -- ninvpax (Default to 0 for decimal fields)
+        0, -- npostransfer (Default to 0 for decimal fields)
+        0, -- ninvpromov (Default to 0 for decimal fields)
+        0, -- ninvpromod (Default to 0 for decimal fields)
+        0, -- ninvpromos (Default to 0 for decimal fields)
+        0, -- ninvkm (Default to 0 for decimal fields)
+        0, -- ninvpawal (Default to 0 for decimal fields)
+        0, -- ninvcetak1 (Default to 0 for decimal fields)
+        0, -- ninvpilih (Default to 0 for decimal fields)
+        0, -- ninvpersen (Default to 0 for decimal fields)
+        0, -- xkirim (Default to 0 for decimal fields)
+        ?
+    )`;
+
+const invoiceParams = [
+    body.invoiceNo, body.warehouse, body.date, body.date,
+    body.customer.pk, body.customer.desc, body.salesman.pk, 
+    body.tax, body.loginUser, body.loginUser, 
+    body.invoiceNo - 10000
+];
+
 
     try {
-        const invoiceResponse = await this.genericRepository.query<any>(invoiceQuery);
+        const invoiceResponse = await this.genericRepository.query<any>(invoiceQuery, invoiceParams);
         const invoicePK = body.invoiceNo;
 
         for (let i = 0; i < body.tableFormData.length; i++) {
@@ -149,25 +188,28 @@ export class TransactionModuleService {
                     nivdfactor, nivdzqtyout, nivdamount, nivdorder, civdunit, nivdstkppn,
                     civdsn
                 ) 
-                SELECT
-                    '${row.pk}', '${row.stock_id_header}', '${row.qty}', LEFT(SHA1(UUID()), 23),
-                    '${invoicePK}', '${row.price}', 
-                    sd.nstdfactor, '${row.qty}' * sd.nstdfactor,
-                    '${row.qty}' * '${row.price}', '${i + 1}', 
-                    u.cunidesc, s.nstkppn, ' '
-                FROM
-                    stockdetail sd
+                SELECT ?, ?, ?, LEFT(SHA1(UUID()), 23),
+                    (SELECT cinvpk FROM invoice WHERE cinvrefno = ?), 
+                    ?, sd.nstdfactor, ? * sd.nstdfactor,
+                    ? * ?, ?, u.cunidesc, s.nstkppn, ' '
+                FROM stockdetail sd
                 LEFT JOIN unit u ON u.cunipk = sd.cstdfkuni
-                LEFT JOIN stock s ON s.cstkpk = '${row.pk}'
-                WHERE 
-                    sd.cstdcode = '${row.stock_id_header}'
+                LEFT JOIN stock s ON s.cstkpk = ?
+                WHERE sd.cstdcode = ?
                 LIMIT 1;
             `;
-            const detailResponse = await this.genericRepository.query<any>(detailQuery);
+
+            const detailParams = [
+                row.pk, row.stock_id_header, row.qty, body.invoiceNo, row.price, 
+                row.qty, row.qty, row.price, (i + 1), row.pk, row.stock_id_header
+            ];
+
+            const detailResponse = await this.genericRepository.query<any>(detailQuery, detailParams);
         }
-        const updateQuery = await this.genericRepository.query<any>(`UPDATE ymk
-            SET L_jual = L_jual + 1;`);
-            
+
+        const updateQuery = `UPDATE ymk SET L_jual = L_jual + 1;`;
+        await this.genericRepository.query<any>(updateQuery);
+
         return ResponseHelper.CreateResponse<any>(
             'Invoice and details inserted successfully.',
             HttpStatus.OK,
@@ -184,4 +226,6 @@ export class TransactionModuleService {
         );
     }
 }
+
+
 }

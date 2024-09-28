@@ -4,7 +4,7 @@ import { map } from 'rxjs/operators';
 
 @Injectable()
 
-export class SchemaInfoResponseHandler implements NestInterceptor {
+export class SetupResponseHandler implements NestInterceptor {
   intercept(context: ExecutionContext, next: CallHandler): Observable<any> {
     return next.handle().pipe(
       map((data) => {

@@ -1,4 +1,5 @@
 {
+    "sales_transaction": "Faktur Penjualan",
     "scan_barcode": "Pindai Barcode",
     "switch_database": "Ganti Basis Data",
     "stock_report": "Saldo Stock",

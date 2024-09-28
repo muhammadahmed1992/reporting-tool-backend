@@ -34,16 +34,19 @@ import { LocalizationService } from './services/localization.service';
 import { LocalizationController } from './controller/translate.controller';
 import { TransactionModuleController } from './controller/transaction.module.controller';
 import { TransactionModuleService } from './services/transaction.module.service';
+import { SetupResponseController } from './controller/setup.response.controller';
+import { SetupResponseService } from './services/setup.response.service';
 
 @Module({
   imports: [
     AuthModule,
   ],
-  controllers: [ReportsController, SchemaInfoController, HeartBeatController, LocalizationController, TransactionModuleController],
+  controllers: [ReportsController, SchemaInfoController, HeartBeatController, LocalizationController, TransactionModuleController, SetupResponseController],
   providers: [
     LocalizationService,
     ReportService,
     SchemaInformationService,
+    SetupResponseService,
     TransactionModuleService,
     ReportFactory,
     GenericRepository,
@@ -67,7 +70,7 @@ export class AppModule {
     consumer
       .apply(ConnectionStringMiddleware)
       .forRoutes(
-        Andriod2Controller, SchemaInfoController, ReportsController, TransactionModuleController
+        Andriod2Controller, SchemaInfoController, ReportsController, TransactionModuleController, SetupResponseController
       );
   }
 }

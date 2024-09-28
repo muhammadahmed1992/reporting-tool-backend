@@ -108,5 +108,22 @@
     "price_header": "Price",
     "location_header": "Location",
     "balance_header": "Balance"
+  },
+  "sales_transaction": {
+    "table": {
+    "item_header" :"Item",
+    "id" : "ID",
+    "qty_header": "Qty",
+    "price_header": "Price",
+    "amount_header": "Amount"
+    },
+    "invoice": {
+      "invoice_no": "Invoice No", 
+      "date": "Date", 
+      "warehouse": "Warehouse", 
+      "customer": "Customer", 
+      "salesman": "Salesman", 
+      "tax": "Tax"
+    }
   }
 }
