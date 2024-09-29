@@ -1,4 +1,5 @@
 {
+    "sales_transaction": "Sales Invoice",
     "scan_barcode": "Scan Barcode",
     "switch_database": "Switch Database",
     "stock_report": "Stock Report",
