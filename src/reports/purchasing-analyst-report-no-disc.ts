@@ -10,7 +10,6 @@ import ResponseHelper from 'src/helper/response-helper';
 import { SalesAnalystDTO } from '../dto/sales-analyst.dto';
 import { ReportName } from 'src/helper/enums/report-names.enum';
 import Constants from 'src/helper/constants';
-import { QueryStringDTO } from 'src/dto/query-string.dto';
 @Injectable()
 export class PurchaseAnalystReportNoDisc implements ReportStrategy {
     constructor(private readonly genericRepository: GenericRepository) {}
