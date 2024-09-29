@@ -107,28 +107,11 @@ export class SalesAnalystReport implements ReportStrategy {
         console.log('warehouse: ', decodeURIComponent(warehouse));
         console.log('stockGroup: ', decodeURIComponent(stockGroup));
         console.log(`=============================================`);
-
-        
-        const offset = (pageNumber - 1) * pageSize;
-        parameters.push(pageSize);
-        parameters.push(offset);
-        const [response, totalRows] = await Promise.all([
-            this.genericRepository.query<SalesAnalystDTO>(query, parameters),
-            this.genericRepository.query<number>(countQuery, countParameters)
-        ]);
-        const totalPages = Math.ceil((totalRows[0] as any).total_rows / pageSize);
+        const response = await this.genericRepository.query<SalesAnalystDTO>(query, parameters);
         if (response?.length) {
-            return ResponseHelper.CreateResponse<SalesAnalystDTO[]>(response, HttpStatus.OK, Constants.DATA_SUCCESS, {
-                paging: {
-                    totalPages
-                }
-            });
+            return ResponseHelper.CreateResponse<SalesAnalystDTO[]>(response, HttpStatus.OK, Constants.DATA_SUCCESS);
         } else {
-            return ResponseHelper.CreateResponse<SalesAnalystDTO[]>([], HttpStatus.NOT_FOUND, Constants.DATA_NOT_FOUND, {
-                paging: {
-                    totalPages: 1
-                }
-            });
+            return ResponseHelper.CreateResponse<SalesAnalystDTO[]>([], HttpStatus.NOT_FOUND, Constants.DATA_NOT_FOUND);
         }
     }
 }

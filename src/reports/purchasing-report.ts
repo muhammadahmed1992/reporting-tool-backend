@@ -38,30 +38,6 @@ export class PurchaseReport implements ReportStrategy {
         console.log(`endDate: ${endDate}`);
         parameters.push(startDate);
         parameters.push(endDate);
-        countParameters.push(startDate);
-        countParameters.push(endDate);
-        let count = `
-        SELECT COUNT(DISTINCT cinvrefno) as total_rows
-    FROM invoice
-    INNER JOIN invoicedetail ON civdfkinv = cinvpk
-    INNER JOIN exchange ON cinvfkexc = cexcpk
-    LEFT JOIN entity ON cinvfkent = centpk
-    WHERE dinvdate >= ? AND dinvdate <= ? 
-    AND (cinvspecial = 'BL' OR cinvspecial = 'RB' OR cinvspecial = 'KS')
-`;
-            if (searchValue) {
-                count += ' AND (';
-                count += filterColumns.map(column => `${column} LIKE ?`).join(' OR ');
-                count += ')';
-                countParameters.push(...filterColumns.map(() => `%${searchValue}%`));
-            }
-        if (warehouse) {
-            count += ` AND (IFNULL(?, cinvfkwhs) = cinvfkwhs OR cinvfkwhs IS NULL) `;
-            countParameters.push(decodeURIComponent(warehouse));
-        }
-        
-        
-
         let query = `
         SELECT Invoice as invoice_header, Date as date_header, IFNULL(Supplier, '') as supplier_header, Currency as currency_header,
             FORMAT(Amount,0) AS amount_header,
@@ -89,8 +65,6 @@ export class PurchaseReport implements ReportStrategy {
         if (warehouse) {
             query+= ` and (IFNULL(?, cinvfkwhs) = cinvfkwhs or cinvfkwhs is null) `;
         } 
-        const sortBy = sortColumn ? sortColumn : 'currency_header,date_header,invoice_header';  
-        const sortOrder = sortDirection ? sortDirection : 'ASC';
         query+= ` group by civdfkinv) as a
 
         inner join
@@ -117,26 +91,12 @@ export class PurchaseReport implements ReportStrategy {
 
         if (warehouse)
             parameters.push(decodeURIComponent(warehouse));
-        const offset = (pageNumber - 1) * pageSize;
-        parameters.push(pageSize);
-        parameters.push(offset);
-        const [response, totalRows] = await Promise.all([
-            this.genericRepository.query<PurchasingDTO>(query, parameters),
-            this.genericRepository.query<number>(count, countParameters)
-        ]);
-        const totalPages = Math.ceil((totalRows[0] as any).total_rows / pageSize);
+
+        const response = await this.genericRepository.query<PurchasingDTO>(query, parameters);
         if (response?.length) {
-            return ResponseHelper.CreateResponse<PurchasingDTO[]>(response, HttpStatus.OK, Constants.DATA_SUCCESS, {
-                paging: {
-                    totalPages
-                }
-            });
+            return ResponseHelper.CreateResponse<PurchasingDTO[]>(response, HttpStatus.OK, Constants.DATA_SUCCESS);
         } else {
-            return ResponseHelper.CreateResponse<PurchasingDTO[]>([], HttpStatus.NOT_FOUND, Constants.DATA_NOT_FOUND, {
-                paging: {
-                    totalPages: 1
-                }
-            });
+            return ResponseHelper.CreateResponse<PurchasingDTO[]>([], HttpStatus.NOT_FOUND, Constants.DATA_NOT_FOUND);
         }
     }
 }

@@ -79,8 +79,6 @@ export class SalesAnalyst2Report implements ReportStrategy {
 	if (warehouse){
         query+= ` and (IFNULL(?, cinvfkwhs) = cinvfkwhs or cinvfkwhs is null)`;
     }
-    const sortBy = sortColumn ? sortColumn : 'stock_name_header,stock_id_header';  
-    const sortOrder = sortDirection ? sortDirection : 'ASC';
     query+= `
   group by cstdcode, cstkdesc, cexcdesc
  ) AS c, (SELECT @currentGroup := '', @currentSum := 0, @currentGroupAmountTax := '', @currentSumAmountTax := 0) r 
@@ -93,8 +91,7 @@ export class SalesAnalyst2Report implements ReportStrategy {
         if (warehouse) {
             parameters.push(decodeURIComponent(warehouse));
         }
-        parameters.push(pageSize);
-        parameters.push(offset);
+        
         console.log(`query: ${query}`);
         console.log(`Report Name: ${ReportName.Sales_Analyst_No_Disc}`);
         console.log(`start Date: ${startDate}`);
@@ -102,24 +99,11 @@ export class SalesAnalyst2Report implements ReportStrategy {
         console.log('warehouse: ', decodeURIComponent(warehouse));
         console.log('stockGroup: ', decodeURIComponent(stockGroup));
         console.log(`=============================================`);
-        const [response, totalRows] = await Promise.all([
-            this.genericRepository.query<SalesAnalystDTO>(query, parameters),
-            this.genericRepository.query<SalesAnalystDTO>(count, parameters)
-        ]);
-        console.log({totalRows});
-        const totalPages = Math.ceil((totalRows[0] as any).total_rows / pageSize);
+        const response = await this.genericRepository.query<SalesAnalystDTO>(query, parameters);
         if (response?.length) {
-            return ResponseHelper.CreateResponse<SalesAnalystDTO[]>(response, HttpStatus.OK, Constants.DATA_SUCCESS, {
-                paging: {
-                    totalPages
-                }
-            });
+            return ResponseHelper.CreateResponse<SalesAnalystDTO[]>(response, HttpStatus.OK, Constants.DATA_SUCCESS);
         } else {
-            return ResponseHelper.CreateResponse<SalesAnalystDTO[]>([], HttpStatus.NOT_FOUND, Constants.DATA_NOT_FOUND, {
-                paging: {
-                    totalPages: 1
-                }
-            });
+            return ResponseHelper.CreateResponse<SalesAnalystDTO[]>([], HttpStatus.NOT_FOUND, Constants.DATA_NOT_FOUND);
         }
     }
 }

@@ -33,56 +33,10 @@ export class PurchaseAnalystReport implements ReportStrategy {
         else {
             sortBy = `currency_header,CAST(REPLACE(${sortColumn}, ',', '') AS SIGNED) ${sortOrder},stock_id_header`;
         }
-              
+        
         const parameters = [];
         parameters.push(startDate);
         parameters.push(endDate);
-        countParameters.push(startDate);
-        countParameters.push(endDate);
-        let count = 
-        `
-  SELECT COUNT(DISTINCT StockID) as total_rows
-FROM (
-    SELECT cstdcode as StockID
-    FROM (
-        SELECT civdfkinv, COUNT(1) as rows2 
-        FROM invoicedetail
-        INNER JOIN invoice ON cinvpk = civdfkinv
-        WHERE nIVDkirim = 1 
-        GROUP BY civdfkinv
-    ) as a
-    INNER JOIN (
-        SELECT cstdcode
-        FROM invoice
-        INNER JOIN invoicedetail ON cINVpk = cIVDfkINV
-        INNER JOIN exchange ON cINVfkexc = cexcpk
-        INNER JOIN stock ON cIVDfkSTK = cSTKpk
-        INNER JOIN stockdetail ON cSTKpk = cSTDfkSTK
-        WHERE nstdkey = 1 
-        AND nIVDkirim = 1 
-        AND (cINVspecial = 'BL' OR cINVspecial = 'RB' OR cINVspecial = 'KS')
-        AND dinvdate >= ? AND dinvdate <= ?
-        GROUP BY cstdcode, cstkdesc, cexcdesc
-    ) as b
-) as subquery;
-`;
-
-if (searchValue) {
-    count += ' AND (';
-    count += filterColumns.map(column => `${column} LIKE ?`).join(' OR ');
-    count += ')';
-    countParameters.push(...filterColumns.map(() => `%${searchValue}%`));
-}
-        if (warehouse) {
-            count += ` AND (IFNULL(?, cinvfkwhs) = cinvfkwhs OR cinvfkwhs IS NULL) `;
-            countParameters.push(decodeURIComponent(warehouse));
-        }
-
-        if (stockGroup) {
-            count += ` AND (IFNULL(?, cstkfkgrp) = cstkfkgrp OR cstkfkgrp IS NULL) `;
-            countParameters.push(decodeURIComponent(stockGroup));
-        }
-
         let query = 
         `
         SELECT StockID as stock_id_header, StockName as stock_name_header, FORMAT(Qty,0) as qty_header, Currency as currency_header, FORMAT(Amount, 0) as amount_header, FORMAT(Amount_Tax, 0) as amount_tax_header,
@@ -139,8 +93,7 @@ if (searchValue) {
             query+= ` and (IFNULL(?, cstkfkgrp) = cstkfkgrp or cstkfkgrp is null)  `;
             parameters.push(decodeURIComponent(stockGroup));
         }
-        const sortBy = sortColumn ? sortColumn : 'stock_name_header,stock_id_header';  
-        const sortOrder = sortDirection ? sortDirection : 'ASC';                        
+                               
         query+= ` group by nstkppn,cinvspecial,civdfkinv,cstdcode, cstkdesc, cexcdesc,ninvdisc,nivdstkppn,ninvtax 
          order by cexcdesc,cstdcode
         ) as b
@@ -154,26 +107,11 @@ if (searchValue) {
         console.log('warehouse: ', decodeURIComponent(warehouse));
         console.log('stockGroup: ', decodeURIComponent(stockGroup));
         console.log(`=============================================`);
-        const offset = (pageNumber - 1) * pageSize;
-        parameters.push(pageSize);
-        parameters.push(offset);
-        const [response, totalRows] = await Promise.all([
-            this.genericRepository.query<SalesAnalystDTO>(query, parameters),
-            this.genericRepository.query<SalesAnalystDTO>(count, countParameters)
-        ]);
-        const totalPages = Math.ceil((totalRows[0] as any).total_rows / pageSize);
+        const response = await this.genericRepository.query<SalesAnalystDTO>(query, parameters);
         if (response?.length) {
-            return ResponseHelper.CreateResponse<SalesAnalystDTO[]>(response, HttpStatus.OK, Constants.DATA_SUCCESS, {
-                paging: {
-                    totalPages
-                }
-            });
+            return ResponseHelper.CreateResponse<SalesAnalystDTO[]>(response, HttpStatus.OK, Constants.DATA_SUCCESS);
         } else {
-            return ResponseHelper.CreateResponse<SalesAnalystDTO[]>([], HttpStatus.NOT_FOUND, Constants.DATA_NOT_FOUND, {
-                paging: {
-                    totalPages: 1
-                }
-            });
+            return ResponseHelper.CreateResponse<SalesAnalystDTO[]>([], HttpStatus.NOT_FOUND, Constants.DATA_NOT_FOUND);
         }
     }
 }

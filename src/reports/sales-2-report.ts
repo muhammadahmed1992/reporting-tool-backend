@@ -33,28 +33,6 @@ export class Sales2Report implements ReportStrategy {
 
         parameters.push(startDate);
         parameters.push(endDate);
-        countParameters.push(startDate);
-        countParameters.push(endDate);
-        let count = `
-        SELECT COUNT(DISTINCT cinvrefno) as total_rows
-FROM invoice
-INNER JOIN invoicedetail ON cinvpk = civdfkinv
-INNER JOIN exchange ON cinvfkexc = cexcpk
-LEFT JOIN entity ON cinvfkent = centpk
-WHERE (cinvspecial = 'JL' OR cinvspecial = 'RJ' OR cinvspecial = 'PS' OR cinvspecial = 'RS')
-AND dinvdate >= ? AND dinvdate <= ?
-`;
-              if (searchValue) {
-                count += ' AND (';
-                count += filterColumns.map(column => `${column} LIKE ?`).join(' OR ');
-                count += ')';
-                countParameters.push(...filterColumns.map(() => `%${searchValue}%`));
-            }
-        if (warehouse) {
-            count += ` AND (IFNULL(?, cinvfkwhs) = cinvfkwhs OR cinvfkwhs IS NULL) `;
-            countParameters.push(decodeURIComponent(warehouse));
-        }        
-
         let query = `
         SELECT Invoice as invoice_header, Date as date_header, Currency as currency_header,
             FORMAT(Amount,0) AS amount_header,
@@ -86,8 +64,7 @@ AND dinvdate >= ? AND dinvdate <= ?
             query+= `and (IFNULL(?, cinvfkwhs) = cinvfkwhs or cinvfkwhs is null) `;
             parameters.push(decodeURIComponent(warehouse));
         }
-        const sortBy = sortColumn ? sortColumn : 'currency_header,date_header,invoice_header';  
-        const sortOrder = sortDirection ? sortDirection : 'ASC';
+
         query += `
         group by cinvrefno,dinvdate,centdesc,cexcdesc,ninvdisc1,ninvdisc2,ninvdisc3,ninvtax,ninvfreight,cinvspecial
         ) AS c, (SELECT @currentGroup := '', @currentSum := 0) r 
@@ -97,23 +74,11 @@ AND dinvdate >= ? AND dinvdate <= ?
         console.log(`Report Name: ${ReportName.Sales_No_Disc}`);
         console.log('warehouse: ', decodeURIComponent(warehouse));
         console.log(`=============================================`);   
-        const [response, totalRows] = await Promise.all([
-            this.genericRepository.query<Sales2DTO>(query, parameters), 
-            this.genericRepository.query<Sales2DTO>(count, parameters)
-        ]);
-        const totalPages = Math.ceil((totalRows[0] as any).total_rows / pageSize);
+        const response = await this.genericRepository.query<Sales2DTO>(query, parameters);
         if (response?.length) {
-            return ResponseHelper.CreateResponse<Sales2DTO[]>(response, HttpStatus.OK, Constants.DATA_SUCCESS, {
-                paging: {
-                    totalPages
-                }
-            });
+            return ResponseHelper.CreateResponse<Sales2DTO[]>(response, HttpStatus.OK, Constants.DATA_SUCCESS);
         } else {
-            return ResponseHelper.CreateResponse<Sales2DTO[]>([], HttpStatus.NOT_FOUND, Constants.DATA_NOT_FOUND, {
-                paging: {
-                    totalPages: 1
-                }
-            });
+            return ResponseHelper.CreateResponse<Sales2DTO[]>([], HttpStatus.NOT_FOUND, Constants.DATA_NOT_FOUND);
         }
     }
 }

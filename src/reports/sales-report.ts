@@ -35,10 +35,13 @@ export class SalesReport implements ReportStrategy {
         console.log(`endDate: ${endDate}`);
         parameters.push(startDate);
         parameters.push(endDate);
-        countParameters.push(startDate);
-        countParameters.push(endDate);
-        let count = `
-       SELECT COUNT(1) as total_rows
+        let query = `
+       SELECT Invoice as invoice_header, Date as date_header, Currency as currency_header,
+            FORMAT(Amount,0) AS amount_header,
+            FORMAT(IF(@currentGroup <> Currency, 
+                IF(@currentGroup:= Currency, @currentSum:= 0, @currentSum:= Amount), 
+                @currentSum:= @currentSum + Amount
+            ),0) AS subtotal_header
         FROM (
         select 
         LTRIM(RTRIM(cinvrefno)) as Invoice,
@@ -57,10 +60,9 @@ export class SalesReport implements ReportStrategy {
             parameters.push(...filterColumns.map(() => `%${searchValue}%`));
         }
         if (warehouse) {
-            count+= ` and (IFNULL(?, cinvfkwhs) = cinvfkwhs or cinvfkwhs is null) `;
-            countParameters.push(decodeURIComponent(warehouse));
+            query+= ` and (IFNULL(?, cinvfkwhs) = cinvfkwhs or cinvfkwhs is null) `;
         } 
-        count+= ` group by civdfkinv) as a
+        query+= ` group by civdfkinv) as a
 
         inner join
 
@@ -83,29 +85,15 @@ export class SalesReport implements ReportStrategy {
         console.log(`Report Name: ${ReportName.Sales}`);
         console.log('warehouse: ', decodeURIComponent(warehouse));
         console.log(`==================================================`);
-
+        console.log({queryString});
         if (warehouse)
             parameters.push(decodeURIComponent(warehouse));
-        const offset = (pageNumber - 1) * pageSize;
-        parameters.push(pageSize);
-        parameters.push(offset);
-        const [response, totalRows] = await Promise.all([
-            this.genericRepository.query<SalesDTO>(query, parameters),
-            this.genericRepository.query<number>(count, countParameters)
-        ]);
-        const totalPages = Math.ceil((totalRows[0] as any).total_rows / pageSize);
+
+        const response = await this.genericRepository.query<SalesDTO>(query, parameters);
         if (response?.length) {
-            return ResponseHelper.CreateResponse<SalesDTO[]>(response, HttpStatus.OK, Constants.DATA_SUCCESS, {
-                paging: {
-                    totalPages
-                }
-            });
+            return ResponseHelper.CreateResponse<SalesDTO[]>(response, HttpStatus.OK, Constants.DATA_SUCCESS);
         } else {
-            return ResponseHelper.CreateResponse<SalesDTO[]>([], HttpStatus.NOT_FOUND, Constants.DATA_NOT_FOUND, {
-                paging: {
-                    totalPages: 1
-                }
-            });
+            return ResponseHelper.CreateResponse<SalesDTO[]>([], HttpStatus.NOT_FOUND, Constants.DATA_NOT_FOUND);
         }
     }
 }

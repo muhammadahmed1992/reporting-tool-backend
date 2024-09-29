@@ -9,7 +9,6 @@ import ResponseHelper from 'src/helper/response-helper';
 import { ReportName } from 'src/helper/enums/report-names.enum';
 import Constants from 'src/helper/constants';
 import { QueryStringDTO } from 'src/dto/query-string.dto';
-
 @Injectable()
 export class StockBalanceReport implements ReportStrategy {
     constructor(private readonly genericRepository: GenericRepository) {}
@@ -84,10 +83,9 @@ export class StockBalanceReport implements ReportStrategy {
             query+= ` and (IFNULL(?, cwhspk) = cwhspk or cwhspk is null) `;
         }
         if (stockGroup) {
-            query+= ` and (IFNULL(?, cstkfkgrp) = cstkfkgrp or cstkfkgrp is null) ` ;
+            query+= ` and (IFNULL(?, cstkfkgrp) = cstkfkgrp or cstkfkgrp is null) `;
         }
-        const sortBy = sortColumn ? sortColumn : 'stock_id_header,stock_name_header,location_header';  
-        const sortOrder = sortDirection ? sortDirection : 'ASC';
+        
         query+= ` group by Kode,Nama,Lokasi
          ) d
         JOIN (SELECT @totalBalance := 0) r
@@ -104,17 +102,9 @@ export class StockBalanceReport implements ReportStrategy {
             parameters.push(decodeURIComponent(stockGroup));
         const response = await this.genericRepository.query<StocBalancekDTO>(query, parameters);
         if (response?.length) {
-            return ResponseHelper.CreateResponse<StocBalancekDTO[]>(response, HttpStatus.OK, Constants.DATA_SUCCESS, {
-                paging: {
-                    totalPages
-                }
-            });
+            return ResponseHelper.CreateResponse<StocBalancekDTO[]>(response, HttpStatus.OK, Constants.DATA_SUCCESS);
         } else {
-            return ResponseHelper.CreateResponse<StocBalancekDTO[]>([], HttpStatus.NOT_FOUND, Constants.DATA_NOT_FOUND, {
-                paging: {
-                    totalPages: 1
-                }
-            });
+            return ResponseHelper.CreateResponse<StocBalancekDTO[]>([], HttpStatus.NOT_FOUND, Constants.DATA_NOT_FOUND);
         }
     }
 }

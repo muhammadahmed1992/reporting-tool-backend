@@ -1,6 +1,9 @@
 import { Injectable, HttpStatus } from '@nestjs/common';
+
+
 import { ReportStrategy } from '../interfaces-strategy/report-strategy';
-import { GenericRepository } from '../repository/generic.repository';
+import { GenericRepository } from '../repository/generic.repository'
+
 import ApiResponse from 'src/helper/api-response';
 import ResponseHelper from 'src/helper/response-helper';
 import { PriceListDTO } from 'src/dto/price-list.dto';
@@ -45,7 +48,7 @@ export class PriceListReport implements ReportStrategy {
         query+= `  ORDER BY ${sortBy} ${sortOrder} `;        
         console.log(`query: ${query}`);
         console.log(`Report Name: ${ReportName.Price_List}`);
-        console.log('parameters:', { stockGroup: decodeURIComponent(stockGroup), sortBy, sortOrder });
+        console.log('parameter: stockGroup: ', decodeURIComponent(stockGroup));
         console.log('=====================================');
         const response = await this.genericRepository.query<PriceListDTO>(query, parameters);
         if (response?.length) {

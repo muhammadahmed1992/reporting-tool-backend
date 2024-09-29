@@ -6,6 +6,7 @@ import { GenericRepository } from '../repository/generic.repository'
 
 import ApiResponse from 'src/helper/api-response';
 import ResponseHelper from 'src/helper/response-helper';
+import { PriceListDTO } from 'src/dto/price-list.dto';
 import { StocBalancekDTO } from 'src/dto/stock-balance.dto';
 import { ReportName } from 'src/helper/enums/report-names.enum';
 import Constants from 'src/helper/constants';
@@ -61,7 +62,7 @@ export class SearchStockIDReport implements ReportStrategy {
         on cIvdFkStk=CSTKPK and nstksuspend=0 and nstkservice=0
         INNER JOIN stockdetail sdt 
         on cIvdFkStk=cSTDfkSTK And nSTDfactor=1 and nstdkey=1 
-        INNER JOIN unit ON cSTDfkUNI=cUNIpk `;
+        INNER JOIN unit ON cSTDfkUNI=cUNIpk `
         
         if (stockId) {
             query+= ` where cstdcode=? `
@@ -75,23 +76,11 @@ export class SearchStockIDReport implements ReportStrategy {
         console.log(`Report Name: ${ReportName.Stock_Balance_BarCode}`);
         console.log(`stockCode ${decodeURIComponent(stockId)}`);
         console.log(`==================================================`);
-        const [response, totalRows] = await Promise.all([
-            this.genericRepository.query<StocBalancekDTO>(query, parameters),
-            this.genericRepository.query<StocBalancekDTO>(count, parameters)
-        ]);
-        const totalPages = Math.ceil((totalRows[0] as any).total_rows / pageSize);
+        const response = await this.genericRepository.query<StocBalancekDTO>(query, parameters);
         if (response?.length) {
-            return ResponseHelper.CreateResponse<StocBalancekDTO[]>(response, HttpStatus.OK, Constants.DATA_SUCCESS, {
-                paging: {
-                    totalPages
-                }
-            });
+            return ResponseHelper.CreateResponse<StocBalancekDTO[]>(response, HttpStatus.OK, Constants.DATA_SUCCESS);
         } else {
-            return ResponseHelper.CreateResponse<StocBalancekDTO[]>([], HttpStatus.NOT_FOUND, Constants.DATA_NOT_FOUND, {
-                paging: {
-                    totalPages: 1
-                }
-            });
+            return ResponseHelper.CreateResponse<StocBalancekDTO[]>([], HttpStatus.NOT_FOUND, Constants.DATA_NOT_FOUND);
         }
     }
 }
