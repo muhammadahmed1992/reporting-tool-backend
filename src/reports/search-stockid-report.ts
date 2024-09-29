@@ -6,6 +6,7 @@ import { GenericRepository } from '../repository/generic.repository'
 
 import ApiResponse from 'src/helper/api-response';
 import ResponseHelper from 'src/helper/response-helper';
+import { PriceListDTO } from 'src/dto/price-list.dto';
 import { StocBalancekDTO } from 'src/dto/stock-balance.dto';
 import { ReportName } from 'src/helper/enums/report-names.enum';
 import Constants from 'src/helper/constants';

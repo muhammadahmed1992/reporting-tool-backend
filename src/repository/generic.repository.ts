@@ -33,6 +33,25 @@ export class GenericRepository implements OnModuleDestroy {
       GenericRepository.dataSource = new DataSource(dataSourceOptions);
       await GenericRepository.dataSource.initialize();
       console.log(`DataSource initialized with name: ${this.connectionName}`);
+    } else {
+      console.log(`closing the datasource`);
+      await GenericRepository.dataSource.destroy();
+      this.connectionName = uuidv4();
+
+      const connectionString = this.request['connection-string'];
+      console.log(`Initializing new DataSource with connection string: ${connectionString}`);
+
+      const dataSourceOptions: DataSourceOptions = {
+        type: 'mysql',
+        url: connectionString,
+        entities: [], // Define your entities here
+        synchronize: false,
+        name: this.connectionName, // Unique connection name
+      };
+
+      GenericRepository.dataSource = new DataSource(dataSourceOptions);
+      await GenericRepository.dataSource.initialize();
+      console.log(`DataSource initialized with name: ${this.connectionName}`);
     }
   }
 
