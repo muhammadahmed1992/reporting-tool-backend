@@ -15,60 +15,17 @@ export class StockBalanceReport implements ReportStrategy {
     constructor(private readonly genericRepository: GenericRepository) {}
 
     public async generateReport(queryString: QueryStringDTO): Promise<ApiResponse<any>> {
-        const { stockGroup, warehouse, pageSize, pageNumber, searchValue, columnsToFilter, sortColumn, sortDirection } = queryString;
-        const filterColumns = columnsToFilter ? columnsToFilter.toString().split(',').map(item => item.trim()) : [];
-        const parameters = []; 
-        const countParameters = [];
-
-        let countQuery = `
-        SELECT COUNT(*) AS total_count
-        FROM (
-            SELECT DISTINCT LTRIM(RTRIM(cSTDcode)) AS Kode, 
-                            LTRIM(RTRIM(cSTKdesc)) AS Nama,
-                            LTRIM(RTRIM(warehouse.cwhsdesc)) AS Lokasi
-            FROM (
-                SELECT cIvdFkStk, cInvFkWhs AS pkWhs
-                FROM Invoicedetail
-                INNER JOIN Invoice ON cIVDfkINV = cINVpk
-                WHERE cinvspecial <> 'KS'  
-                  AND nIVDkirim = 1
-                  AND nivdaccqty >= 0
-                  AND cinvspecial <> '02'
-                GROUP BY cIvdFkStk, cInvFkWhs 
-
-                UNION 
-
-                SELECT cIvdFkStk, cInvTransfer AS pkWhs
-                FROM Invoicedetail
-                INNER JOIN Invoice ON cIVDfkINV = cINVpk
-                WHERE cinvspecial <> 'KS'  
-                  AND nIVDkirim = 1
-                  AND nivdaccqty >= 0
-                  AND cinvspecial <> '02'
-                GROUP BY cIvdFkStk, cInvTransfer 
-            ) AS c
-            INNER JOIN warehouse ON warehouse.cwhspk = c.pkWhs
-            INNER JOIN stock ON cIvdFkStk = CSTKPK AND nstksuspend = 0 AND nstkservice = 0
-            INNER JOIN stockdetail sdt ON cIvdFkStk = cSTDfkSTK AND nSTDfactor = 1 AND nstdkey = 1 
-            INNER JOIN unit ON cSTDfkUNI = cUNIpk
-            WHERE 1=1`;
-
-        if (searchValue) {
-            countQuery += ' AND (' + filterColumns.map(column => `${column} LIKE ?`).join(' OR ') + ')';
-            countParameters.push(...filterColumns.map(() => `%${searchValue}%`));
+        const {stockGroup, warehouse, sortColumn, sortDirection, searchValue, columnsToFilter } = queryString;
+        let sortBy = sortColumn ? sortColumn : 'stock_name_header,stock_id_header,location_header'.includes(sortColumn);  
+        const sortOrder = sortDirection ? sortDirection : 'ASC'; 
+        if(sortColumn && !(sortColumn ==='stock_name_header' || sortColumn === 'stock_id_header' || sortColumn === 'location_header')) {
+            sortBy = `CAST(REPLACE(${sortColumn}, ',', '') AS SIGNED)`;
+        } else {
+            sortBy = !sortColumn ? 'stock_name_header,stock_id_header,location_header' : sortColumn;
         }
-        if (warehouse) {
-            countQuery += ' AND cwhspk = ?';
-            countParameters.push(warehouse);
-        }
-        if (stockGroup) {
-            countQuery += ' AND cstkfkgrp = ?';
-            countParameters.push(stockGroup);
-        }
-
-        countQuery += ` GROUP BY Kode, Nama, Lokasi) AS d`;
-
-        let query = `select
+        const parameters = [];
+        let query = `
+        select
         Kode as stock_id_header, Nama as stock_name_header, Lokasi as location_header,
                 FORMAT(d.Qty, 0) as qty_header,
                 Format(d.Price, 0) as price_header,
@@ -115,7 +72,8 @@ export class StockBalanceReport implements ReportStrategy {
         INNER JOIN stockdetail sdt 
         on cIvdFkStk=cSTDfkSTK And nSTDfactor=1 and nstdkey=1 
         INNER JOIN unit ON cSTDfkUNI=cUNIpk
-        where 1=1 `
+        where 1=1 `;
+        const filterColumns = columnsToFilter ? columnsToFilter.toString().split(',').map(item => item.trim()) : [];
         if (searchValue) {
             query += ' AND (';
             query += filterColumns.map(column => `${column} LIKE ?`).join(' OR ');
@@ -132,26 +90,19 @@ export class StockBalanceReport implements ReportStrategy {
         const sortOrder = sortDirection ? sortDirection : 'ASC';
         query+= ` group by Kode,Nama,Lokasi
          ) d
-        JOIN (SELECT @totalBalance := 0) r 
-        order by ${sortBy} ${sortOrder} 
-        LIMIT ? OFFSET ?`;
-
-        parameters.push(pageSize);
-        parameters.push((pageNumber - 1) * pageSize);
-
-        console.log(`query: ${query}`);
+        JOIN (SELECT @totalBalance := 0) r
+        order by ${sortBy} ${sortOrder}`;
+        console.log(`query: ${query} `);
         console.log(`Report Name: ${ReportName.Stock_Balance}`);
         console.log('warehouse: ', decodeURIComponent(warehouse));
         console.log('stockGroup: ', decodeURIComponent(stockGroup));
         console.log(`=================================================`);
-
-        const [response, totalRows] = await Promise.all([
-            this.genericRepository.query<StocBalancekDTO>(query, parameters),
-            this.genericRepository.query<{ total_count: number }>(countQuery, countParameters)
-        ]);
         
-        const totalPages = Math.ceil((totalRows[0].total_count) / pageSize);
-        
+        if (warehouse)
+            parameters.push(decodeURIComponent(warehouse));
+        if (stockGroup)
+            parameters.push(decodeURIComponent(stockGroup));
+        const response = await this.genericRepository.query<StocBalancekDTO>(query, parameters);
         if (response?.length) {
             return ResponseHelper.CreateResponse<StocBalancekDTO[]>(response, HttpStatus.OK, Constants.DATA_SUCCESS, {
                 paging: {

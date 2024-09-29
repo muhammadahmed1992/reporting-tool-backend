@@ -6,7 +6,6 @@ import { GenericRepository } from '../repository/generic.repository'
 
 import ApiResponse from 'src/helper/api-response';
 import ResponseHelper from 'src/helper/response-helper';
-import { PriceListDTO } from 'src/dto/price-list.dto';
 import { StocBalancekDTO } from 'src/dto/stock-balance.dto';
 import { ReportName } from 'src/helper/enums/report-names.enum';
 import Constants from 'src/helper/constants';
@@ -16,51 +15,11 @@ export class SearchStockIDReport implements ReportStrategy {
     constructor(private readonly genericRepository: GenericRepository) {}
 
     public async generateReport(queryString: QueryStringDTO): Promise<ApiResponse<any>> {
-        const {stockCode, pageSize, pageNumber} = queryString;
-        const parameters = []; const countParameters = [];
-        
-        let count = `
-        select COUNT(1) as total_rows
-        from
-        (
-        
-        SELECT cIvdFkStk, cInvFkWhs as pkWhs,
-        SUM(nIVDzqtyIn) as zQtyIn, SUM(nIVDzqtyout) as zQtyOut, 
-        'a' as detailType FROM Invoicedetail
-        INNER JOIN Invoice ON cIVDfkINV = cINVpk
-        WHERE cinvspecial<>'KS' 
-        and nivdaccqty>=0
-        and cinvspecial<>'02' 
-        group by cIvdFkStk, cInvFkWhs 
-        
-        union 
-        
-        SELECT cIvdFkStk, cInvTransfer as pkWhs,
-        SUM(nIVDzqtyOut) as zQtyIn,
-        SUM(nIVDzqtyIn) as zQtyOut, 
-        't' as detailType FROM Invoicedetail
-        INNER JOIN Invoice ON cIVDfkINV = cINVpk
-        WHERE cinvspecial<>'KS'  
-        and cInvTransfer <> 'n/a'
-        and nIVDkirim=1 and cInvTransfer is not null
-        and nivdaccqty>=0
-        and cinvspecial<>'02'
-        group by cIvdFkStk, cInvTransfer 
-        
-        ) as c
-        
-        inner join warehouse 
-        on warehouse.cwhspk=c.pkwhs
-        INNER JOIN stock 
-        on cIvdFkStk=CSTKPK and nstksuspend=0 and nstkservice=0
-        INNER JOIN stockdetail sdt 
-        on cIvdFkStk=cSTDfkSTK And nSTDfactor=1 and nstdkey=1 
-        INNER JOIN unit ON cSTDfkUNI=cUNIpk `
-        
-        if (stockCode) {
-            count+= ` where cstdcode=? `
+        const {stockId} = queryString;
+        if (!stockId) {
+            return ResponseHelper.CreateResponse<StocBalancekDTO[]>([], HttpStatus.NOT_FOUND, Constants.STOCK_CODE_EMPTY);
         }
-
+        const parameters = [];
         let query = `
         select LTRIM(RTRIM(cSTDcode)) as StockID,
         LTRIM(RTRIM(cSTKdesc)) as StockName,
@@ -104,21 +63,17 @@ export class SearchStockIDReport implements ReportStrategy {
         on cIvdFkStk=cSTDfkSTK And nSTDfactor=1 and nstdkey=1 
         INNER JOIN unit ON cSTDfkUNI=cUNIpk `;
         
-        if (stockCode) {
-            query+= ` where cstdcode=? `;
+        if (stockId) {
+            query+= ` where cstdcode=? `
+            parameters.push(decodeURIComponent(stockId));
         }
         
         query+= `group by StockId,StockName,Location
-        order by Location asc LIMIT ? OFFSET ?`;
-        if (stockCode) {
-            parameters.push(decodeURIComponent(stockCode));
-        }
-        const offset = (pageNumber - 1) * pageSize;
-        parameters.push(pageSize);
-        parameters.push(offset);
+        order by Location asc`
+
         console.log(`query: ${query}`);
         console.log(`Report Name: ${ReportName.Stock_Balance_BarCode}`);
-        console.log(`stockCode ${decodeURIComponent(stockCode)}`);
+        console.log(`stockCode ${decodeURIComponent(stockId)}`);
         console.log(`==================================================`);
         const [response, totalRows] = await Promise.all([
             this.genericRepository.query<StocBalancekDTO>(query, parameters),

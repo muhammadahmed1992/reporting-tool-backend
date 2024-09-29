@@ -13,101 +13,45 @@ export class PriceListReport implements ReportStrategy {
     constructor(private readonly genericRepository: GenericRepository) {}
 
     public async generateReport(queryString: QueryStringDTO): Promise<ApiResponse<any>> {
-        const { stockGroup, pageSize, pageNumber, searchValue, columnsToFilter, sortColumn, sortDirection } = queryString;
-
-        console.log({ searchValue, columnsToFilter });
-
-        const filterColumns = columnsToFilter ? columnsToFilter.toString().split(',').map(item => item.trim()) : [];
-        console.log({ filterColumns });
-
+        const {stockGroup, sortColumn, sortDirection, searchValue, columnsToFilter } = queryString;
+        let sortBy;
+        const sortOrder = !sortDirection ? 'ASC' : sortDirection;
+        if(sortColumn === 'price_header') {
+            sortBy = `CAST(REPLACE(${sortColumn}, ',', '') AS SIGNED)`
+        } else {
+            sortBy = !sortColumn ? 'stock_id_header' : sortColumn;
+        }
         const parameters = [];
-        const countParameters = [];
-
-        // Build the count query
-        let count = `
-            SELECT COUNT(1) as total_rows
-            FROM Stock
-            INNER JOIN Stockdetail ON Stock.cSTKpk = Stockdetail.cSTDfkSTK
-            INNER JOIN Unit ON Stockdetail.cSTDfkUNI = Unit.cUNIpk
-            INNER JOIN stockgroup ON cstkfkgrp = cgrppk
-            WHERE 1=1`;
-
-        if (searchValue) {
-            count += ' AND (';
-            count += filterColumns.map(column => `${column} LIKE ?`).join(' OR ');
-            count += ')';
-            countParameters.push(...filterColumns.map(() => `%${searchValue}%`));
-        }
-
-        if (stockGroup) {
-            count += ' AND (IFNULL(?, cstkfkgrp) = cstkfkgrp OR cstkfkgrp IS NULL)';
-            countParameters.push(decodeURIComponent(stockGroup));
-        }
-
-        console.log('count query:', count);
-        console.log('======================================');
-
-        // Build the main query
         let query = `
-            SELECT cSTDcode AS stock_id_header,
-                   LTRIM(RTRIM(cSTKdesc)) AS stock_name_header,
-                   FORMAT(nSTDprice, 0) AS price_header,
-                   LTRIM(RTRIM(cUNIdesc)) AS unit_header
-            FROM Stock
-            INNER JOIN Stockdetail ON Stock.cSTKpk = Stockdetail.cSTDfkSTK
-            INNER JOIN Unit ON Stockdetail.cSTDfkUNI = Unit.cUNIpk
-            INNER JOIN stockgroup ON cstkfkgrp = cgrppk
-            WHERE 1=1`;
-
+        SELECT cSTDcode as stock_id_header, LTRIM(RTRIM(cSTKdesc)) as stock_name_header,
+        FORMAT(nSTDprice,0) as price_header,LTRIM(RTRIM(cUNIdesc)) as unit_header
+        FROM Stock INNER JOIN Stockdetail
+        ON Stock.cSTKpk = Stockdetail.cSTDfkSTK
+        INNER JOIN Unit
+        ON Stockdetail.cSTDfkUNI = Unit.cUNIpk
+        inner join stockgroup on cstkfkgrp = cgrppk
+        where 1=1 `;
+        const filterColumns = columnsToFilter ? columnsToFilter.toString().split(',').map(item => item.trim()) : [];
         if (searchValue) {
             query += ' AND (';
             query += filterColumns.map(column => `${column} LIKE ?`).join(' OR ');
             query += ')';
             parameters.push(...filterColumns.map(() => `%${searchValue}%`));
         }
-
         if (stockGroup) {
-            query += ' AND (IFNULL(?, cstkfkgrp) = cstkfkgrp OR cstkfkgrp IS NULL)';
+            query+= ` and (IFNULL(?, cstkfkgrp) = cstkfkgrp or cstkfkgrp is null) `;
             parameters.push(decodeURIComponent(stockGroup));
         }
-
-        // Handle sorting// List of allowed columns to sort by
-        console.log({sortDirection});
-        const sortBy = sortColumn ? sortColumn : 'cSTDcode';  // Default to 'cSTDcode' if invalid column
-        const sortOrder = sortDirection ? sortDirection : 'ASC';  // Default to 'ASC'
-
-        query += ` ORDER BY ${sortBy} ${sortOrder} LIMIT ? OFFSET ?`;
-
-        const offset = (pageNumber - 1) * pageSize;
-        parameters.push(pageSize);
-        parameters.push(offset);
-
-        console.log(`offset: ${offset}, pageNumber: ${pageNumber}, pageSize: ${pageSize}`);
+        query+= `  ORDER BY ${sortBy} ${sortOrder} `;        
         console.log(`query: ${query}`);
         console.log(`Report Name: ${ReportName.Price_List}`);
         console.log('parameters:', { stockGroup: decodeURIComponent(stockGroup), sortBy, sortOrder });
         console.log('=====================================');
-
-        // Execute the queries
-        const [response, totalRows] = await Promise.all([
-            this.genericRepository.query<PriceListDTO>(query, parameters),
-            this.genericRepository.query<number>(count, countParameters)
-        ]);
-
-        const totalPages = Math.ceil((totalRows[0] as any).total_rows / pageSize);
-
+        const response = await this.genericRepository.query<PriceListDTO>(query, parameters);
         if (response?.length) {
-            return ResponseHelper.CreateResponse<PriceListDTO[]>(response, HttpStatus.OK, Constants.DATA_SUCCESS, {
-                paging: {
-                    totalPages
-                }
-            });
+            return ResponseHelper.CreateResponse<PriceListDTO[]>(response, HttpStatus.OK, Constants.DATA_SUCCESS);
         } else {
-            return ResponseHelper.CreateResponse<PriceListDTO[]>([], HttpStatus.NOT_FOUND, Constants.DATA_NOT_FOUND, {
-                paging: {
-                    totalPages: 1
-                }
-            });
+            return ResponseHelper.CreateResponse<PriceListDTO[]>([], HttpStatus.NOT_FOUND, Constants.DATA_NOT_FOUND);
         }
     }
 }

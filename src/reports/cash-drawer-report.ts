@@ -175,14 +175,8 @@ FROM (
     @running_balance := 0
 ) AS vars LIMIT ? OFFSET ?;
 `;
-        let {startDate, endDate, pageSize, pageNumber} = queryString;
-        const offset = (pageNumber - 1) * pageSize;
-        console.log({offset});
-        if (!startDate)
-            startDate = new Date();
-        if (!endDate)
-            endDate = new Date();
-        const parameters = []; const countParameters = [];
+        const {startDate, endDate} = queryString;
+        const parameters = [];
         parameters.push(startDate);
         parameters.push(endDate);
         countParameters.push(startDate);

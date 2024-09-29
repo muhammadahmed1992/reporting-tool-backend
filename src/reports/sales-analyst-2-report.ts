@@ -11,55 +11,34 @@ import { SalesAnalystDTO } from '../dto/sales-analyst.dto';
 import { ReportName } from 'src/helper/enums/report-names.enum';
 import Constants from 'src/helper/constants';
 import { QueryStringDTO } from 'src/dto/query-string.dto';
+
 @Injectable()
 export class SalesAnalyst2Report implements ReportStrategy {
     constructor(private readonly genericRepository: GenericRepository) {}
 
     public async generateReport(queryString: QueryStringDTO): Promise<ApiResponse<any>> {
-        let {startDate, endDate, warehouse, stockGroup, pageSize, pageNumber, searchValue, columnsToFilter, sortColumn, sortDirection} = queryString;
-        const filterColumns = columnsToFilter ? columnsToFilter.toString().split(',').map(item => item.trim()) : [];
-        const parameters = []; const countParameters = [];
-        if (!startDate)
-            startDate = new Date();
-        if (!endDate)
-            endDate = new Date();
+        let {startDate, endDate, warehouse, stockGroup, sortColumn, sortDirection, searchValue, columnsToFilter } = queryString;
+        let sortBy;
+
+        const sortOrder = !sortDirection ? 'ASC' : sortDirection;
+
+        if(!sortColumn || sortColumn === 'currency_header' || sortColumn === 'stock_id_header') {
+            if(sortColumn === 'currency_header')
+                sortBy = `currency_header ${sortOrder},stock_id_header`;
+            else    
+                sortBy = `currency_header ,stock_id_header ${sortOrder}`;
+        } else if (sortColumn === 'stock_name_header') {
+            sortBy = `currency_header,stock_name_header`;
+        } else if (sortColumn === 'date_header') {
+            sortBy = `currency_header, STR_TO_DATE(date_header, '%Y-%m-%d') ${sortOrder}, invoice_header `;
+        }
+        else {
+            sortBy = `currency_header,CAST(REPLACE(${sortColumn}, ',', '') AS SIGNED) ${sortOrder},stock_id_header`;
+        }
+
+        const parameters = [];
         parameters.push(startDate);
         parameters.push(endDate);
-        countParameters.push(startDate);
-        countParameters.push(endDate);
-        let count = 
-        ` SELECT COUNT(1) as total_rows
-FROM (
-    SELECT DISTINCT cstdcode
-    FROM invoice
-    INNER JOIN invoicedetail ON cINVpk = cIVDfkINV
-    INNER JOIN exchange ON cINVfkexc = cexcpk
-    INNER JOIN stock ON cIVDfkSTK = cSTKpk
-    INNER JOIN stockdetail ON cSTKpk = cSTDfkSTK
-    WHERE nstdkey = 1 
-      AND nIVDkirim = 1 
-      AND (cINVspecial = 'JL' OR cINVspecial = 'RJ' OR cINVspecial = 'PS' OR cINVspecial = 'RS')
-      AND dinvdate >= ? 
-      AND dinvdate <= ?
-      ${searchValue ? `AND (${filterColumns.map(column => `${column} LIKE ?`).join(' OR ')})` : ''}
-      ${stockGroup ? `AND (IFNULL(?, cstkfkgrp) = cstkfkgrp OR cstkfkgrp IS NULL)` : ''}
-      ${warehouse ? `AND (IFNULL(?, cinvfkwhs) = cinvfkwhs OR cinvfkwhs IS NULL)` : ''}
-) AS count_query
-`;
-
-        if (searchValue) {
-            count += ' AND (' + filterColumns.map(column => `${column} LIKE ?`).join(' OR ') + ')';
-            countParameters.push(...filterColumns.map(() => `%${searchValue}%`));
-        }
-        if (stockGroup) {
-            count += ` AND (IFNULL(?, cstkfkgrp) = cstkfkgrp OR cstkfkgrp IS NULL)`;
-            countParameters.push(decodeURIComponent(stockGroup));
-        }
-        if (warehouse) {
-            count += ` AND (IFNULL(?, cinvfkwhs) = cinvfkwhs OR cinvfkwhs IS NULL)`;
-            countParameters.push(decodeURIComponent(warehouse));
-        }
-
         let query = 
         `
         SELECT StockID as stock_id_header, StockName as stock_name_header, FORMAT(Qty,0) as qty_header, Currency as currency_header, FORMAT(Amount, 0) as amount_header, FORMAT(Amount_Tax, 0) as amount_tax_header,
@@ -87,6 +66,7 @@ FROM (
         ON  cSTKpk = cSTDfkSTK
         WHERE nstdkey = 1 and nIVDkirim=1 AND (cINVspecial='JL' or cINVspecial='RJ' or cINVspecial='PS' or cINVspecial='RS')
         and dinvdate>=? and dinvdate<=? `;
+        const filterColumns = columnsToFilter ? columnsToFilter.toString().split(',').map(item => item.trim()) : [];
         if (searchValue) {
             query += ' AND (';
             query += filterColumns.map(column => `${column} LIKE ?`).join(' OR ');
@@ -104,9 +84,8 @@ FROM (
     query+= `
   group by cstdcode, cstkdesc, cexcdesc
  ) AS c, (SELECT @currentGroup := '', @currentSum := 0, @currentGroupAmountTax := '', @currentSumAmountTax := 0) r 
-        order by ${sortBy} ${sortOrder} LIMIT ? OFFSET ?`; 
+       order by ${sortBy}`; 
 
-        const offset = (pageNumber - 1) * pageSize;
         
         if (stockGroup){
             parameters.push(decodeURIComponent(stockGroup));
