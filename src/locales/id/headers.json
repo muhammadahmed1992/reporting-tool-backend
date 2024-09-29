@@ -1,113 +1,127 @@
 {
-    "cash_drawer_report": {
-      "date_drawer_header": "Tanggal",
-      "opening_header": "Pembukaan",
-      "dp_header": "DP",
-      "voucher_header": "Voucher",
-      "cash_header": "Tunai",
-      "payroll_header": "Penggajian",
-      "credit_card_header": "Kartu Kredit",
-      "debit_card_header": "Kartu Debit",
-      "online_header": "Online",
-      "withdrawn_header": "Penarikan",
-      "cancel_header": "Pembatalan",
-      "balance_header": "Saldo"
-    },
-    "cash_drawer_report_detail": {
-      "cashier_header": "Kasir",
-      "date_header": "Tanggal",
-      "opening_header": "Pembukaan",
-      "dp_header": "DP",
-      "voucher_header": "Voucher",
-      "cash_header": "Tunai",
-      "payroll_header": "Penggajian",
-      "credit_card_header": "Kartu Kredit",
-      "debit_card_header": "Kartu Debit",
-      "online_header": "Online",
-      "withdrawn_header": "Penarikan",
-      "cancel_header": "Pembatalan",
-      "balance_header": "Saldo"
-    },
-    "price_report": {
-      "stock_id_header": "ID Stok",
-      "stock_name_header": "Nama Stok",
-      "price_header": "Harga",
-      "unit_header": "Unit"
-    },
-    "stock_report": {
-      "stock_id_header": "ID Stok",
-      "stock_name_header": "Nama Stok",
-      "location_header": "Lokasi",
-      "qty_header": "Jumlah",
-      "price_header": "Harga",
-      "balance_header": "Saldo"
-    },
-    "purchasing_report": {
-      "invoice_header": "Faktur",
-      "date_header": "Tanggal",
-      "supplier_header": "Pemasok",
-      "currency_header": "Mata Uang",
-      "amount_header": "Jumlah"
-    },
-    "purchasing_report_no_disc": {
-      "invoice_header": "Faktur",
-      "date_header": "Tanggal",
-      "supplier_header": "Pemasok",
-      "currency_header": "Mata Uang",
-      "amount_header": "Jumlah"
-    },
-    "purchasing_analyst_report": {
-      "stock_id_header": "ID Stok",
-      "stock_name_header": "Nama Stok",
-      "qty_header": "Jumlah",
-      "currency_header": "Mata Uang",
-      "amount_header": "Jumlah",
-      "amount_tax_header": "Pajak Jumlah"
-    },
-    "purchasing_analyst_report_no_disc": {
-      "stock_id_header": "ID Stok",
-      "stock_name_header": "Nama Stok",
-      "qty_header": "Jumlah",
-      "currency_header": "Mata Uang",
-      "amount_header": "Jumlah",
-      "amount_tax_header": "Pajak Jumlah"
-    },
-    "sales_report": {
-      "invoice_header": "Faktur",
-      "date_header": "Tanggal",
-      "currency_header": "Mata Uang",
-      "amount_header": "Jumlah"
-    },
-    "sales_report_2": {
-      "invoice_header": "Faktur",
-      "date_header": "Tanggal",
-      "currency_header": "Mata Uang",
-      "amount_header": "Jumlah"
-    },
-    "sales_analyst_report": {
-      "stock_id_header": "ID Stok",
-      "stock_name_header": "Nama Stok",
-      "qty_header": "Jumlah",
-      "currency_header": "Mata Uang",
-      "amount_header": "Jumlah",
-      "amount_tax_header": "Pajak Jumlah"
-    },
-    "sales_analyst_report_2": {
-      "stock_id_header": "ID Stok",
-      "stock_name_header": "Nama Stok",
-      "qty_header": "Jumlah",
-      "currency_header": "Mata Uang",
-      "amount_header": "Jumlah",
-      "amount_tax_header": "Pajak Jumlah"
-    },
-    "scan_barcode_report": {
-      "item_header": "Item",
-      "stock_id_header": "ID Stok",
-      "stock_name_header": "Nama Stok",
-      "qty_header": "Jumlah",
-      "price_header": "Harga",
-      "location_header": "Lokasi",
-      "balance_header": "Saldo"
-    }
+  "cash_drawer_report": {
+    "date_drawer_header": "Tanggal",
+    "opening_header": "Pembukaan",
+    "dp_header": "DP",
+    "voucher_header": "Voucher",
+    "cash_header": "Tunai",
+    "payroll_header": "Penggajian",
+    "credit_card_header": "Kartu Kredit",
+    "debit_card_header": "Kartu Debit",
+    "online_header": "Online",
+    "withdrawn_header": "Penarikan",
+    "cancel_header": "Pembatalan",
+    "balance_header": "Saldo"
+  },
+  "cash_drawer_report_detail": {
+    "cashier_header": "Kasir",
+    "date_header": "Tanggal",
+    "opening_header": "Pembukaan",
+    "dp_header": "DP",
+    "voucher_header": "Voucher",
+    "cash_header": "Tunai",
+    "payroll_header": "Penggajian",
+    "credit_card_header": "Kartu Kredit",
+    "debit_card_header": "Kartu Debit",
+    "online_header": "Online",
+    "withdrawn_header": "Penarikan",
+    "cancel_header": "Pembatalan",
+    "balance_header": "Saldo"
+  },
+  "price_report": {
+    "stock_id_header": "ID Stok",
+    "stock_name_header": "Nama Stok",
+    "price_header": "Harga",
+    "unit_header": "Unit"
+  },
+  "stock_report": {
+    "stock_id_header": "ID Stok",
+    "stock_name_header": "Nama Stok",
+    "location_header": "Lokasi",
+    "qty_header": "Jumlah",
+    "price_header": "Harga",
+    "balance_header": "Saldo"
+  },
+  "purchasing_report": {
+    "invoice_header": "Faktur",
+    "date_header": "Tanggal",
+    "supplier_header": "Pemasok",
+    "currency_header": "Mata Uang",
+    "amount_header": "Jumlah"
+  },
+  "purchasing_report_no_disc": {
+    "invoice_header": "Faktur",
+    "date_header": "Tanggal",
+    "supplier_header": "Pemasok",
+    "currency_header": "Mata Uang",
+    "amount_header": "Jumlah"
+  },
+  "purchasing_analyst_report": {
+    "stock_id_header": "ID Stok",
+    "stock_name_header": "Nama Stok",
+    "qty_header": "Jumlah",
+    "currency_header": "Mata Uang",
+    "amount_header": "Jumlah",
+    "amount_tax_header": "Pajak Jumlah"
+  },
+  "purchasing_analyst_report_no_disc": {
+    "stock_id_header": "ID Stok",
+    "stock_name_header": "Nama Stok",
+    "qty_header": "Jumlah",
+    "currency_header": "Mata Uang",
+    "amount_header": "Jumlah",
+    "amount_tax_header": "Pajak Jumlah"
+  },
+  "sales_report": {
+    "invoice_header": "Faktur",
+    "date_header": "Tanggal",
+    "currency_header": "Mata Uang",
+    "amount_header": "Jumlah"
+  },
+  "sales_report_2": {
+    "invoice_header": "Faktur",
+    "date_header": "Tanggal",
+    "currency_header": "Mata Uang",
+    "amount_header": "Jumlah"
+  },
+  "sales_analyst_report": {
+    "stock_id_header": "ID Stok",
+    "stock_name_header": "Nama Stok",
+    "qty_header": "Jumlah",
+    "currency_header": "Mata Uang",
+    "amount_header": "Jumlah",
+    "amount_tax_header": "Pajak Jumlah"
+  },
+  "sales_analyst_report_2": {
+    "stock_id_header": "ID Stok",
+    "stock_name_header": "Nama Stok",
+    "qty_header": "Jumlah",
+    "currency_header": "Mata Uang",
+    "amount_header": "Jumlah",
+    "amount_tax_header": "Pajak Jumlah"
+  },
+  "scan_barcode_report": {
+    "item_header": "Item",
+    "stock_id_header": "ID Stok",
+    "stock_name_header": "Nama Stok",
+    "qty_header": "Jumlah",
+    "price_header": "Harga",
+    "location_header": "Lokasi",
+    "balance_header": "Saldo"
+  },
+  "sales_transaction_table": {
+    "item_header": "Barang",
+    "id": "ID",
+    "qty_header": "Jumlah",
+    "price_header": "Harga",
+    "amount_header": "Jumlah Harga"
+  },
+  "sales_transaction_invoice": {
+    "invoice_no": "No Faktur",
+    "date": "Tanggal",
+    "warehouse": "Gudang",
+    "customer": "Pelanggan",
+    "salesman": "Penjual",
+    "tax": "Pajak"
   }
-  
+}

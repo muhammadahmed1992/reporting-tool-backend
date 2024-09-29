@@ -1,4 +1,4 @@
-import { Controller, Get } from '@nestjs/common';
+import { Controller, Get, UseInterceptors } from '@nestjs/common';
 import { SchemaInformationService } from 'src/services/schema.information.service';
 
 @Controller('schemaInfo')
