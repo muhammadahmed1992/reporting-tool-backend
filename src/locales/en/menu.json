@@ -1,5 +1,8 @@
 {
     "sales_transaction": "Sales Invoice",
+    "sales_order_transaction": "Sales Order Invoice",
+    "point_of_sale_transaction": "Point of Sale",
+    "stock_adjusment": "Stock Adjusment",
     "scan_barcode": "Scan Barcode",
     "switch_database": "Switch Database",
     "stock_report": "Stock Report",
