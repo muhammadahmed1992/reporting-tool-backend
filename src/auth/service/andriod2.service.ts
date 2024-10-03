@@ -3,8 +3,6 @@ import { GenericRepository } from '../../repository/generic.repository'
 import * as crypto from 'crypto';
 import ApiResponse from 'src/helper/api-response';
 import ResponseHelper from 'src/helper/response-helper';
-import { REQUEST } from '@nestjs/core';
-import { Request } from 'express';
 import { UserDTO } from 'src/dto/user.dto';
 import Constants from 'src/helper/constants';
 

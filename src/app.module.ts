@@ -36,12 +36,22 @@ import { TransactionModuleController } from './controller/transaction.module.con
 import { TransactionModuleService } from './services/transaction.module.service';
 import { SetupResponseController } from './controller/setup.response.controller';
 import { SetupResponseService } from './services/setup.response.service';
+import { AdminService } from './services/admin.service';
+import { AdminController } from './controller/administration.controller';
 
 @Module({
   imports: [
     AuthModule,
   ],
-  controllers: [ReportsController, SchemaInfoController, HeartBeatController, LocalizationController, TransactionModuleController, SetupResponseController],
+  controllers: [
+                ReportsController, 
+                SchemaInfoController, 
+                HeartBeatController, 
+                LocalizationController, 
+                TransactionModuleController, 
+                SetupResponseController,
+                AdminController
+              ],
   providers: [
     LocalizationService,
     ReportService,
@@ -62,7 +72,8 @@ import { SetupResponseService } from './services/setup.response.service';
     PurchaseReportNoDisc,
     PurchaseAnalystReport,
     PurchaseAnalystReportNoDisc,
-    CashDrawerDetailReport
+    CashDrawerDetailReport,
+    AdminService
   ]
 })
 export class AppModule {
