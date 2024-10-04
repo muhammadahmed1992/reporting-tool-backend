@@ -1,6 +1,8 @@
 {
     "no_data_found": "Data not found",
     "invalid_user": "Invalid username or password!",
+    "query_success": "Query executed successfully",
+    "query_fail": "Query failed to execute",
     "data_found": "Data retrieved successfully!",
     "connection_string_not_found": "Please specify connection string",
     "bad_connection_string_format": "Provided connection string is not in correct format",

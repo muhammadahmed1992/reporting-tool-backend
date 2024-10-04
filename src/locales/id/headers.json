@@ -109,19 +109,78 @@
     "location_header": "Lokasi",
     "balance_header": "Saldo"
   },
-  "sales_transaction_table": {
-    "item_header": "Barang",
-    "id": "ID",
-    "qty_header": "Jumlah",
-    "price_header": "Harga",
-    "amount_header": "Jumlah Harga"
+  "sales_transaction": {
+    "invoice": {
+      "invoice_no": "No Faktur",
+      "date": "Tanggal",
+      "warehouse": "Gudang",
+      "customer": "Pelanggan",
+      "salesman": "Penjual",
+      "tax": "Pajak"
+    },
+    "table": {
+      "item_header": "Barang",
+      "id": "ID",
+      "qty_header": "Jumlah",
+      "price_header": "Harga",
+      "amount_header": "Jumlah Total"
+    }
   },
-  "sales_transaction_invoice": {
-    "invoice_no": "No Faktur",
-    "date": "Tanggal",
-    "warehouse": "Gudang",
-    "customer": "Pelanggan",
-    "salesman": "Penjual",
-    "tax": "Pajak"
+  "sales_order_transaction": {
+    "table": {
+      "item_header": "Barang",
+      "id": "ID",
+      "qty_header": "Jumlah",
+      "price_header": "Harga",
+      "amount_header": "Jumlah Total"
+    },
+    "invoice": {
+      "invoice_no": "Nomor Faktur",
+      "date": "Tanggal",
+      "warehouse": "Gudang",
+      "customer": "Pelanggan",
+      "salesman": "Penjual",
+      "tax": "Pajak"
+    }
+  },
+  "point_of_sale_transaction": {
+    "table": {
+      "item_header": "Barang",
+      "id": "ID",
+      "qty_header": "Jumlah",
+      "price_header": "Harga",
+      "amount_header": "Jumlah Total"
+    },
+    "invoice": {
+      "invoice_no": "Nomor Faktur",
+      "date": "Tanggal",
+      "warehouse": "Gudang",
+      "customer": "Pelanggan",
+      "salesman": "Penjual",
+      "service_charge": "Biaya Layanan",
+      "tax": "Pajak",
+      "table": "Meja"
+    },
+    "payment": {
+      "total": "Total",
+      "voucher": "Voucher",
+      "cash": "Tunai",
+      "credit_card": "Kartu Kredit",
+      "debit_card": "Kartu Debit",
+      "online": "Online",
+      "change": "Kembalian"
+    }
+  },
+  "stock_adjusment": {
+    "invoice": {
+      "invoice_no": "No Faktur",
+      "date": "Tanggal",
+      "warehouse": "Gudang"
+    },
+    "table": {
+      "item_header": "Barang",
+      "id": "ID",
+      "qty_header": "Jumlah"
+    }
   }
 }

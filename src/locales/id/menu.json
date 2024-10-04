@@ -1,7 +1,11 @@
 {
     "sales_transaction": "Faktur Penjualan",
+    "sales_order_transaction": "Faktur Pesanan Penjualan",
+    "point_of_sale_transaction": "Tempat Penjualan",
+    "stock_adjusment": "Penyesuaian Stok",
     "scan_barcode": "Pindai Barcode",
     "switch_database": "Ganti Basis Data",
+    "registration": "Registrasi",
     "stock_report": "Saldo Stock",
     "price_report": "Laporan Harga",
     "purchasing_report": "Laporan Pembelian",
@@ -23,7 +27,15 @@
     "clear": "Bersihkan",
     "page": "Halaman",
     "of": "dari",
+    "enter_stock_id": "Masukkan ID Stok",
     "search": "Cari di",
     "next": "Berikutnya",
-    "previous": "Sebelumnya"
+    "previous": "Sebelumnya",
+    "registration_placeholder": "Masukkan kunci registrasi Anda",
+    "set_key": "Setel Kunci Registrasi",
+    "get_dev_num": "Dapatkan Nomor Perangkat",
+    "dev_num": "Nomor Perangkat",
+    "transaction_1": "Data Faktur",
+    "transaction_2": "Detail Pesanan",
+    "transaction_3": "Detail Pembayaran"
 }

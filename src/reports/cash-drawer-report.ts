@@ -13,8 +13,17 @@ import { QueryStringDTO } from 'src/dto/query-string.dto';
 @Injectable()
 export class CashDrawerReport implements ReportStrategy {
     constructor(private readonly genericRepository: GenericRepository) {}
-
+    
     public async generateReport(queryString: QueryStringDTO): Promise<ApiResponse<any>> {
+        const {startDate, endDate, sortColumn, sortDirection} = queryString;
+        let sortBy;
+        const sortOrder = !sortDirection ? 'ASC' : sortDirection;
+        
+        if(!sortColumn || sortColumn === 'date_drawer_header') {
+            sortBy = !sortColumn ? 'date_drawer_header' : sortColumn;
+        } else {
+            sortBy = `CAST(REPLACE(${sortColumn}, ',', '') AS SIGNED)`
+        }
         let query = `
 SELECT
     Date as date_drawer_header,
@@ -105,8 +114,7 @@ FROM (
         ) AS c
     ON 
         c.ddradate = a.dinvdate
-    ORDER BY 
-        Date)  AS subquery,
+    )  AS subquery,
 (SELECT 
     @running_opening := 0,
     @running_dp := 0,
@@ -119,9 +127,9 @@ FROM (
     @running_withdrawn := 0,
     @running_cancel := 0,
     @running_balance := 0
-) AS vars;
+) AS vars
+ORDER BY ${sortBy} ${sortOrder}
 `;
-        const {startDate, endDate} = queryString;
         const parameters = [];
         parameters.push(startDate);
         parameters.push(endDate);
