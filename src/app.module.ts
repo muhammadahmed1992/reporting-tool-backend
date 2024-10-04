@@ -81,7 +81,7 @@ export class AppModule {
     consumer
       .apply(ConnectionStringMiddleware)
       .forRoutes(
-        Andriod2Controller, SchemaInfoController, ReportsController, TransactionModuleController, SetupResponseController
+        Andriod2Controller, SchemaInfoController, ReportsController, TransactionModuleController, SetupResponseController, AdminController
       );
   }
 }

@@ -14,7 +14,6 @@ export class TransactionModuleService {
   constructor(private readonly genericRepository: GenericRepository) {}
 
   async salesInvoice(user: string) {
-    console.log(user);
     const query = `
       SELECT
           (SELECT L_jual FROM ymk) AS InvoiceNo,
@@ -50,7 +49,6 @@ export class TransactionModuleService {
       finalResponse.Customer = response[0].Customer;
       finalResponse.Salesman = response[0].Salesman;
       finalResponse.Tax = response[0].Tax;
-      console.log(finalResponse);
       warehouse.primaryKey = response[0].primarykey;
       warehouse.description = response[0].description;
       finalResponse.Warehouse = warehouse;
@@ -95,7 +93,6 @@ export class TransactionModuleService {
       await this.genericRepository.query<TransactionSalesTableDto>(query, [
         stockId,
       ]);
-    console.log(response);
 
     if (response?.length) {
       return ResponseHelper.CreateResponse<any>(
@@ -113,7 +110,6 @@ export class TransactionModuleService {
   }
 
   async setSalesInvoice(body: any) {
-    console.log(body);
 
     // Insert invoice details first
     const invoiceQuery = `
@@ -190,7 +186,6 @@ export class TransactionModuleService {
         invoiceQuery,
         invoiceParams,
       );
-      const invoicePK = body.invoiceNo;
 
       for (let i = 0; i < body.tableFormData.length; i++) {
         const row = body.tableFormData[i];
@@ -202,7 +197,7 @@ export class TransactionModuleService {
                     civdsn, civdmemo
                 ) 
                 SELECT ?, ?, ?, LEFT(SHA1(UUID()), 23),
-                    (SELECT cinvpk FROM invoice WHERE cinvrefno = ? cinvspecial = 'SO'), 
+                    (SELECT cinvpk FROM invoice WHERE cinvrefno = ? and cinvspecial = 'JL'), 
                     ?, sd.nstdfactor, ? * sd.nstdfactor,
                     ? * ?, ?, u.cunidesc, s.nstkppn, ' ', ' '
                 FROM stockdetail sd
@@ -215,7 +210,7 @@ export class TransactionModuleService {
           row.pk,
           row.stock_id_header,
           row.qty,
-          body.invoiceNo,
+          body.invoice.invoiceNo,
           row.price,
           row.qty,
           row.qty,
@@ -235,17 +230,16 @@ export class TransactionModuleService {
       await this.genericRepository.query<any>(updateQuery);
 
       return ResponseHelper.CreateResponse<any>(
-        'Invoice and details inserted successfully.',
+        null,
         HttpStatus.OK,
-        Constants.DATA_SUCCESS,
+        Constants.QUERY_SUCCESS,
       );
     } catch (error) {
-      console.error('Error inserting invoice or details:', error);
 
       return ResponseHelper.CreateResponse<any>(
-        'Failed to insert invoice or details.',
+        null,
         HttpStatus.INTERNAL_SERVER_ERROR,
-        Constants.DATA_FAILURE,
+        Constants.QUERY_FAILURE,
       );
     }
   }
@@ -286,7 +280,6 @@ export class TransactionModuleService {
       finalResponse.Customer = response[0].Customer;
       finalResponse.Salesman = response[0].Salesman;
       finalResponse.Tax = response[0].Tax;
-      console.log(finalResponse);
       warehouse.primaryKey = response[0].primarykey;
       warehouse.description = response[0].description;
       finalResponse.Warehouse = warehouse;
@@ -331,8 +324,6 @@ export class TransactionModuleService {
       await this.genericRepository.query<TransactionSalesTableDto>(query, [
         stockId,
       ]);
-    console.log(response);
-
     if (response?.length) {
       return ResponseHelper.CreateResponse<any>(
         response,
@@ -396,7 +387,7 @@ export class TransactionModuleService {
                     civdmemo
                 ) 
                 SELECT ?, ?, ?, LEFT(SHA1(UUID()), 23),
-                    (SELECT cinvpk FROM porder WHERE cinvrefno = ? and cinvspecial = 'JL'), 
+                    (SELECT cinvpk FROM porder WHERE cinvrefno = ? and cinvspecial = 'SO'), 
                     ?, sd.nstdfactor, ? * sd.nstdfactor,
                     ? * ?, ?, u.cunidesc, s.nstkppn, ' '
                 FROM stockdetail sd
@@ -430,23 +421,21 @@ export class TransactionModuleService {
       await this.genericRepository.query<any>(updateQuery);
 
       return ResponseHelper.CreateResponse<any>(
-        'Invoice and details inserted successfully.',
+        null,
         HttpStatus.OK,
-        Constants.DATA_SUCCESS,
+        Constants.QUERY_SUCCESS,
       );
     } catch (error) {
-      console.error('Error inserting invoice or details:', error);
 
       return ResponseHelper.CreateResponse<any>(
-        'Failed to insert invoice or details.',
+        null,
         HttpStatus.INTERNAL_SERVER_ERROR,
-        Constants.DATA_FAILURE,
+        Constants.QUERY_FAILURE,
       );
     }
   }
 
   async posInvoice(user: string) {
-    console.log(user);
     const query = `
       SELECT
           (SELECT L_pos FROM ymk) AS InvoiceNo,
@@ -488,7 +477,6 @@ export class TransactionModuleService {
       finalResponse.Service = response[0].Service;
       finalResponse.Tax = response[0].Tax;
       finalResponse.Table = response[0].Table;
-      console.log(finalResponse);
       warehouse.primaryKey = response[0].primarykey;
       warehouse.description = response[0].description;
       finalResponse.Warehouse = warehouse;
@@ -533,8 +521,6 @@ export class TransactionModuleService {
       await this.genericRepository.query<TransactionSalesTableDto>(query, [
         stockId,
       ]);
-    console.log(response);
-
     if (response?.length) {
       return ResponseHelper.CreateResponse<any>(
         response,
@@ -603,7 +589,6 @@ export class TransactionModuleService {
       body.payment.online || 0,
       body.invoice.service || 0, // ninvvalue1 (ninvvoucher+ninvtunai+ninvcredit+ninvdebit+ninvmobile)
     ];
-
     try {
       const invoiceResponse = await this.genericRepository.query<any>(
         invoiceQuery,
@@ -615,78 +600,82 @@ export class TransactionModuleService {
       for (let i = 0; i < body.tableFormData.length; i++) {
         const row = body.tableFormData[i];
         const balanceQuery = `
-            SELECT 
-                ROUND(SUM((zqtyin - zqtyout) * nstdprice), 2) AS Balance
-            FROM (
-                SELECT 
-                    cIvdFkStk, 
-                    SUM(nIVDzqtyIn) AS zQtyIn, 
-                    SUM(nIVDzqtyOut) AS zQtyOut,
-                    SUM(nIVDzqtyIn * nSTDprice) AS nstdprice
-                FROM Invoicedetail
-                INNER JOIN Invoice ON cIVDfkINV = cINVpk
-                INNER JOIN stockdetail ON cIvdFkStk = cSTDfkSTK AND nSTDfactor = 1 AND nstdkey = 1
-                WHERE 
-                    cinvspecial <> 'KS' 
-                    AND nivdaccqty >= 0
-                    AND cinvspecial <> '02'
-                
-                UNION 
-                
-                SELECT 
-                    cIvdFkStk, 
-                    SUM(nIVDzqtyOut) AS zQtyIn,
-                    SUM(nIVDzqtyIn) AS zQtyOut,
-                    SUM(nIVDzqtyOut * nSTDprice) AS nstdprice
-                FROM Invoicedetail
-                INNER JOIN Invoice ON cIVDfkINV = cINVpk
-                INNER JOIN stockdetail ON cIvdFkStk = cSTDfkSTK AND nSTDfactor = 1 AND nstdkey = 1
-                WHERE 
-                    cinvspecial <> 'KS'  
-                    AND cInvTransfer <> 'n/a'
-                    AND nIVDkirim = 1 
-                    AND cInvTransfer IS NOT NULL
-                    AND nivdaccqty >= 0
-                    AND cinvspecial <> '02'
-                    AND cstdcode = ?
-            ) AS c
+            select 
+        Round(sum(zqtyin-zqtyout)*SUM(nstdprice),0) as Balance
+        from
+        (
+        
+        SELECT cIvdFkStk, cInvFkWhs as pkWhs,
+        SUM(nIVDzqtyIn) as zQtyIn, SUM(nIVDzqtyout) as zQtyOut, 
+        'a' as detailType FROM Invoicedetail
+        INNER JOIN Invoice ON cIVDfkINV = cINVpk
+        WHERE cinvspecial<>'KS' 
+        and nivdaccqty>=0
+        and cinvspecial<>'02' 
+        group by cIvdFkStk, cInvFkWhs 
+        
+        union 
+        
+        SELECT cIvdFkStk, cInvTransfer as pkWhs,
+        SUM(nIVDzqtyOut) as zQtyIn,
+        SUM(nIVDzqtyIn) as zQtyOut, 
+        't' as detailType FROM Invoicedetail
+        INNER JOIN Invoice ON cIVDfkINV = cINVpk
+        WHERE cinvspecial<>'KS'  
+        and cInvTransfer <> 'n/a'
+        and nIVDkirim=1 and cInvTransfer is not null
+        and nivdaccqty>=0
+        and cinvspecial<>'02'
+        group by cIvdFkStk, cInvTransfer 
+        
+        ) as c
+        
+        inner join warehouse 
+        on warehouse.cwhspk=c.pkwhs
+        INNER JOIN stock 
+        on cIvdFkStk=CSTKPK and nstksuspend=0 and nstkservice=0
+        INNER JOIN stockdetail sdt 
+        on cIvdFkStk=cSTDfkSTK And nSTDfactor=1 and nstdkey=1 
+        INNER JOIN unit ON cSTDfkUNI=cUNIpk 
+        where cstdcode=?
         `;
       const balanceResponse = await this.genericRepository.query<any>(balanceQuery, [
         row.stock_id_header,
       ]);
-        const  balance = parseInt(balanceResponse[0].Balance);
+        const balance = parseInt(balanceResponse[0].Balance);
         const detailQuery = `
                 INSERT INTO invoicedetail (
-                    civdfkstk, civdcode, nivdonhand, nivdqtyout, qtyresep, civdpk, civdfkinv, nivdprice,
-                    nivdfactor, nivdzqtyout, nivdamount, nivdorder, civdunit, nivdstkppn,
-                    nivdpokok, civdmemo, civdpromocard, civdresep
-                ) 
-                SELECT ?, ?, ?, ?, ?, ?, ? LEFT(SHA1(UUID()), 23),
-                    (SELECT cinvpk FROM invoice WHERE cinvrefno = ? and cinvspecial = 'PS'), 
-                    ?, sd.nstdfactor, ? * sd.nstdfactor,
-                    ? * ?, ?, u.cunidesc, s.nstkppn, 0, ' ', ' ', ' '
-                FROM stockdetail sd
-                LEFT JOIN unit u ON u.cunipk = sd.cstdfkuni
-                LEFT JOIN stock s ON s.cstkpk = ?
-                WHERE sd.cstdcode = ?
+    civdfkstk, civdcode, nivdonhand, nivdqtyout, qtyresep, civdpk, civdfkinv, nivdprice,
+    nivdfactor, nivdzqtyout, nivdamount, nivdorder, civdunit, nivdstkppn,
+    nivdpokok, civdmemo, civdpromocard, civdresep
+) 
+SELECT ?, ?, ?, ?, ?, LEFT(SHA1(UUID()), 23), 
+    (SELECT cinvpk FROM invoice WHERE cinvrefno = ? and cinvspecial = 'PS'), -- Subquery for civdfkinv
+    ?, sd.nstdfactor, ? * sd.nstdfactor,
+    ? * ?, ?, u.cunidesc, s.nstkppn, 0, ' ', ' ', ' '
+FROM stockdetail sd
+LEFT JOIN unit u ON u.cunipk = sd.cstdfkuni
+LEFT JOIN stock s ON s.cstkpk = ?
+WHERE sd.cstdcode = ?;
+
             `;
 
-        const detailParams = [
-          row.pk,
-          row.stock_id_header,
-          balance,
-          row.qty,
-          row.qty,
-          body.invoiceNo,
-          row.price,
-          row.qty,
-          row.qty,
-          row.price,
-          i + 1,
-          row.pk,
-          row.stock_id_header,
-        ];
-
+            const detailParams = [
+              row.pk,              // civdfkstk
+              row.stock_id_header, // civdcode
+              balance,             // nivdonhand
+              row.qty,             // nivdqtyout
+              row.qty,             // qtyresep
+              body.invoice.invoiceNo, // cinvrefno (subquery in SELECT)
+              row.price,           // nivdprice
+              row.qty,             // quantity * nstdfactor
+              row.qty,             // quantity
+              row.price,           // nivdamount
+              i + 1,               // nivdorder
+              row.pk,              // s.cstkpk (to match stock in JOIN)
+              row.stock_id_header, // sd.cstdcode
+          ];
+          
         const detailResponse = await this.genericRepository.query<any>(
           detailQuery,
           detailParams,
@@ -695,13 +684,22 @@ export class TransactionModuleService {
       await this.genericRepository.query<any>(
         `Update ymk Set L_pos = L_pos + 1;`,
       );
+      return ResponseHelper.CreateResponse<any>(
+        null,
+        HttpStatus.OK,
+        Constants.QUERY_SUCCESS,
+      );
     } catch (error) {
-      // Handle error
+
+      return ResponseHelper.CreateResponse<any>(
+        null,
+        HttpStatus.INTERNAL_SERVER_ERROR,
+        Constants.QUERY_FAILURE,
+      );
     }
   }
 
   async stockInvoice(user: string) {
-    console.log(user);
     const query = `
     SELECT
         (SELECT L_opname FROM ymk) AS InvoiceNo,
@@ -727,7 +725,6 @@ export class TransactionModuleService {
     if (response?.length) {
       finalResponse.InvoiceNo = response[0].InvoiceNo;
       finalResponse.Date = response[0].Date;
-      console.log(finalResponse);
       warehouse.primaryKey = response[0].primarykey;
       warehouse.description = response[0].description;
       finalResponse.Warehouse = warehouse;
@@ -770,7 +767,6 @@ export class TransactionModuleService {
       await this.genericRepository.query<TransactionSalesTableDto>(query, [
         stockId,
       ]);
-    console.log(response);
 
     if (response?.length) {
       return ResponseHelper.CreateResponse<any>(
@@ -788,7 +784,6 @@ export class TransactionModuleService {
   }
 
   async setStockInvoice(body: any) {
-    console.log(body.invoice.invoiceNo);
     const invoiceQuery = `
   INSERT INTO invoice (
       cinvrefno, cinvfkwhs,
@@ -819,7 +814,6 @@ export class TransactionModuleService {
       body.invoice.loginUser,
       body.invoice.loginUser,
     ];
-    console.log(invoiceQuery);
     try {
       const invoiceResponse = await this.genericRepository.query<any>(
         invoiceQuery,
@@ -829,47 +823,49 @@ export class TransactionModuleService {
       for (let i = 0; i < body.tableFormData.length; i++) {
         const row = body.tableFormData[i];
         const balanceQuery = `
-          SELECT
-              ROUND(SUM((zqtyin - zqtyout) * nstdprice), 2) AS Balance
-          FROM (
-              SELECT
-                  cIvdFkStk,
-                  SUM(nIVDzqtyIn) AS zQtyIn,
-                  SUM(nIVDzqtyOut) AS zQtyOut,
-                  SUM(nIVDzqtyIn * nSTDprice) AS nstdprice
-              FROM Invoicedetail
-              INNER JOIN Invoice ON cIVDfkINV = cINVpk
-              INNER JOIN stockdetail ON cIvdFkStk = cSTDfkSTK AND nSTDfactor = 1 AND nstdkey = 1
-              WHERE
-                  cinvspecial <> 'KS'
-                  AND nivdaccqty >= 0
-                  AND cinvspecial <> '02'
-
-              UNION
-
-              SELECT
-                  cIvdFkStk,
-                  SUM(nIVDzqtyOut) AS zQtyIn,
-                  SUM(nIVDzqtyIn) AS zQtyOut,
-                  SUM(nIVDzqtyOut * nSTDprice) AS nstdprice
-              FROM Invoicedetail
-              INNER JOIN Invoice ON cIVDfkINV = cINVpk
-              INNER JOIN stockdetail ON cIvdFkStk = cSTDfkSTK AND nSTDfactor = 1 AND nstdkey = 1
-              WHERE
-                  cinvspecial <> 'KS'
-                  AND cInvTransfer <> 'n/a'
-                  AND nIVDkirim = 1
-                  AND cInvTransfer IS NOT NULL
-                  AND nivdaccqty >= 0
-                  AND cinvspecial <> '02'
-                  AND cstdcode = ?
-          ) AS c
-      `;
+            select 
+        Round(sum(zqtyin-zqtyout)*SUM(nstdprice),0) as Balance
+        from
+        (
+        
+        SELECT cIvdFkStk, cInvFkWhs as pkWhs,
+        SUM(nIVDzqtyIn) as zQtyIn, SUM(nIVDzqtyout) as zQtyOut, 
+        'a' as detailType FROM Invoicedetail
+        INNER JOIN Invoice ON cIVDfkINV = cINVpk
+        WHERE cinvspecial<>'KS' 
+        and nivdaccqty>=0
+        and cinvspecial<>'02' 
+        group by cIvdFkStk, cInvFkWhs 
+        
+        union 
+        
+        SELECT cIvdFkStk, cInvTransfer as pkWhs,
+        SUM(nIVDzqtyOut) as zQtyIn,
+        SUM(nIVDzqtyIn) as zQtyOut, 
+        't' as detailType FROM Invoicedetail
+        INNER JOIN Invoice ON cIVDfkINV = cINVpk
+        WHERE cinvspecial<>'KS'  
+        and cInvTransfer <> 'n/a'
+        and nIVDkirim=1 and cInvTransfer is not null
+        and nivdaccqty>=0
+        and cinvspecial<>'02'
+        group by cIvdFkStk, cInvTransfer 
+        
+        ) as c
+        
+        inner join warehouse 
+        on warehouse.cwhspk=c.pkwhs
+        INNER JOIN stock 
+        on cIvdFkStk=CSTKPK and nstksuspend=0 and nstkservice=0
+        INNER JOIN stockdetail sdt 
+        on cIvdFkStk=cSTDfkSTK And nSTDfactor=1 and nstdkey=1 
+        INNER JOIN unit ON cSTDfkUNI=cUNIpk 
+        where cstdcode=?
+        `;
       const balanceResponse = await this.genericRepository.query<any>(balanceQuery, [
         row.stock_id_header,
       ]);
       const balance = parseInt(balanceResponse[0].Balance);
-      console.log(balance);
       
         const nivdqtyin = balance < row.qty ? row.qty - balance : 0;
         const nivdzqtyin = balance < row.qty ? row.qty - balance : 0;
@@ -885,7 +881,7 @@ export class TransactionModuleService {
               nivdamount, nivdorder, civdunit
             ) Values (
               ?, ?, ?, ?, 
-              LEFT(SHA1(UUID()), 23), ((SELECT cinvpk FROM invoice WHERE cinvrefno = ? and cinvspecial = 'OP')),
+              LEFT(SHA1(UUID()), 23), (SELECT cinvpk FROM invoice WHERE cinvrefno = ? and cinvspecial = 'OP'),
               (SELECT nstkbuy FROM stock WHERE cstkpk = ?),
               ?, ?, ?, ?,
               (? * (SELECT nstkbuy FROM stock WHERE cstkpk = ?)), ?,
@@ -895,7 +891,7 @@ export class TransactionModuleService {
         
         const detailParams = [
           row.pk, row.stock_id_header, balance, 
-          row.qty, body.invoiceNo, row.pk, 
+          row.qty, body.invoice.invoiceNo, row.pk, 
           nivdqtyin, nivdzqtyin, nivdqtyout, nivdzqtyout,  // Pre-calculated values
           nivdamount, row.pk, i + 1,  // nivdamount and sequence number
           row.pk  // Stock PK for retrieving unit information
@@ -910,8 +906,18 @@ export class TransactionModuleService {
       await this.genericRepository.query<any>(
         `Update ymk Set L_opname = L_opname + 1;`,
       );
+      return ResponseHelper.CreateResponse<any>(
+        null,
+        HttpStatus.OK,
+        Constants.QUERY_SUCCESS,
+      );
     } catch (error) {
-      console.error(error);
+
+      return ResponseHelper.CreateResponse<any>(
+        null,
+        HttpStatus.INTERNAL_SERVER_ERROR,
+        Constants.QUERY_FAILURE,
+      );
     }
   }
 }

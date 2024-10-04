@@ -5,6 +5,7 @@
     "stock_adjusment": "Stock Adjusment",
     "scan_barcode": "Scan Barcode",
     "switch_database": "Switch Database",
+    "registration": "Registration",
     "stock_report": "Stock Report",
     "price_report": "Price Report",
     "purchasing_report": "Purchasing Report",
@@ -25,8 +26,16 @@
     "filter": "Filter",
     "clear": "Clear",
     "page": "Page",
+    "enter_stock_id": "Enter Stock ID",
     "of": "of",
     "search": "Search in",
     "next": "Next",
-    "previous": "Previous"
+    "previous": "Previous",
+    "registration_placeholder": "Enter your registration key",
+    "set_key": "Set Registration Key",
+    "get_dev_num": "Get Device Number",
+    "dev_num": "Device Number",
+    "transaction_1": "Invoice Data",
+    "transaction_2": "Order Detail",
+    "transaction_3": "Payment Details"
 }

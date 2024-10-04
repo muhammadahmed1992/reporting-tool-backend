@@ -2,6 +2,8 @@
     "no_data_found": "Tidak ada data",
     "invalid_user": "Nama pengguna atau kata sandi tidak valid!",
     "data_found": "Data berhasil diambil!",
+    "query_success": "Kueri berhasil dijalankan",
+    "query_fail": "Kueri gagal dijalankan",
     "connection_string_not_found": "Harap tentukan string koneksi",
     "bad_connection_string_format": "String koneksi yang diberikan tidak dalam format yang benar",
     "unauthorized_user": "Pengguna tidak diizinkan untuk login",
