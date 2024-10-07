@@ -17,12 +17,12 @@ export class TransactionModuleService {
     const query = `
       SELECT
           (SELECT L_jual FROM ymk) AS InvoiceNo,
-          DATE_FORMAT(CURDATE(), '%Y-%m-%d') AS 'Date',
+          DATE_FORMAT(CURDATE(), '%d-%m-%Y') AS 'Date',
           w.cwhspk as primarykey,
           (TRIM(w.cwhsdesc)) AS description,
           ('') AS Customer,
           ('') AS Salesman,
-          (SELECT gst FROM ymk3) AS Tax
+          (SELECT njualtax FROM ymk) AS Tax
       FROM
           android2 a
       JOIN
@@ -174,7 +174,7 @@ export class TransactionModuleService {
       body.invoice.customer.pk,
       body.invoice.customer.desc,
       body.invoice.customer.desc,
-      body.invoice.salesman.pk,
+      body.invoice.salesman.pk || '..default..............',
       body.invoice.tax,
       body.invoice.loginUser,
       body.invoice.loginUser,
@@ -248,12 +248,12 @@ export class TransactionModuleService {
     const query = `
       SELECT
           (SELECT L_so FROM ymk) AS InvoiceNo,
-          DATE_FORMAT(CURDATE(), '%Y-%m-%d') AS 'Date',
+          DATE_FORMAT(CURDATE(), '%d-%m-%Y') AS 'Date',
           w.cwhspk as primarykey,
           (TRIM(w.cwhsdesc)) AS description,
           ('') AS Customer,
           ('') AS Salesman,
-          (SELECT gst FROM ymk3) AS Tax
+          (SELECT njualtax FROM ymk) AS Tax
       FROM
           android2 a
       JOIN
@@ -364,7 +364,7 @@ export class TransactionModuleService {
       body.invoice.customer.pk,
       body.invoice.customer.desc,
       body.invoice.customer.desc,
-      body.invoice.salesman.pk,
+      body.invoice.salesman.pk || '..default..............',
       body.invoice.tax,
       body.invoice.loginUser,
       body.invoice.loginUser,
@@ -439,7 +439,7 @@ export class TransactionModuleService {
     const query = `
       SELECT
           (SELECT L_pos FROM ymk) AS InvoiceNo,
-          DATE_FORMAT(CURDATE(), '%Y-%m-%d') AS 'Date',
+          DATE_FORMAT(CURDATE(), '%d-%m-%Y') AS 'Date',
           w.cwhspk as primarykey,
           (TRIM(w.cwhsdesc)) AS description,
           ('') AS Customer,
@@ -563,9 +563,9 @@ export class TransactionModuleService {
     const invoiceParams = [
       body.invoice.invoiceNo, // cinvrefno
       body.invoice.warehouse, // cinvfkwhs
-      body.invoice.customer.pk, // cinvfkent
-      body.invoice.customer.desc, // cinvfkentcode
-      body.invoice.salesman.pk, // cinvfksam
+      body.invoice.customer.pk || '', // cinvfkent
+      body.invoice.customer.desc || '', // cinvfkentcode
+      body.invoice.salesman.pk || '..default..............', // cinvfksam
       body.invoice.tax, // ninvtax
       body.invoice.table || ' ', // cinvmeja (Table)
       body.payment.voucher || 0, // ninvvoucher (Voucher)
@@ -703,7 +703,7 @@ WHERE sd.cstdcode = ?;
     const query = `
     SELECT
         (SELECT L_opname FROM ymk) AS InvoiceNo,
-        DATE_FORMAT(CURDATE(), '%Y-%m-%d') AS 'Date',
+        DATE_FORMAT(CURDATE(), '%d-%m-%Y') AS 'Date',
         w.cwhspk as primarykey,
         (TRIM(w.cwhsdesc)) AS description
     FROM android2 a
