@@ -17,7 +17,7 @@ export class TransactionModuleService {
     const query = `
       SELECT
           (SELECT L_jual FROM ymk) AS InvoiceNo,
-          DATE_FORMAT(CURDATE(), '%Y-%m-%d') AS 'Date',
+          DATE_FORMAT(CURDATE(), '%d-%m-%Y') AS 'Date',
           w.cwhspk as primarykey,
           (TRIM(w.cwhsdesc)) AS description,
           ('') AS Customer,
@@ -248,7 +248,7 @@ export class TransactionModuleService {
     const query = `
       SELECT
           (SELECT L_so FROM ymk) AS InvoiceNo,
-          DATE_FORMAT(CURDATE(), '%Y-%m-%d') AS 'Date',
+          DATE_FORMAT(CURDATE(), '%d-%m-%Y') AS 'Date',
           w.cwhspk as primarykey,
           (TRIM(w.cwhsdesc)) AS description,
           ('') AS Customer,
@@ -439,7 +439,7 @@ export class TransactionModuleService {
     const query = `
       SELECT
           (SELECT L_pos FROM ymk) AS InvoiceNo,
-          DATE_FORMAT(CURDATE(), '%Y-%m-%d') AS 'Date',
+          DATE_FORMAT(CURDATE(), '%d-%m-%Y') AS 'Date',
           w.cwhspk as primarykey,
           (TRIM(w.cwhsdesc)) AS description,
           ('') AS Customer,
@@ -703,7 +703,7 @@ WHERE sd.cstdcode = ?;
     const query = `
     SELECT
         (SELECT L_opname FROM ymk) AS InvoiceNo,
-        DATE_FORMAT(CURDATE(), '%Y-%m-%d') AS 'Date',
+        DATE_FORMAT(CURDATE(), '%d-%m-%Y') AS 'Date',
         w.cwhspk as primarykey,
         (TRIM(w.cwhsdesc)) AS description
     FROM android2 a
