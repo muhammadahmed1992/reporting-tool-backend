@@ -22,7 +22,7 @@ export class TransactionModuleService {
           (TRIM(w.cwhsdesc)) AS description,
           ('') AS Customer,
           ('') AS Salesman,
-          (SELECT gst FROM ymk3) AS Tax
+          (SELECT njualtax FROM ymk) AS Tax
       FROM
           android2 a
       JOIN
@@ -174,7 +174,7 @@ export class TransactionModuleService {
       body.invoice.customer.pk,
       body.invoice.customer.desc,
       body.invoice.customer.desc,
-      body.invoice.salesman.pk,
+      body.invoice.salesman.pk || '..default..............',
       body.invoice.tax,
       body.invoice.loginUser,
       body.invoice.loginUser,
@@ -253,7 +253,7 @@ export class TransactionModuleService {
           (TRIM(w.cwhsdesc)) AS description,
           ('') AS Customer,
           ('') AS Salesman,
-          (SELECT gst FROM ymk3) AS Tax
+          (SELECT njualtax FROM ymk) AS Tax
       FROM
           android2 a
       JOIN
@@ -364,7 +364,7 @@ export class TransactionModuleService {
       body.invoice.customer.pk,
       body.invoice.customer.desc,
       body.invoice.customer.desc,
-      body.invoice.salesman.pk,
+      body.invoice.salesman.pk || '..default..............',
       body.invoice.tax,
       body.invoice.loginUser,
       body.invoice.loginUser,
@@ -563,9 +563,9 @@ export class TransactionModuleService {
     const invoiceParams = [
       body.invoice.invoiceNo, // cinvrefno
       body.invoice.warehouse, // cinvfkwhs
-      body.invoice.customer.pk, // cinvfkent
-      body.invoice.customer.desc, // cinvfkentcode
-      body.invoice.salesman.pk, // cinvfksam
+      body.invoice.customer.pk || '', // cinvfkent
+      body.invoice.customer.desc || '', // cinvfkentcode
+      body.invoice.salesman.pk || '..default..............', // cinvfksam
       body.invoice.tax, // ninvtax
       body.invoice.table || ' ', // cinvmeja (Table)
       body.payment.voucher || 0, // ninvvoucher (Voucher)
