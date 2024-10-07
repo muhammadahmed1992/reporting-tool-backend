@@ -194,12 +194,12 @@ export class TransactionModuleService {
                 INSERT INTO invoicedetail (
                     civdfkstk, civdcode, nivdqtyout, civdpk, civdfkinv, nivdprice,
                     nivdfactor, nivdzqtyout, nivdamount, nivdorder, civdunit, nivdstkppn,
-                    civdsn, civdmemo
+                    civdsn, civdmemo, civdpokok
                 ) 
                 SELECT ?, ?, ?, LEFT(SHA1(UUID()), 23),
                     (SELECT cinvpk FROM invoice WHERE cinvrefno = ? and cinvspecial = 'JL'), 
                     ?, sd.nstdfactor, ? * sd.nstdfactor,
-                    ? * ?, ?, u.cunidesc, s.nstkppn, ' ', ' '
+                    ? * ?, ?, u.cunidesc, s.nstkppn, ' ', ' ', (select nstkbuy from stock where cstkpk= ?) * (? * sd.nstdfactor)
                 FROM stockdetail sd
                 LEFT JOIN unit u ON u.cunipk = sd.cstdfkuni
                 LEFT JOIN stock s ON s.cstkpk = ?
@@ -218,6 +218,8 @@ export class TransactionModuleService {
           i + 1,
           row.pk,
           row.stock_id_header,
+          row.pk,
+          row.qty
         ];
 
         const detailResponse = await this.genericRepository.query<any>(
