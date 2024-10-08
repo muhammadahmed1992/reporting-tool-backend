@@ -19,7 +19,7 @@ export class Andriod2Service {
             nandjual as IsSalesReportAndCashReportAllowed,
             nandpos as IsSalesAndSalesOrderAndPosTransactionAllowed,
             nandopname as IsStockAdjusmentAllowed 
-            FROM 'android2' WHERE canddesc = ? AND candpw = ?`;
+            FROM android2 WHERE canddesc = ? AND candpw = ?`;
     const result = await this.genericRepository.query(query, [username, hashedPassword]);
 
     if (result.length === 0) {
