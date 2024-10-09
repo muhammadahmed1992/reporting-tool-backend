@@ -1,12 +1,14 @@
 import { HttpStatus, Injectable } from "@nestjs/common";
-import * as crypto from 'crypto';
 import ApiResponse from "src/helper/api-response";
 import ResponseHelper from "src/helper/response-helper";
+import { GenericRepository } from "src/repository/generic.repository";
 
 @Injectable()
 export class AdminService {
+    constructor(private readonly genericRepository: GenericRepository) {}
     async validateLicense(imei: string): Promise<ApiResponse<string>> {
-        const hashedLicense = crypto.createHash('sha1').update(`ahmed${imei}jerry`).digest('hex');
-        return ResponseHelper.CreateResponse<string>(hashedLicense.substring(0, 5), HttpStatus.OK);
+        const hashedLicense = `select left(sha1(concat('ahmed','${imei}','jerry')),5) as resultID`;
+        const response = await this.genericRepository.query<any>(hashedLicense);
+        return ResponseHelper.CreateResponse<string>(response[0].resultID, HttpStatus.OK);
     }
 }

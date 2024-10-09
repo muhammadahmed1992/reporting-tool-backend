@@ -8,7 +8,7 @@ import { GenericRepository } from 'src/repository/generic.repository';
 export class SetupResponseService {
     constructor(private readonly genericRepository: GenericRepository) {}
     async getCustomerList(): Promise<ApiResponse<any>> {
-        let query = `select centpk,  LTRIM(RTRIM(centdesc)) from entity where nentcust=1 and nentsuspend=0`;
+        let query = `select centpk, LTRIM(RTRIM(centdesc)) from entity where nentcust=1 and nentsuspend=0 order by centdesc asc`;
 
         const response = await this.genericRepository.query<any>(query);
         if (response?.length) {
@@ -19,7 +19,7 @@ export class SetupResponseService {
     }
 
     async getSalesmanList(): Promise<ApiResponse<any>> {
-        let query = `select csampk,  LTRIM(RTRIM(csamdesc)) from salesman where nsamsuspend=0`;
+        let query = `select csampk, LTRIM(RTRIM(csamdesc)) from salesman where nsamsuspend=0 order by csamdesc asc`;
 
         const response = await this.genericRepository.query<any>(query);
         if (response?.length) {
