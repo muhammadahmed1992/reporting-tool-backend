@@ -16,7 +16,7 @@ export class TransactionModuleService {
   async salesInvoice(user: string) {
     const query = `
       SELECT
-          (SELECT L_jual FROM ymk) AS InvoiceNo,
+          (SELECT IF(L_jual IS NULL OR L_jual NOT REGEXP '^[0-9]+$', 10000, L_jual) AS L_jual_value FROM ymk) AS InvoiceNo,
           DATE_FORMAT(CURDATE(), '%d-%m-%Y') AS 'Date',
           w.cwhspk as primarykey,
           (TRIM(w.cwhsdesc)) AS description,
@@ -125,8 +125,8 @@ export class TransactionModuleService {
         npostransfer, ninvpromov, ninvpromod, ninvpromos, ninvkm, 
         ninvpawal, ninvcetak1, ninvpilih, ninvpersen, xkirim, ninvvalue
     ) VALUES (
-        ?, ?, STR_TO_DATE(?, '%Y-%m-%d'), CURDATE(), 
-        STR_TO_DATE(?, '%Y-%m-%d'), ?, ?, ?, 
+        ?, ?, STR_TO_DATE(?, '%d-%m-%Y'), CURDATE(), 
+        STR_TO_DATE(?, '%d-%m-%Y'), ?, ?, ?, 
         ?, LEFT(SHA1(UUID()), 23), ?, ?, 
         CONCAT(DATE_FORMAT(NOW(), '%d-%m-%Y %H:%i'), ' ', ?), 
         'JL', -- cinvspecial
@@ -194,7 +194,7 @@ export class TransactionModuleService {
                 INSERT INTO invoicedetail (
                     civdfkstk, civdcode, nivdqtyout, civdpk, civdfkinv, nivdprice,
                     nivdfactor, nivdzqtyout, nivdamount, nivdorder, civdunit, nivdstkppn,
-                    civdsn, civdmemo, civdpokok
+                    civdsn, civdmemo, nivdpokok
                 ) 
                 SELECT ?, ?, ?, LEFT(SHA1(UUID()), 23),
                     (SELECT cinvpk FROM invoice WHERE cinvrefno = ? and cinvspecial = 'JL'), 
@@ -204,7 +204,7 @@ export class TransactionModuleService {
                 LEFT JOIN unit u ON u.cunipk = sd.cstdfkuni
                 LEFT JOIN stock s ON s.cstkpk = ?
                 WHERE sd.cstdcode = ?
-            `;
+            `; 
 
         const detailParams = [
           row.pk,
@@ -249,7 +249,7 @@ export class TransactionModuleService {
   async salesOrderInvoice(user: string) {
     const query = `
       SELECT
-          (SELECT L_so FROM ymk) AS InvoiceNo,
+          (SELECT IF(L_so IS NULL OR L_so NOT REGEXP '^[0-9]+$', 10000, L_so) AS L_so FROM ymk) AS InvoiceNo,
           DATE_FORMAT(CURDATE(), '%d-%m-%Y') AS 'Date',
           w.cwhspk as primarykey,
           (TRIM(w.cwhsdesc)) AS description,
@@ -350,8 +350,8 @@ export class TransactionModuleService {
         cinvtransfer, cinvfkexc, kunci, ninvrate, ninvjenis, 
         ninvoption, cinvremark, cinvremark1, ninvdp, xkirim, ninvclose
     ) VALUES (
-        ?, ?, STR_TO_DATE(?, '%Y-%m-%d'), CURDATE(), 
-        STR_TO_DATE(?, '%Y-%m-%d'), ?, ?, ?, 
+        ?, ?, STR_TO_DATE(?, '%d-%m-%Y'), CURDATE(), 
+        STR_TO_DATE(?, '%d-%m-%Y'), ?, ?, ?, 
         ?, LEFT(SHA1(UUID()), 23), ?, ?, 
         CONCAT(DATE_FORMAT(NOW(), '%d-%m-%Y %H:%i'), ' ', ?), 
         (SELECT soexpire FROM ymk2), 'SO', 'n/a', 
@@ -440,7 +440,7 @@ export class TransactionModuleService {
   async posInvoice(user: string) {
     const query = `
       SELECT
-          (SELECT L_pos FROM ymk) AS InvoiceNo,
+      (SELECT IF(L_pos IS NULL OR L_pos NOT REGEXP '^[0-9]+$', 10000, L_pos) AS L_pos FROM ymk) AS InvoiceNo,
           DATE_FORMAT(CURDATE(), '%d-%m-%Y') AS 'Date',
           w.cwhspk as primarykey,
           (TRIM(w.cwhsdesc)) AS description,
@@ -704,7 +704,7 @@ WHERE sd.cstdcode = ?;
   async stockInvoice(user: string) {
     const query = `
     SELECT
-        (SELECT L_opname FROM ymk) AS InvoiceNo,
+        (SELECT IF(L_opname IS NULL OR L_opname NOT REGEXP '^[0-9]+$', 10000, L_opname) AS L_opname FROM ymk) AS InvoiceNo,
         DATE_FORMAT(CURDATE(), '%d-%m-%Y') AS 'Date',
         w.cwhspk as primarykey,
         (TRIM(w.cwhsdesc)) AS description
@@ -784,7 +784,7 @@ WHERE sd.cstdcode = ?;
       );
     }
   }
-
+  
   async setStockInvoice(body: any) {
     const invoiceQuery = `
   INSERT INTO invoice (
@@ -797,7 +797,7 @@ WHERE sd.cstdcode = ?;
       xkirim
   ) VALUES (
       ?, ?,
-      ?, ?, ?, ?,
+      STR_TO_DATE(?, '%d-%m-%Y'), STR_TO_DATE(?, '%d-%m-%Y'), STR_TO_DATE(?, '%d-%m-%Y'), STR_TO_DATE(?, '%d-%m-%Y'),
       LEFT(SHA1(UUID()), 23), ?, CONCAT(DATE_FORMAT(NOW(), '%d-%m-%Y %H:%i'), ' ', ?),
        '..opname...............',  '..default..............',  'OP', '..rupiah...............',
        'OPNAME', 1, 1, 1,
@@ -867,8 +867,8 @@ WHERE sd.cstdcode = ?;
       const balanceResponse = await this.genericRepository.query<any>(balanceQuery, [
         row.stock_id_header,
       ]);
-      const balance = parseInt(balanceResponse[0].Balance);
-      
+      const balance = parseInt(balanceResponse[0].Balance) || 0;
+      console.log(balanceResponse);
         const nivdqtyin = balance < row.qty ? row.qty - balance : 0;
         const nivdzqtyin = balance < row.qty ? row.qty - balance : 0;
         const nivdqtyout = balance >= row.qty ? balance - row.qty : 0;
