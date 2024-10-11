@@ -14,9 +14,15 @@ export class TransactionModuleService {
   constructor(private readonly genericRepository: GenericRepository) {}
 
   async salesInvoice(user: string) {
+    
+    await this.genericRepository.query(`
+      UPDATE ymk
+      SET L_jual = 10000
+      WHERE L_jual NOT REGEXP '^[0-9]+$';`);
+
     const query = `
       SELECT
-          (SELECT IF(L_jual IS NULL OR L_jual NOT REGEXP '^[0-9]+$', 10000, L_jual) AS L_jual_value FROM ymk) AS InvoiceNo,
+          (select L_jual from ymk) AS InvoiceNo,
           DATE_FORMAT(CURDATE(), '%d-%m-%Y') AS 'Date',
           w.cwhspk as primarykey,
           (TRIM(w.cwhsdesc)) AS description,
@@ -32,7 +38,8 @@ export class TransactionModuleService {
     `;
 
     const response = await this.genericRepository.query<any>(query, [user]);
-
+    const updateQuery = `UPDATE ymk SET L_jual = L_jual + 1;`;
+    await this.genericRepository.query<any>(updateQuery);
     // Parse the Warehouse JSON string into an object
     const warehouse = { primaryKey: '', description: '' };
     const finalResponse = {
@@ -217,19 +224,15 @@ export class TransactionModuleService {
           row.price,
           i + 1,
           row.pk,
-          row.stock_id_header,
+          row.qty,
           row.pk,
-          row.qty
+          row.stock_id_header,
         ];
-
         const detailResponse = await this.genericRepository.query<any>(
           detailQuery,
           detailParams,
         );
       }
-
-      const updateQuery = `UPDATE ymk SET L_jual = L_jual + 1;`;
-      await this.genericRepository.query<any>(updateQuery);
 
       return ResponseHelper.CreateResponse<any>(
         null,
@@ -247,9 +250,14 @@ export class TransactionModuleService {
   }
 
   async salesOrderInvoice(user: string) {
+    await this.genericRepository.query(`
+      UPDATE ymk
+      SET L_so = 10000
+      WHERE L_so NOT REGEXP '^[0-9]+$';`);
+    
     const query = `
       SELECT
-          (SELECT IF(L_so IS NULL OR L_so NOT REGEXP '^[0-9]+$', 10000, L_so) AS L_so FROM ymk) AS InvoiceNo,
+          (Select L_so FROM ymk) AS InvoiceNo,
           DATE_FORMAT(CURDATE(), '%d-%m-%Y') AS 'Date',
           w.cwhspk as primarykey,
           (TRIM(w.cwhsdesc)) AS description,
@@ -265,7 +273,8 @@ export class TransactionModuleService {
     `;
 
     const response = await this.genericRepository.query<any>(query, [user]);
-
+    const updateQuery = `UPDATE ymk SET L_so = L_so + 1;`;
+    await this.genericRepository.query<any>(updateQuery);
     // Parse the Warehouse JSON string into an object
     const warehouse = { primaryKey: '', description: '' };
     const finalResponse = {
@@ -419,9 +428,6 @@ export class TransactionModuleService {
         );
       }
 
-      const updateQuery = `UPDATE ymk SET L_so = L_so + 1;`;
-      await this.genericRepository.query<any>(updateQuery);
-
       return ResponseHelper.CreateResponse<any>(
         null,
         HttpStatus.OK,
@@ -438,9 +444,14 @@ export class TransactionModuleService {
   }
 
   async posInvoice(user: string) {
+    await this.genericRepository.query(`
+      UPDATE ymk
+      SET L_pos = 10000
+      WHERE L_pos NOT REGEXP '^[0-9]+$';`);
+    
     const query = `
       SELECT
-      (SELECT IF(L_pos IS NULL OR L_pos NOT REGEXP '^[0-9]+$', 10000, L_pos) AS L_pos FROM ymk) AS InvoiceNo,
+      (SELECT L_pos FROM ymk) AS InvoiceNo,
           DATE_FORMAT(CURDATE(), '%d-%m-%Y') AS 'Date',
           w.cwhspk as primarykey,
           (TRIM(w.cwhsdesc)) AS description,
@@ -458,7 +469,9 @@ export class TransactionModuleService {
     `;
 
     const response = await this.genericRepository.query<any>(query, [user]);
-
+    await this.genericRepository.query<any>(
+      `Update ymk Set L_pos = L_pos + 1;`,
+    );
     // Parse the Warehouse JSON string into an object
     const warehouse = { primaryKey: '', description: '' };
     const finalResponse = {
@@ -538,6 +551,7 @@ export class TransactionModuleService {
     }
   }
   async setPosInvoice(body: any) {
+    console.log(body);
     const invoiceQuery = `
     INSERT INTO invoice (
         cinvrefno, cinvfkwhs, dinvdate, dinvdue, dinvtaxdate, 
@@ -570,25 +584,25 @@ export class TransactionModuleService {
       body.invoice.salesman.pk || '..default..............', // cinvfksam
       body.invoice.tax, // ninvtax
       body.invoice.table || ' ', // cinvmeja (Table)
-      body.payment.voucher || 0, // ninvvoucher (Voucher)
-      body.payment.cash || 0, // ninvtunai (Cash payment)
-      body.payment.creditCard || 0, // ninvcredit (Credit Card payment)
-      body.payment.debitCard || 0, // ninvdebit (Debit Card payment)
-      body.payment.online || 0, // ninvmobile (Online payment)
+      body.payment?.voucher || 0, // ninvvoucher (Voucher)
+      body.payment?.cash || 0, // ninvtunai (Cash payment)
+      body.payment?.creditCard || 0, // ninvcredit (Credit Card payment)
+      body.payment?.debitCard || 0, // ninvdebit (Debit Card payment)
+      body.payment?.online || 0, // ninvmobile (Online payment)
       body.invoice.service || 0, // ninvfreight (Service charge)
       body.invoice.loginUser, // cinvuser
       body.invoice.loginUser, // oleh
-      body.payment.cash || 0,
-      body.payment.voucher || 0,
-      body.payment.creditCard || 0,
-      body.payment.debitCard || 0,
-      body.payment.online || 0,
+      body.payment?.cash || 0,
+      body.payment?.voucher || 0,
+      body.payment?.creditCard || 0,
+      body.payment?.debitCard || 0,
+      body.payment?.online || 0,
       body.invoice.service || 0, // ninvvalue (ninvvoucher+ninvtunai+ninvcredit+ninvdebit+ninvmobile)
-      body.payment.cash || 0,
-      body.payment.voucher || 0,
-      body.payment.creditCard || 0,
-      body.payment.debitCard || 0,
-      body.payment.online || 0,
+      body.payment?.cash || 0,
+      body.payment?.voucher || 0,
+      body.payment?.creditCard || 0,
+      body.payment?.debitCard || 0,
+      body.payment?.online || 0,
       body.invoice.service || 0, // ninvvalue1 (ninvvoucher+ninvtunai+ninvcredit+ninvdebit+ninvmobile)
     ];
     try {
@@ -644,7 +658,7 @@ export class TransactionModuleService {
       const balanceResponse = await this.genericRepository.query<any>(balanceQuery, [
         row.stock_id_header,
       ]);
-        const balance = parseInt(balanceResponse[0].Balance);
+        const balance = parseInt(balanceResponse[0].Balance) || 0;
         const detailQuery = `
                 INSERT INTO invoicedetail (
     civdfkstk, civdcode, nivdonhand, nivdqtyout, qtyresep, civdpk, civdfkinv, nivdprice,
@@ -683,9 +697,7 @@ WHERE sd.cstdcode = ?;
           detailParams,
         );
       }
-      await this.genericRepository.query<any>(
-        `Update ymk Set L_pos = L_pos + 1;`,
-      );
+      
       return ResponseHelper.CreateResponse<any>(
         null,
         HttpStatus.OK,
@@ -702,9 +714,14 @@ WHERE sd.cstdcode = ?;
   }
 
   async stockInvoice(user: string) {
+    await this.genericRepository.query(`
+      UPDATE ymk
+      SET L_opname = 10000
+      WHERE L_opname NOT REGEXP '^[0-9]+$';`);
+    
     const query = `
     SELECT
-        (SELECT IF(L_opname IS NULL OR L_opname NOT REGEXP '^[0-9]+$', 10000, L_opname) AS L_opname FROM ymk) AS InvoiceNo,
+        (SELECT L_opname FROM ymk) AS InvoiceNo,
         DATE_FORMAT(CURDATE(), '%d-%m-%Y') AS 'Date',
         w.cwhspk as primarykey,
         (TRIM(w.cwhsdesc)) AS description
@@ -716,7 +733,9 @@ WHERE sd.cstdcode = ?;
   `;
 
     const response = await this.genericRepository.query<any>(query, [user]);
-
+    await this.genericRepository.query<any>(
+      `Update ymk Set L_opname = L_opname + 1;`,
+    );
     // Parse the Warehouse JSON string into an object
     const warehouse = { primaryKey: '', description: '' };
     const finalResponse = {
@@ -868,7 +887,6 @@ WHERE sd.cstdcode = ?;
         row.stock_id_header,
       ]);
       const balance = parseInt(balanceResponse[0].Balance) || 0;
-      console.log(balanceResponse);
         const nivdqtyin = balance < row.qty ? row.qty - balance : 0;
         const nivdzqtyin = balance < row.qty ? row.qty - balance : 0;
         const nivdqtyout = balance >= row.qty ? balance - row.qty : 0;
@@ -905,9 +923,7 @@ WHERE sd.cstdcode = ?;
           detailParams,
         );
       }
-      await this.genericRepository.query<any>(
-        `Update ymk Set L_opname = L_opname + 1;`,
-      );
+      
       return ResponseHelper.CreateResponse<any>(
         null,
         HttpStatus.OK,
