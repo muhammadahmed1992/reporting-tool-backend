@@ -8,4 +8,6 @@ export default class Constants {
     static readonly STOCK_CODE_EMPTY = "stock_code_empty";
     static readonly QUERY_FAILURE = "query_failed";
     static readonly QUERY_SUCCESS = "query_success";
+    static readonly TRANSACTION_SUCCESS = "transaction_success";
+    static readonly TRANSACTION_FAILURE = "transaction_failed";
 }

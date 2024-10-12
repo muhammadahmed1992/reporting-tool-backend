@@ -37,5 +37,22 @@
     "dev_num": "Nomor Perangkat",
     "transaction_1": "Data Faktur",
     "transaction_2": "Detail Pesanan",
-    "transaction_3": "Detail Pembayaran"
+    "transaction_3": "Detail Pembayaran",
+    "error": "Error",
+    "sent": "Sent",
+    "warning:": "Warning",
+    "confirmation": "Confirmation",
+    "proceed": "Do you want to proceed",
+    "complete": "Transaction Completed",
+    "fill_order": "Please fill order details",
+    "fill_customer": "Please select a customer",
+    "fill_payment": "Payment not completed",
+    "invalid_key": "Invalid Key",
+    "success": "Success",
+    "close": "Close",
+    "error_fetching_imei": "Error fetching IMEI",
+    "warning": "Warning",
+    "invalid_key_message": "Registration Key Must Be 5 Characters",
+    "registration_set_success": "Registration key has been set",
+    "invalid_key_warning": "Please enter a valid registration key"
 }

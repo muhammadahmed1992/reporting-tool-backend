@@ -17,9 +17,10 @@ export class TransactionModuleService {
     
     await this.genericRepository.query(`
       UPDATE ymk
-      SET L_jual = 10000
+      SET L_jual = 1000
       WHERE L_jual NOT REGEXP '^[0-9]+$';`);
-
+    const updateQuery = `UPDATE ymk SET L_jual = L_jual + 1;`;
+    await this.genericRepository.query<any>(updateQuery);
     const query = `
       SELECT
           (select L_jual from ymk) AS InvoiceNo,
@@ -38,8 +39,8 @@ export class TransactionModuleService {
     `;
 
     const response = await this.genericRepository.query<any>(query, [user]);
-    const updateQuery = `UPDATE ymk SET L_jual = L_jual + 1;`;
-    await this.genericRepository.query<any>(updateQuery);
+    
+    
     // Parse the Warehouse JSON string into an object
     const warehouse = { primaryKey: '', description: '' };
     const finalResponse = {
@@ -130,7 +131,7 @@ export class TransactionModuleService {
         cinvdine, cinvmeja, cinvsedan, cinvsedancode, cinvepajak, 
         cinvremark, cinvremark1, ninvkembali, ninvpoint, ninvpax, 
         npostransfer, ninvpromov, ninvpromod, ninvpromos, ninvkm, 
-        ninvpawal, ninvcetak1, ninvpilih, ninvpersen, xkirim, ninvvalue
+        ninvpawal, ninvcetak1, ninvpilih, ninvpersen, xkirim, nivdtime, ninvvalue, cinvtambah 
     ) VALUES (
         ?, ?, STR_TO_DATE(?, '%d-%m-%Y'), CURDATE(), 
         STR_TO_DATE(?, '%d-%m-%Y'), ?, ?, ?, 
@@ -170,7 +171,9 @@ export class TransactionModuleService {
         0, -- ninvpilih (Default to 0 for decimal fields)
         0, -- ninvpersen (Default to 0 for decimal fields)
         0, -- xkirim (Default to 0 for decimal fields)
-        ?
+        CURDATE(), -- nivdtime
+        ?,
+        '01' -- cinvtambah
     )`;
 
     const invoiceParams = [
@@ -185,7 +188,7 @@ export class TransactionModuleService {
       body.invoice.tax,
       body.invoice.loginUser,
       body.invoice.loginUser,
-      body.invoice.invoiceNo - 10000,
+      body.payment.total
     ];
 
     try {
@@ -233,18 +236,27 @@ export class TransactionModuleService {
           detailParams,
         );
       }
-
       return ResponseHelper.CreateResponse<any>(
         null,
         HttpStatus.OK,
-        Constants.QUERY_SUCCESS,
+        Constants.TRANSACTION_SUCCESS,
       );
     } catch (error) {
-
+      // for avoiding data corruption
+      const deleteInvoiceDetail = `Delete FROM invoicedetail WHERE civdfkinv = (SELECT cinvpk FROM invoice WHERE cinvrefno = ? and cinvspecial = 'JL')`;
+      await this.genericRepository.query<any>(
+        deleteInvoiceDetail,
+        [body.invoice.invoiceNo],
+      );
+      const deleteInvoice = `Delete FROM invoice WHERE cinvrefno = ?`;
+      await this.genericRepository.query<any>(
+        deleteInvoice,
+        [body.invoice.invoiceNo],
+      ); 
       return ResponseHelper.CreateResponse<any>(
         null,
         HttpStatus.INTERNAL_SERVER_ERROR,
-        Constants.QUERY_FAILURE,
+        Constants.TRANSACTION_FAILURE,
       );
     }
   }
@@ -252,9 +264,12 @@ export class TransactionModuleService {
   async salesOrderInvoice(user: string) {
     await this.genericRepository.query(`
       UPDATE ymk
-      SET L_so = 10000
+      SET L_so = 1000
       WHERE L_so NOT REGEXP '^[0-9]+$';`);
-    
+
+    const updateQuery = `UPDATE ymk SET L_so = L_so + 1;`;
+    await this.genericRepository.query<any>(updateQuery);
+
     const query = `
       SELECT
           (Select L_so FROM ymk) AS InvoiceNo,
@@ -273,8 +288,7 @@ export class TransactionModuleService {
     `;
 
     const response = await this.genericRepository.query<any>(query, [user]);
-    const updateQuery = `UPDATE ymk SET L_so = L_so + 1;`;
-    await this.genericRepository.query<any>(updateQuery);
+    
     // Parse the Warehouse JSON string into an object
     const warehouse = { primaryKey: '', description: '' };
     const finalResponse = {
@@ -431,14 +445,23 @@ export class TransactionModuleService {
       return ResponseHelper.CreateResponse<any>(
         null,
         HttpStatus.OK,
-        Constants.QUERY_SUCCESS,
+        Constants.TRANSACTION_SUCCESS,
       );
     } catch (error) {
-
+      const deleteInvoiceDetail = `Delete FROM porderdetail WHERE civdfkinv = (SELECT cinvpk FROM invoice WHERE cinvrefno = ? and cinvspecial = 'JL')`;
+      await this.genericRepository.query<any>(
+        deleteInvoiceDetail,
+        [body.invoice.invoiceNo],
+      );
+      const deleteInvoice = `Delete FROM porderdetail WHERE cinvrefno = ?`;
+      await this.genericRepository.query<any>(
+        deleteInvoice,
+        [body.invoice.invoiceNo],
+      );
       return ResponseHelper.CreateResponse<any>(
         null,
         HttpStatus.INTERNAL_SERVER_ERROR,
-        Constants.QUERY_FAILURE,
+        Constants.TRANSACTION_FAILURE,
       );
     }
   }
@@ -446,9 +469,13 @@ export class TransactionModuleService {
   async posInvoice(user: string) {
     await this.genericRepository.query(`
       UPDATE ymk
-      SET L_pos = 10000
+      SET L_pos = 1000
       WHERE L_pos NOT REGEXP '^[0-9]+$';`);
-    
+
+      await this.genericRepository.query<any>(
+        `Update ymk Set L_pos = L_pos + 1;`,
+      );
+
     const query = `
       SELECT
       (SELECT L_pos FROM ymk) AS InvoiceNo,
@@ -469,9 +496,7 @@ export class TransactionModuleService {
     `;
 
     const response = await this.genericRepository.query<any>(query, [user]);
-    await this.genericRepository.query<any>(
-      `Update ymk Set L_pos = L_pos + 1;`,
-    );
+    
     // Parse the Warehouse JSON string into an object
     const warehouse = { primaryKey: '', description: '' };
     const finalResponse = {
@@ -551,7 +576,6 @@ export class TransactionModuleService {
     }
   }
   async setPosInvoice(body: any) {
-    console.log(body);
     const invoiceQuery = `
     INSERT INTO invoice (
         cinvrefno, cinvfkwhs, dinvdate, dinvdue, dinvtaxdate, 
@@ -568,10 +592,10 @@ export class TransactionModuleService {
         ?, ?, ?, ?, ?,
         ?, ?, ?, ?, ?, ?, LEFT(SHA1(UUID()), 23),
         ?, CONCAT(DATE_FORMAT(NOW(), '%d-%m-%Y %H:%i'), ' ', ?),
-        HOUR(NOW()), ? + ? + ? + ?, ? + ? + ? + ?,
+        HOUR(NOW()), ?, ?,
         'PS', 'n/a',  '..rupiah...............', 1, 1, 1,
         '', '', '', '', '', '', '', '', '', '', '', '', '', '',
-        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+        0, 0, 0, ?, 0, 0, 0, 0, 0, 0, 0, 0
     )
     `;
 
@@ -584,26 +608,17 @@ export class TransactionModuleService {
       body.invoice.salesman.pk || '..default..............', // cinvfksam
       body.invoice.tax, // ninvtax
       body.invoice.table || ' ', // cinvmeja (Table)
-      body.payment?.voucher || 0, // ninvvoucher (Voucher)
-      body.payment?.cash || 0, // ninvtunai (Cash payment)
-      body.payment?.creditCard || 0, // ninvcredit (Credit Card payment)
-      body.payment?.debitCard || 0, // ninvdebit (Debit Card payment)
-      body.payment?.online || 0, // ninvmobile (Online payment)
-      body.invoice.service || 0, // ninvfreight (Service charge)
+      body.payment.voucher, // ninvvoucher (Voucher)
+      body.payment.cash - body.payment.change, // ninvtunai (Cash payment)
+      body.payment.creditCard, // ninvcredit (Credit Card payment)
+      body.payment.debitCard, // ninvdebit (Debit Card payment)
+      body.payment.online, // ninvmobile (Online payment)
+      body.invoice.service, // ninvfreight (Service charge)
       body.invoice.loginUser, // cinvuser
       body.invoice.loginUser, // oleh
-      body.payment?.cash || 0,
-      body.payment?.voucher || 0,
-      body.payment?.creditCard || 0,
-      body.payment?.debitCard || 0,
-      body.payment?.online || 0,
-      body.invoice.service || 0, // ninvvalue (ninvvoucher+ninvtunai+ninvcredit+ninvdebit+ninvmobile)
-      body.payment?.cash || 0,
-      body.payment?.voucher || 0,
-      body.payment?.creditCard || 0,
-      body.payment?.debitCard || 0,
-      body.payment?.online || 0,
-      body.invoice.service || 0, // ninvvalue1 (ninvvoucher+ninvtunai+ninvcredit+ninvdebit+ninvmobile)
+      body.payment.total,// ninvvalue (ninvvoucher+ninvtunai+ninvcredit+ninvdebit+ninvmobile)
+      body.payment.total,// ninvvalue1 (ninvvoucher+ninvtunai+ninvcredit+ninvdebit+ninvmobile)
+      body.payment.change
     ];
     try {
       const invoiceResponse = await this.genericRepository.query<any>(
@@ -668,7 +683,7 @@ export class TransactionModuleService {
 SELECT ?, ?, ?, ?, ?, LEFT(SHA1(UUID()), 23), 
     (SELECT cinvpk FROM invoice WHERE cinvrefno = ? and cinvspecial = 'PS'), -- Subquery for civdfkinv
     ?, sd.nstdfactor, ? * sd.nstdfactor,
-    ? * ?, ?, u.cunidesc, s.nstkppn, 0, ' ', ' ', ' '
+    ? * ?, ?, u.cunidesc, s.nstkppn, 0, (select nstkbuy from stock where cstkpk= ?) * (? * sd.nstdfactor), ' ', ' '
 FROM stockdetail sd
 LEFT JOIN unit u ON u.cunipk = sd.cstdfkuni
 LEFT JOIN stock s ON s.cstkpk = ?
@@ -688,6 +703,8 @@ WHERE sd.cstdcode = ?;
               row.qty,             // quantity
               row.price,           // nivdamount
               i + 1,               // nivdorder
+              row.pk,
+              row.qty,
               row.pk,              // s.cstkpk (to match stock in JOIN)
               row.stock_id_header, // sd.cstdcode
           ];
@@ -701,14 +718,23 @@ WHERE sd.cstdcode = ?;
       return ResponseHelper.CreateResponse<any>(
         null,
         HttpStatus.OK,
-        Constants.QUERY_SUCCESS,
+        Constants.TRANSACTION_SUCCESS,
       );
     } catch (error) {
-
+      const deleteInvoiceDetail = `Delete FROM invoicedetail WHERE civdfkinv = (SELECT cinvpk FROM invoice WHERE cinvrefno = ? and cinvspecial = 'JL')`;
+      await this.genericRepository.query<any>(
+        deleteInvoiceDetail,
+        [body.invoice.invoiceNo],
+      );
+      const deleteInvoice = `Delete FROM invoice WHERE cinvrefno = ?`;
+      await this.genericRepository.query<any>(
+        deleteInvoice,
+        [body.invoice.invoiceNo],
+      ); 
       return ResponseHelper.CreateResponse<any>(
         null,
         HttpStatus.INTERNAL_SERVER_ERROR,
-        Constants.QUERY_FAILURE,
+        Constants.TRANSACTION_FAILURE,
       );
     }
   }
@@ -716,9 +742,13 @@ WHERE sd.cstdcode = ?;
   async stockInvoice(user: string) {
     await this.genericRepository.query(`
       UPDATE ymk
-      SET L_opname = 10000
+      SET L_opname = 1000
       WHERE L_opname NOT REGEXP '^[0-9]+$';`);
-    
+
+      await this.genericRepository.query<any>(
+        `Update ymk Set L_opname = L_opname + 1;`,
+      );
+
     const query = `
     SELECT
         (SELECT L_opname FROM ymk) AS InvoiceNo,
@@ -733,9 +763,7 @@ WHERE sd.cstdcode = ?;
   `;
 
     const response = await this.genericRepository.query<any>(query, [user]);
-    await this.genericRepository.query<any>(
-      `Update ymk Set L_opname = L_opname + 1;`,
-    );
+    
     // Parse the Warehouse JSON string into an object
     const warehouse = { primaryKey: '', description: '' };
     const finalResponse = {
@@ -781,7 +809,7 @@ WHERE sd.cstdcode = ?;
     JOIN 
       stock s ON s.cstkpk = d.cstdfkstk 
     WHERE 
-      cstdcode = ?;
+      cstdcode = ? and nstdfactor=1;
   `;
 
     const response =
@@ -927,14 +955,23 @@ WHERE sd.cstdcode = ?;
       return ResponseHelper.CreateResponse<any>(
         null,
         HttpStatus.OK,
-        Constants.QUERY_SUCCESS,
+        Constants.TRANSACTION_SUCCESS,
       );
     } catch (error) {
-
+      const deleteInvoiceDetail = `Delete FROM invoicedetail WHERE civdfkinv = (SELECT cinvpk FROM invoice WHERE cinvrefno = ? and cinvspecial = 'JL')`;
+      await this.genericRepository.query<any>(
+        deleteInvoiceDetail,
+        [body.invoice.invoiceNo],
+      );
+      const deleteInvoice = `Delete FROM invoice WHERE cinvrefno = ?`;
+      await this.genericRepository.query<any>(
+        deleteInvoice,
+        [body.invoice.invoiceNo],
+      ); 
       return ResponseHelper.CreateResponse<any>(
         null,
         HttpStatus.INTERNAL_SERVER_ERROR,
-        Constants.QUERY_FAILURE,
+        Constants.TRANSACTION_FAILURE,
       );
     }
   }

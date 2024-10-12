@@ -1,9 +1,9 @@
 import { Controller, Get, Query, Post, Body, Param } from '@nestjs/common';
 import { TransactionModuleService } from 'src/services/transaction.module.service';
 import { TransactionSalesInvoiceDTO } from 'src/dto/transaction-sales-invoice.dto';
-
 @Controller('/transactions')
 export class TransactionModuleController {
+
   constructor(
     private readonly transactionModuleService: TransactionModuleService,
   ) {}

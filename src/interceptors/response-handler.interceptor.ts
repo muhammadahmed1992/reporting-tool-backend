@@ -26,7 +26,6 @@ export default class ResponseHandlerInterceptor<T>
     return next.handle().pipe(
       switchMap((data) => {
         const response = context.switchToHttp().getResponse();
-
         if (data) {
           return from(this.localizationService.translate(locale, 'backend', data.message))
             .pipe(

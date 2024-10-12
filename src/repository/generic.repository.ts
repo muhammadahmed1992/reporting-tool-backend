@@ -72,6 +72,7 @@ export class GenericRepository implements OnModuleDestroy {
     } catch (e: any) {
       console.error('Error executing query:', e.message);
       console.error('Stack trace:', e.stack);
+      throw new Error(e);
     }
     return result;
   }
@@ -86,6 +87,7 @@ export class GenericRepository implements OnModuleDestroy {
       } catch (closeError: any) {
         console.error('Error closing DataSource during module destroy:', closeError.message);
         console.error('Stack trace:', closeError.stack);
+        throw new Error(closeError);
       }
     }
   }
