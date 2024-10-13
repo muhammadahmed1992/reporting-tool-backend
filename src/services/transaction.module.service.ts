@@ -630,9 +630,9 @@ export class TransactionModuleService {
 
       for (let i = 0; i < body.tableFormData.length; i++) {
         const row = body.tableFormData[i];
-        const balanceQuery = `
+        const qtyQuery = `
             select 
-        Round(sum(zqtyin-zqtyout)*SUM(nstdprice),0) as Balance
+        sum(zqtyin-zqtyout) as Qty
         from
         (
         
@@ -670,15 +670,15 @@ export class TransactionModuleService {
         INNER JOIN unit ON cSTDfkUNI=cUNIpk 
         where cstdcode=?
         `;
-      const balanceResponse = await this.genericRepository.query<any>(balanceQuery, [
+      const qtyResponse = await this.genericRepository.query<any>(qtyQuery, [
         row.stock_id_header,
       ]);
-        const balance = parseInt(balanceResponse[0].Balance) || 0;
+      const qty = parseInt(qtyResponse[0].Qty) || 0;
         const detailQuery = `
                 INSERT INTO invoicedetail (
     civdfkstk, civdcode, nivdonhand, nivdqtyout, qtyresep, civdpk, civdfkinv, nivdprice,
     nivdfactor, nivdzqtyout, nivdamount, nivdorder, civdunit, nivdstkppn,
-    nivdpokok, civdmemo, civdpromocard, civdresep
+    civdmemo, nivdpokok, civdpromocard, civdresep
 ) 
 SELECT ?, ?, ?, ?, ?, LEFT(SHA1(UUID()), 23), 
     (SELECT cinvpk FROM invoice WHERE cinvrefno = ? and cinvspecial = 'PS'), -- Subquery for civdfkinv
@@ -694,7 +694,7 @@ WHERE sd.cstdcode = ?;
             const detailParams = [
               row.pk,              // civdfkstk
               row.stock_id_header, // civdcode
-              balance,             // nivdonhand
+              qty,             // nivdonhand
               row.qty,             // nivdqtyout
               row.qty,             // qtyresep
               body.invoice.invoiceNo, // cinvrefno (subquery in SELECT)
@@ -871,9 +871,9 @@ WHERE sd.cstdcode = ?;
 
       for (let i = 0; i < body.tableFormData.length; i++) {
         const row = body.tableFormData[i];
-        const balanceQuery = `
+        const qtyQuery = `
             select 
-        Round(sum(zqtyin-zqtyout)*SUM(nstdprice),0) as Balance
+        sum(zqtyin-zqtyout) as Qty
         from
         (
         
@@ -911,16 +911,15 @@ WHERE sd.cstdcode = ?;
         INNER JOIN unit ON cSTDfkUNI=cUNIpk 
         where cstdcode=?
         `;
-      const balanceResponse = await this.genericRepository.query<any>(balanceQuery, [
+      const qtyResponse = await this.genericRepository.query<any>(qtyQuery, [
         row.stock_id_header,
       ]);
-      const balance = parseInt(balanceResponse[0].Balance) || 0;
-        const nivdqtyin = balance < row.qty ? row.qty - balance : 0;
-        const nivdzqtyin = balance < row.qty ? row.qty - balance : 0;
-        const nivdqtyout = balance >= row.qty ? balance - row.qty : 0;
-        const nivdzqtyout = balance >= row.qty ? balance - row.qty : 0;
-        const nivdamount = row.qty - balance; 
-        
+      const qty = parseInt(qtyResponse[0].Qty) || 0;
+        const nivdqtyin = qty < row.qty ? row.qty - qty : 0;
+        const nivdzqtyin = qty < row.qty ? row.qty - qty : 0;
+        const nivdqtyout = qty >= row.qty ? qty - row.qty : 0;
+        const nivdzqtyout = qty >= row.qty ? qty - row.qty : 0;
+        const nivdamount = row.qty - qty; 
         const detailQuery = `
             INSERT INTO invoicedetail (
               civdfkstk, civdcode, nivdonhand, nivdadjust, 
@@ -938,7 +937,7 @@ WHERE sd.cstdcode = ?;
         `;
         
         const detailParams = [
-          row.pk, row.stock_id_header, balance, 
+          row.pk, row.stock_id_header, qty, 
           row.qty, body.invoice.invoiceNo, row.pk, 
           nivdqtyin, nivdzqtyin, nivdqtyout, nivdzqtyout,  // Pre-calculated values
           nivdamount, row.pk, i + 1,  // nivdamount and sequence number
