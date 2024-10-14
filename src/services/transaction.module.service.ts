@@ -6,21 +6,26 @@ import { TransactionSalesDto } from '../dto/transaction-sales.dto';
 import ResponseHelper from 'src/helper/response-helper';
 import Constants from 'src/helper/constants';
 import { TransactionSalesTableDto } from 'src/dto/transaction-sales-table.dto';
-import { TransactionSalesInvoiceDTO } from 'src/dto/transaction-sales-invoice.dto';
-import { Table } from 'typeorm';
+import TransactionError from 'src/utils/errors/transaction.error';
 
 @Injectable({ scope: Scope.REQUEST })
 export class TransactionModuleService {
   constructor(private readonly genericRepository: GenericRepository) {}
 
   async salesInvoice(user: string) {
-    
     await this.genericRepository.query(`
       UPDATE ymk
-      SET L_jual = 1000
-      WHERE L_jual NOT REGEXP '^[0-9]+$';`);
-    const updateQuery = `UPDATE ymk SET L_jual = L_jual + 1;`;
-    await this.genericRepository.query<any>(updateQuery);
+      SET L_jual = '1000'
+      WHERE L_jual NOT REGEXP '^[0-9]+$';
+    `);
+    
+    // 2. Next, increment L_opname by 1 only if it's a numeric value.
+    await this.genericRepository.query(`
+      UPDATE ymk
+      SET L_jual = CAST(CAST(L_jual AS UNSIGNED) + 1 AS CHAR)
+      WHERE L_jual REGEXP '^[0-9]+$';
+    `);
+
     const query = `
       SELECT
           (select L_jual from ymk) AS InvoiceNo,
@@ -118,7 +123,13 @@ export class TransactionModuleService {
   }
 
   async setSalesInvoice(body: any) {
-
+    try {
+      const allQuantitiesZero = body.tableFormData.every((item: any) => parseInt(item.qty, 10) === 0);
+  
+      // If all quantities are zero, throw an error
+      if (allQuantitiesZero) {
+        throw new TransactionError(Constants.FILL_ORDER_ERROR);
+      }
     // Insert invoice details first
     const invoiceQuery = `
     INSERT INTO invoice (
@@ -191,12 +202,14 @@ export class TransactionModuleService {
       body.payment.total
     ];
 
-    try {
       const invoiceResponse = await this.genericRepository.query<any>(
         invoiceQuery,
         invoiceParams,
       );
-
+      body.tableFormData = body.tableFormData.filter(item => parseInt(item.qty, 10) !== 0);
+      console.log('--------------------');
+      console.log('SalesInvoice');
+      console.table(body.tableFormData);
       for (let i = 0; i < body.tableFormData.length; i++) {
         const row = body.tableFormData[i];
 
@@ -243,6 +256,13 @@ export class TransactionModuleService {
       );
     } catch (error) {
       // for avoiding data corruption
+      if (error instanceof TransactionError) {
+        return ResponseHelper.CreateResponse<any>(
+            null,
+            HttpStatus.BAD_REQUEST,
+            error.message,
+        );
+      }
       const deleteInvoiceDetail = `Delete FROM invoicedetail WHERE civdfkinv = (SELECT cinvpk FROM invoice WHERE cinvrefno = ? and cinvspecial = 'JL')`;
       await this.genericRepository.query<any>(
         deleteInvoiceDetail,
@@ -262,13 +282,19 @@ export class TransactionModuleService {
   }
 
   async salesOrderInvoice(user: string) {
+
     await this.genericRepository.query(`
       UPDATE ymk
-      SET L_so = 1000
-      WHERE L_so NOT REGEXP '^[0-9]+$';`);
-
-    const updateQuery = `UPDATE ymk SET L_so = L_so + 1;`;
-    await this.genericRepository.query<any>(updateQuery);
+      SET L_so = '1000'
+      WHERE L_so NOT REGEXP '^[0-9]+$';
+    `);
+    
+    // 2. Next, increment L_opname by 1 only if it's a numeric value.
+    await this.genericRepository.query(`
+      UPDATE ymk
+      SET L_so = CAST(CAST(L_so AS UNSIGNED) + 1 AS CHAR)
+      WHERE L_so REGEXP '^[0-9]+$';
+    `);
 
     const query = `
       SELECT
@@ -365,6 +391,14 @@ export class TransactionModuleService {
   }
 
   async setSalesOrderInvoice(body: any) {
+
+    try {
+      const allQuantitiesZero = body.tableFormData.every((item: any) => parseInt(item.qty, 10) === 0);
+  
+      // If all quantities are zero, throw an error
+      if (allQuantitiesZero) {
+        throw new TransactionError(Constants.FILL_ORDER_ERROR);
+      }
     const invoiceQuery = `
     INSERT INTO porder (
         cinvrefno, cinvfkwhs, dinvdate, dinvdue, dinvtaxdate, 
@@ -395,13 +429,15 @@ export class TransactionModuleService {
       body.invoice.loginUser,
     ];
 
-    try {
       const invoiceResponse = await this.genericRepository.query<any>(
         invoiceQuery,
         invoiceParams,
       );
       const invoicePK = body.invoiceNo;
-
+      body.tableFormData = body.tableFormData.filter(item => parseInt(item.qty, 10) !== 0);
+      console.log('--------------------');
+      console.log('SalesOrderInvoice');
+      console.table(body.tableFormData);
       for (let i = 0; i < body.tableFormData.length; i++) {
         const row = body.tableFormData[i];
 
@@ -448,6 +484,13 @@ export class TransactionModuleService {
         Constants.TRANSACTION_SUCCESS,
       );
     } catch (error) {
+      if (error instanceof TransactionError) {
+        return ResponseHelper.CreateResponse<any>(
+            null,
+            HttpStatus.BAD_REQUEST,
+            error.message,
+        );
+      }
       const deleteInvoiceDetail = `Delete FROM porderdetail WHERE civdfkinv = (SELECT cinvpk FROM invoice WHERE cinvrefno = ? and cinvspecial = 'JL')`;
       await this.genericRepository.query<any>(
         deleteInvoiceDetail,
@@ -467,15 +510,18 @@ export class TransactionModuleService {
   }
 
   async posInvoice(user: string) {
-    await this.genericRepository.query(`
-      UPDATE ymk
-      SET L_pos = 1000
-      WHERE L_pos NOT REGEXP '^[0-9]+$';`);
-
-      await this.genericRepository.query<any>(
-        `Update ymk Set L_pos = L_pos + 1;`,
-      );
-
+      await this.genericRepository.query(`
+        UPDATE ymk
+        SET L_pos = '1000'
+        WHERE L_pos NOT REGEXP '^[0-9]+$';
+      `);
+      
+      // 2. Next, increment L_opname by 1 only if it's a numeric value.
+      await this.genericRepository.query(`
+        UPDATE ymk
+        SET L_pos = CAST(CAST(L_pos AS UNSIGNED) + 1 AS CHAR)
+        WHERE L_pos REGEXP '^[0-9]+$';
+      `);
     const query = `
       SELECT
       (SELECT L_pos FROM ymk) AS InvoiceNo,
@@ -576,6 +622,13 @@ export class TransactionModuleService {
     }
   }
   async setPosInvoice(body: any) {
+    try {
+    const allQuantitiesZero = body.tableFormData.every((item: any) => parseInt(item.qty, 10) === 0);
+
+    // If all quantities are zero, throw an error
+    if (allQuantitiesZero) {
+      throw new TransactionError(Constants.FILL_ORDER_ERROR);
+    }
     const invoiceQuery = `
     INSERT INTO invoice (
         cinvrefno, cinvfkwhs, dinvdate, dinvdue, dinvtaxdate, 
@@ -620,14 +673,16 @@ export class TransactionModuleService {
       body.payment.total,// ninvvalue1 (ninvvoucher+ninvtunai+ninvcredit+ninvdebit+ninvmobile)
       body.payment.change
     ];
-    try {
       const invoiceResponse = await this.genericRepository.query<any>(
         invoiceQuery,
         invoiceParams,
       );
       // Handle invoice response
       const invoicePK = body.invoiceNo;
-
+      body.tableFormData = body.tableFormData.filter(item => parseInt(item.qty, 10) !== 0);
+      console.log('--------------------');
+      console.log('POSInvoice');
+      console.table(body.tableFormData);
       for (let i = 0; i < body.tableFormData.length; i++) {
         const row = body.tableFormData[i];
         const qtyQuery = `
@@ -669,9 +724,10 @@ export class TransactionModuleService {
         on cIvdFkStk=cSTDfkSTK And nSTDfactor=1 and nstdkey=1 
         INNER JOIN unit ON cSTDfkUNI=cUNIpk 
         where cstdcode=?
+         and (IFNULL(?, cwhspk) = cwhspk or cwhspk is null)
         `;
       const qtyResponse = await this.genericRepository.query<any>(qtyQuery, [
-        row.stock_id_header,
+        row.stock_id_header, body.invoice.warehouse
       ]);
       const qty = parseInt(qtyResponse[0].Qty) || 0;
         const detailQuery = `
@@ -721,6 +777,13 @@ WHERE sd.cstdcode = ?;
         Constants.TRANSACTION_SUCCESS,
       );
     } catch (error) {
+      if (error instanceof TransactionError) {
+        return ResponseHelper.CreateResponse<any>(
+            null,
+            HttpStatus.BAD_REQUEST,
+            error.message,
+        );
+      }
       const deleteInvoiceDetail = `Delete FROM invoicedetail WHERE civdfkinv = (SELECT cinvpk FROM invoice WHERE cinvrefno = ? and cinvspecial = 'JL')`;
       await this.genericRepository.query<any>(
         deleteInvoiceDetail,
@@ -740,15 +803,18 @@ WHERE sd.cstdcode = ?;
   }
 
   async stockInvoice(user: string) {
-    await this.genericRepository.query(`
-      UPDATE ymk
-      SET L_opname = 1000
-      WHERE L_opname NOT REGEXP '^[0-9]+$';`);
-
-      await this.genericRepository.query<any>(
-        `Update ymk Set L_opname = L_opname + 1;`,
-      );
-
+      await this.genericRepository.query(`
+        UPDATE ymk
+        SET L_opname = '1000'
+        WHERE L_opname NOT REGEXP '^[0-9]+$';
+      `);
+      
+      // 2. Next, increment L_opname by 1 only if it's a numeric value.
+      await this.genericRepository.query(`
+        UPDATE ymk
+        SET L_opname = CAST(CAST(L_opname AS UNSIGNED) + 1 AS CHAR)
+        WHERE L_opname REGEXP '^[0-9]+$';
+      `);
     const query = `
     SELECT
         (SELECT L_opname FROM ymk) AS InvoiceNo,
@@ -833,6 +899,12 @@ WHERE sd.cstdcode = ?;
   }
   
   async setStockInvoice(body: any) {
+    try {
+      const allQuantitiesZero = body.tableFormData.every((item: any) => parseInt(item.qty, 10) === 0);
+
+      if (allQuantitiesZero) {
+        throw new TransactionError(Constants.FILL_ORDER_ERROR);
+      }
     const invoiceQuery = `
   INSERT INTO invoice (
       cinvrefno, cinvfkwhs,
@@ -863,12 +935,14 @@ WHERE sd.cstdcode = ?;
       body.invoice.loginUser,
       body.invoice.loginUser,
     ];
-    try {
       const invoiceResponse = await this.genericRepository.query<any>(
         invoiceQuery,
         invoiceParams,
       );
-
+      body.tableFormData = body.tableFormData.filter(item => parseInt(item.qty, 10) !== 0);
+      console.log('--------------------');
+      console.log('StockInvoice');
+      console.table(body.tableFormData);
       for (let i = 0; i < body.tableFormData.length; i++) {
         const row = body.tableFormData[i];
         const qtyQuery = `
@@ -909,10 +983,10 @@ WHERE sd.cstdcode = ?;
         INNER JOIN stockdetail sdt 
         on cIvdFkStk=cSTDfkSTK And nSTDfactor=1 and nstdkey=1 
         INNER JOIN unit ON cSTDfkUNI=cUNIpk 
-        where cstdcode=?
+        where cstdcode=? and (IFNULL(?, cwhspk) = cwhspk or cwhspk is null)
         `;
       const qtyResponse = await this.genericRepository.query<any>(qtyQuery, [
-        row.stock_id_header,
+        row.stock_id_header, body.invoice.warehouse
       ]);
       const qty = parseInt(qtyResponse[0].Qty) || 0;
         const nivdqtyin = qty < row.qty ? row.qty - qty : 0;
@@ -957,6 +1031,13 @@ WHERE sd.cstdcode = ?;
         Constants.TRANSACTION_SUCCESS,
       );
     } catch (error) {
+      if (error instanceof TransactionError) {
+        return ResponseHelper.CreateResponse<any>(
+            null,
+            HttpStatus.BAD_REQUEST,
+            error.message,
+        );
+      }
       const deleteInvoiceDetail = `Delete FROM invoicedetail WHERE civdfkinv = (SELECT cinvpk FROM invoice WHERE cinvrefno = ? and cinvspecial = 'JL')`;
       await this.genericRepository.query<any>(
         deleteInvoiceDetail,

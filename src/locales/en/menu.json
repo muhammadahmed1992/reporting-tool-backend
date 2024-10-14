@@ -40,7 +40,6 @@
     "transaction_3": "Payment Details",
     "error": "Error",
     "sent": "Sent",
-    "warning:": "Warning",
     "confirmation": "Confirmation",
     "proceed": "Do you want to proceed",
     "complete": "Transaction Completed",
