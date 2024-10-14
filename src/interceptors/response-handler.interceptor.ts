@@ -24,16 +24,6 @@ export default class ResponseHandlerInterceptor<T>
     const request = context.switchToHttp().getRequest<Request>();
     const locale = request.headers['accept-language'] || 'id';
 
-    // Extract body and parameters
-    const body = request.body;
-    const params = request.params;
-
-    // Log the endpoint, body, and parameters
-    console.log('Endpoint:', request.url);
-    console.log('Request Body:', body);
-    console.log('Request Parameters:', params);
-
-
     return next.handle().pipe(
       switchMap((data) => {
         console.log(data);
