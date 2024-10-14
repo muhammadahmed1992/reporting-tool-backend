@@ -8,14 +8,8 @@ import * as crypto from 'crypto';
 export class AdminService {
     constructor(private readonly genericRepository: GenericRepository) {}
     async validateLicense(imei: string, key: string): Promise<ApiResponse<boolean>> {
-        // const hashedLicense = `select left(sha1(concat('ahmed','${imei}','jerry')),5) as resultID`;
         const hashedLisence = crypto.createHash('sha1').update(`ahmed${imei}jerry`).digest('hex');
         const actualPassword = hashedLisence.substring(0, 5);
-        console.log(`hashedLiscene: ${hashedLisence.substring(0, 5)}`);
-        console.log(`if pwd and key are same }`);
-        console.log(`comparison: ${actualPassword === key}`);
-        console.log(`key: ${key}`);
-        // const response = await this.genericRepository.query<any>(hashedLicense);
         return ResponseHelper.CreateResponse<boolean>(actualPassword === key, HttpStatus.OK);
     }
 }
