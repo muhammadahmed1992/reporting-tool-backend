@@ -16,14 +16,14 @@ export class TransactionModuleService {
     await this.genericRepository.query(`
       UPDATE ymk
       SET L_jual = '1000'
-      WHERE L_jual NOT REGEXP '^[0-9]+$';
+      WHERE TRIM(L_jual) NOT REGEXP '^[0-9]+$';
     `);
     
     // 2. Next, increment L_opname by 1 only if it's a numeric value.
     await this.genericRepository.query(`
       UPDATE ymk
-      SET L_jual = CAST(CAST(L_jual AS UNSIGNED) + 1 AS CHAR)
-      WHERE L_jual REGEXP '^[0-9]+$';
+      SET L_jual = CAST(CAST(TRIM(L_jual) AS UNSIGNED) + 1 AS CHAR)
+      WHERE TRIM(L_jual) REGEXP '^[0-9]+$';
     `);
 
     const query = `
@@ -286,14 +286,14 @@ export class TransactionModuleService {
     await this.genericRepository.query(`
       UPDATE ymk
       SET L_so = '1000'
-      WHERE L_so NOT REGEXP '^[0-9]+$';
+      WHERE TRIM(L_so) NOT REGEXP '^[0-9]+$';
     `);
     
     // 2. Next, increment L_opname by 1 only if it's a numeric value.
     await this.genericRepository.query(`
       UPDATE ymk
-      SET L_so = CAST(CAST(L_so AS UNSIGNED) + 1 AS CHAR)
-      WHERE L_so REGEXP '^[0-9]+$';
+      SET L_so = CAST(CAST(TRIM(L_so) AS UNSIGNED) + 1 AS CHAR)
+      WHERE TRIM(L_so) REGEXP '^[0-9]+$';
     `);
 
     const query = `
@@ -513,14 +513,14 @@ export class TransactionModuleService {
       await this.genericRepository.query(`
         UPDATE ymk
         SET L_pos = '1000'
-        WHERE L_pos NOT REGEXP '^[0-9]+$';
+        WHERE TRIM(L_pos) NOT REGEXP '^[0-9]+$';
       `);
       
       // 2. Next, increment L_opname by 1 only if it's a numeric value.
       await this.genericRepository.query(`
         UPDATE ymk
-        SET L_pos = CAST(CAST(L_pos AS UNSIGNED) + 1 AS CHAR)
-        WHERE L_pos REGEXP '^[0-9]+$';
+        SET L_pos = CAST(CAST(TRIM(L_pos) AS UNSIGNED) + 1 AS CHAR)
+        WHERE TRIM(L_pos) REGEXP '^[0-9]+$';
       `);
     const query = `
       SELECT
@@ -806,14 +806,14 @@ WHERE sd.cstdcode = ?;
       await this.genericRepository.query(`
         UPDATE ymk
         SET L_opname = '1000'
-        WHERE L_opname NOT REGEXP '^[0-9]+$';
+        WHERE TRIM(L_opname) NOT REGEXP '^[0-9]+$';
       `);
       
       // 2. Next, increment L_opname by 1 only if it's a numeric value.
       await this.genericRepository.query(`
         UPDATE ymk
-        SET L_opname = CAST(CAST(L_opname AS UNSIGNED) + 1 AS CHAR)
-        WHERE L_opname REGEXP '^[0-9]+$';
+        SET L_opname = CAST(CAST(TRIM(L_opname) AS UNSIGNED) + 1 AS CHAR)
+        WHERE TRIM(L_opname) REGEXP '^[0-9]+$';
       `);
     const query = `
     SELECT
@@ -999,14 +999,18 @@ WHERE sd.cstdcode = ?;
               civdfkstk, civdcode, nivdonhand, nivdadjust, 
               civdpk, civdfkinv, nivdprice, 
               nivdqtyin, nivdzqtyin, nivdqtyout, nivdzqtyout,
-              nivdamount, nivdorder, civdunit
+              nivdamount, nivdorder, civdunit, 
+              nivdstkppn, nivdfactor,
+              civdsn, civdmemo, civdfkstk1, disct
             ) Values (
               ?, ?, ?, ?, 
               LEFT(SHA1(UUID()), 23), (SELECT cinvpk FROM invoice WHERE cinvrefno = ? and cinvspecial = 'OP'),
               (SELECT nstkbuy FROM stock WHERE cstkpk = ?),
               ?, ?, ?, ?,
               (? * (SELECT nstkbuy FROM stock WHERE cstkpk = ?)), ?,
-              (SELECT cunidesc FROM unit WHERE cunipk = (SELECT cstdfkuni FROM stockdetail WHERE nstdfactor=1 AND cstdfkstk = ?))
+              (SELECT cunidesc FROM unit WHERE cunipk = (SELECT cstdfkuni FROM stockdetail WHERE nstdfactor=1 AND cstdfkstk = ?)), 
+              1, 1,
+              '', '', '', ''
             )
         `;
         
