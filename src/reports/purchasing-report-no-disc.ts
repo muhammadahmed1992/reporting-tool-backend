@@ -10,16 +10,30 @@ import Constants from 'src/helper/constants';
 import { PurchasingReportNoDiscDTO } from 'src/dto/purchasing-report-no-disc.dto';
 import { QueryStringDTO } from 'src/dto/query-string.dto';
 @Injectable()
+
 export class PurchaseReportNoDisc implements ReportStrategy {
     constructor(private readonly genericRepository: GenericRepository) {}
 
     public async generateReport(queryString: QueryStringDTO): Promise<ApiResponse<any>> {
-        let {startDate, endDate, warehouse} = queryString;
+        let {startDate, endDate, warehouse, sortColumn, sortDirection, searchValue, columnsToFilter } = queryString;
+        let sortBy;
+
+        const sortOrder = !sortDirection ? 'ASC' : sortDirection;
+
+        if(!sortColumn || sortColumn === 'currency_header' || sortColumn === 'invoice_header') {
+            if(sortColumn === 'currency_header')
+                sortBy = ` currency_header ${sortOrder},invoice_header`;
+            else 
+                sortBy = ` currency_header ,invoice_header ${sortOrder}`;
+        }else if (sortColumn === 'date_header') {
+            sortBy = ` currency_header, STR_TO_DATE(date_header, '%d-%m-%Y') ${sortOrder}, invoice_header `;
+        }else {
+            sortBy = ` currency_header, 
+            ${sortColumn === 'supplier_header' ? `${sortColumn}` : `CAST(REPLACE(${sortColumn}, ',', '') AS SIGNED)`} ${sortOrder} ,
+            invoice_header`;
+        }
         const parameters = [];
-        if (!startDate)
-            startDate = new Date();
-        if (!endDate)
-            endDate = new Date();
+
         parameters.push(startDate);
         parameters.push(endDate);
         let query = `
@@ -41,7 +55,14 @@ export class PurchaseReportNoDisc implements ReportStrategy {
         inner join exchange on cinvfkexc=cexcpk
         left join entity on cinvfkent=centpk
         where (cinvspecial='BL' or cinvspecial='RB' or cinvspecial='KS') 
-        and dinvdate>=? and dinvdate<=? `
+        and dinvdate>=? and dinvdate<=? `;
+        const filterColumns = columnsToFilter ? columnsToFilter.toString().split(',').map(item => item.trim()) : [];
+        if (searchValue) {
+            query += ' AND (';
+            query += filterColumns.map(column => `${column} LIKE ?`).join(' OR ');
+            query += ')';
+            parameters.push(...filterColumns.map(() => `%${searchValue}%`));
+        }
         if (warehouse) {
             query+= `and (IFNULL(?, cinvfkwhs) = cinvfkwhs or cinvfkwhs is null) `;
             parameters.push(decodeURIComponent(warehouse));
@@ -49,7 +70,8 @@ export class PurchaseReportNoDisc implements ReportStrategy {
 
         query += `
         group by cinvrefno,dinvdate,centdesc,cexcdesc,ninvdisc1,ninvdisc2,ninvdisc3,ninvtax,ninvfreight,cinvspecial
-        order by currency,date,invoice) AS c, (SELECT @currentGroup := '', @currentSum := 0) r `;
+        ) AS c, (SELECT @currentGroup := '', @currentSum := 0) r 
+        order by ${sortBy}`;
 
         console.log(`query: ${query}`);
         console.log(`Report Name: ${ReportName.Purchase_Report_No_Disc}`);

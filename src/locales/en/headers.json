@@ -108,5 +108,79 @@
     "price_header": "Price",
     "location_header": "Location",
     "balance_header": "Balance"
+  },
+  "sales_transaction": {
+    "table": {
+      "item_header": "Item",
+      "id": "ID",
+      "qty_header": "Qty",
+      "price_header": "Price",
+      "amount_header": "Amount"
+    },
+    "invoice": {
+      "invoice_no": "Invoice No",
+      "date": "Date",
+      "warehouse": "Warehouse",
+      "customer": "Customer",
+      "salesman": "Salesman",
+      "tax": "Tax"
+    }
+  },
+  "sales_order_transaction": {
+    "table": {
+      "item_header": "Item",
+      "id": "ID",
+      "qty_header": "Qty",
+      "price_header": "Price",
+      "amount_header": "Amount"
+    },
+    "invoice": {
+      "invoice_no": "Invoice No",
+      "date": "Date",
+      "warehouse": "Warehouse",
+      "customer": "Customer",
+      "salesman": "Salesman",
+      "tax": "Tax"
+    }
+  },
+  "point_of_sale_transaction": {
+    "table": {
+      "item_header": "Item",
+      "id": "ID",
+      "qty_header": "Qty",
+      "price_header": "Price",
+      "amount_header": "Amount"
+    },
+    "invoice": {
+      "invoice_no": "Invoice No",
+      "date": "Date",
+      "warehouse": "Warehouse",
+      "customer": "Customer",
+      "salesman": "Spg",
+      "service_charge": "Service of Charge",
+      "tax": "Tax",
+      "table": "Table"
+    },
+    "payment": {
+      "total": "Total",
+      "voucher": "Voucher",
+      "cash": "Cash",
+      "credit_card": "Credit Card",
+      "debit_card": "Debit Card",
+      "online": "Online",
+      "change": "Change"
+    }
+  },
+  "stock_adjusment": {
+    "invoice": {
+      "invoice_no": "Invoice No",
+      "date": "Date",
+      "warehouse": "Warehouse"
+    },
+    "table": {
+      "item_header": "Item",
+      "id": "ID",
+      "qty_header": "Qty"
+    }
   }
 }

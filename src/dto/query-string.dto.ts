@@ -1,14 +1,8 @@
-import { IsOptional, IsNumberString, IsDateString } from 'class-validator';
+import { IsOptional } from 'class-validator';
 
 export class QueryStringDTO {
   @IsOptional()
-  pageSize?: number;
-
-  @IsOptional()
-  pageNumber?: number;
-
-  @IsOptional()
-  stockCode?: string;
+  stockId?: string;
 
   @IsOptional()
   stockGroup?: string;
@@ -17,8 +11,20 @@ export class QueryStringDTO {
   warehouse?: string;
 
   @IsOptional()
-  startDate?: Date;
+  startDate?: string;
 
   @IsOptional()
-  endDate?: Date;
+  endDate?: string;
+
+  @IsOptional()
+  searchValue?: string;
+
+  @IsOptional()
+  columnsToFilter?: string[];
+
+  @IsOptional()
+  sortColumn?: string;
+
+  @IsOptional()
+  sortDirection?: 'desc' | 'asc';
 }

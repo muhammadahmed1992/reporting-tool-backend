@@ -14,7 +14,15 @@ export class StockBalanceReport implements ReportStrategy {
     constructor(private readonly genericRepository: GenericRepository) {}
 
     public async generateReport(queryString: QueryStringDTO): Promise<ApiResponse<any>> {
-        const {stockGroup, warehouse} = queryString;
+        const {stockGroup, warehouse, sortColumn, sortDirection, searchValue, columnsToFilter } = queryString;
+        let sortBy = sortColumn ? sortColumn : 'stock_name_header,stock_id_header,location_header'.includes(sortColumn);  
+        const sortOrder = sortDirection ? sortDirection : 'ASC'; 
+        if(sortColumn && !(sortColumn ==='stock_name_header' || sortColumn === 'stock_id_header' || sortColumn === 'location_header')) {
+            sortBy = `CAST(REPLACE(${sortColumn}, ',', '') AS SIGNED)`;
+        } else {
+            sortBy = !sortColumn ? 'stock_name_header,stock_id_header,location_header' : sortColumn;
+        }
+        const parameters = [];
         let query = `
         select
         Kode as stock_id_header, Nama as stock_name_header, Lokasi as location_header,
@@ -63,7 +71,14 @@ export class StockBalanceReport implements ReportStrategy {
         INNER JOIN stockdetail sdt 
         on cIvdFkStk=cSTDfkSTK And nSTDfactor=1 and nstdkey=1 
         INNER JOIN unit ON cSTDfkUNI=cUNIpk
-        where 1=1 `
+        where 1=1 `;
+        const filterColumns = columnsToFilter ? columnsToFilter.toString().split(',').map(item => item.trim()) : [];
+        if (searchValue) {
+            query += ' AND (';
+            query += filterColumns.map(column => `${column} LIKE ?`).join(' OR ');
+            query += ')';
+            parameters.push(...filterColumns.map(() => `%${searchValue}%`));
+        }
         if (warehouse) {
             query+= ` and (IFNULL(?, cwhspk) = cwhspk or cwhspk is null) `;
         }
@@ -72,14 +87,15 @@ export class StockBalanceReport implements ReportStrategy {
         }
         
         query+= ` group by Kode,Nama,Lokasi
-        order by Kode,Nama,Lokasi asc ) d
-        JOIN (SELECT @totalBalance := 0) r`;
+         ) d
+        JOIN (SELECT @totalBalance := 0) r
+        order by ${sortBy} ${sortOrder}`;
         console.log(`query: ${query} `);
         console.log(`Report Name: ${ReportName.Stock_Balance}`);
         console.log('warehouse: ', decodeURIComponent(warehouse));
         console.log('stockGroup: ', decodeURIComponent(stockGroup));
         console.log(`=================================================`);
-        const parameters = [];
+        
         if (warehouse)
             parameters.push(decodeURIComponent(warehouse));
         if (stockGroup)

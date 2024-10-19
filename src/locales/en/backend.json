@@ -1,8 +1,14 @@
 {
     "no_data_found": "Data not found",
     "invalid_user": "Invalid username or password!",
+    "query_success": "Query executed successfully",
+    "query_failed": "Query failed to execute",
+    "transaction_success": "Transaction Completed",
+    "transaction_failed": "Transaction Failed",
     "data_found": "Data retrieved successfully!",
     "connection_string_not_found": "Please specify connection string",
     "bad_connection_string_format": "Provided connection string is not in correct format",
-    "unauthorized_user": "User does not allowed to login"
+    "unauthorized_user": "User does not allowed to login",
+    "stock_code_empty": "Stock code is not selected. Please try again",
+    "fill_order_error": "Please fill order details"
 }

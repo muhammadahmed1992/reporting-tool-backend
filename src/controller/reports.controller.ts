@@ -1,16 +1,17 @@
-import { Controller, Get, Query } from '@nestjs/common';
-
+import { Controller, Get, Query, UseInterceptors } from '@nestjs/common';
 import { ReportService } from './../services/report.service';
 import { ReportName } from 'src/helper/enums/report-names.enum';
 import { QueryStringDTO } from 'src/dto/query-string.dto';
-import { query } from 'express';
+
+import { DateInterceptor } from 'src/interceptors/date.interceptor';
+
 @Controller('reports')
+@UseInterceptors(DateInterceptor)
 export class ReportsController {
   constructor(private readonly reportService: ReportService) {}
 
   @Get('/price-list')
   async pricelist(@Query() query: QueryStringDTO): Promise<any> {
-    console.log(query);
     const result = await this.reportService.generateReport(ReportName.Price_List, query);
     return result;
   }

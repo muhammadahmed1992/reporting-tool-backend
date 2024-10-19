@@ -16,16 +16,15 @@ export class PriceListReport implements ReportStrategy {
     constructor(private readonly genericRepository: GenericRepository) {}
 
     public async generateReport(queryString: QueryStringDTO): Promise<ApiResponse<any>> {
-        const {stockGroup, pageSize} = queryString;
-        let count = `Select Count(1) as total_rows FROM Stock INNER JOIN Stockdetail
-        ON Stock.cSTKpk = Stockdetail.cSTDfkSTK
-        INNER JOIN Unit
-        ON Stockdetail.cSTDfkUNI = Unit.cUNIpk
-        inner join stockgroup on cstkfkgrp = cgrppk
-        where 1=1 `;
-        if (stockGroup) {
-            count += ` and (IFNULL(?, cstkfkgrp) = cstkfkgrp or cstkfkgrp is null) `;
+        const {stockGroup, sortColumn, sortDirection, searchValue, columnsToFilter } = queryString;
+        let sortBy;
+        const sortOrder = !sortDirection ? 'ASC' : sortDirection;
+        if(sortColumn === 'price_header') {
+            sortBy = `CAST(REPLACE(${sortColumn}, ',', '') AS SIGNED)`
+        } else {
+            sortBy = !sortColumn ? 'stock_id_header' : sortColumn;
         }
+        const parameters = [];
         let query = `
         SELECT cSTDcode as stock_id_header, LTRIM(RTRIM(cSTKdesc)) as stock_name_header,
         FORMAT(nSTDprice,0) as price_header,LTRIM(RTRIM(cUNIdesc)) as unit_header
@@ -34,31 +33,28 @@ export class PriceListReport implements ReportStrategy {
         INNER JOIN Unit
         ON Stockdetail.cSTDfkUNI = Unit.cUNIpk
         inner join stockgroup on cstkfkgrp = cgrppk
-        where 1=1 `
+        where 1=1 `;
+        const filterColumns = columnsToFilter ? columnsToFilter.toString().split(',').map(item => item.trim()) : [];
+        if (searchValue) {
+            query += ' AND (';
+            query += filterColumns.map(column => `${column} LIKE ?`).join(' OR ');
+            query += ')';
+            parameters.push(...filterColumns.map(() => `%${searchValue}%`));
+        }
         if (stockGroup) {
             query+= ` and (IFNULL(?, cstkfkgrp) = cstkfkgrp or cstkfkgrp is null) `;
+            parameters.push(decodeURIComponent(stockGroup));
         }
-        query+= ` ORDER BY cstdcode ASC `;
-        
+        query+= `  ORDER BY ${sortBy} ${sortOrder} `;        
         console.log(`query: ${query}`);
         console.log(`Report Name: ${ReportName.Price_List}`);
         console.log('parameter: stockGroup: ', decodeURIComponent(stockGroup));
         console.log('=====================================');
-        const [response, totalRows] = await Promise.all([this.genericRepository.query<PriceListDTO>(query, [decodeURIComponent(stockGroup)]), 
-        this.genericRepository.query<number>(count, [decodeURIComponent(stockGroup)])]);
-        const totalPages = Math.ceil((totalRows[0] as any).total_rows / pageSize); 
+        const response = await this.genericRepository.query<PriceListDTO>(query, parameters);
         if (response?.length) {
-            return ResponseHelper.CreateResponse<PriceListDTO[]>(response, HttpStatus.OK, Constants.DATA_SUCCESS, {
-                paging: {
-                    totalPages
-                }
-            });
+            return ResponseHelper.CreateResponse<PriceListDTO[]>(response, HttpStatus.OK, Constants.DATA_SUCCESS);
         } else {
-            return ResponseHelper.CreateResponse<PriceListDTO[]>([], HttpStatus.NOT_FOUND, Constants.DATA_NOT_FOUND, {
-                paging: {
-                    totalPages: 1
-                }
-            });
+            return ResponseHelper.CreateResponse<PriceListDTO[]>([], HttpStatus.NOT_FOUND, Constants.DATA_NOT_FOUND);
         }
     }
 }

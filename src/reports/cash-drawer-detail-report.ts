@@ -18,7 +18,14 @@ export class CashDrawerDetailReport implements ReportStrategy {
     ) {}
 
     public async generateReport(queryString: QueryStringDTO): Promise<ApiResponse<any>> {
-        
+        const {startDate, endDate, sortColumn, sortDirection} = queryString;
+        let sortBy;
+        const sortOrder = !sortDirection ? 'ASC' : sortDirection;
+        if(!sortColumn || sortColumn === 'date_header' || sortColumn === 'cashier_header') {
+            sortBy = !sortColumn ? 'date_header, cashier_header' : sortColumn;
+        } else {
+            sortBy = `CAST(REPLACE(${sortColumn}, ',', '') AS SIGNED)`  
+        }
         let query = `
 SELECT
     Cashier as cashier_header,
@@ -107,15 +114,14 @@ FROM (
             ddradate, cdrauser,
             SUM(ndraopen) AS nopen, 
             SUM(ndradraw + ndradraw1) AS ndraw
+            
          FROM 
             drawer
          GROUP BY 
             cdrauser,ddradate
         ) AS c
     ON 
-        c.ddradate = a.dinvdate and c.cdrauser=a.cinvuser
-    ORDER BY 
-        Date, Cashier)  AS subquery,
+        c.ddradate = a.dinvdate and c.cdrauser=a.cinvuser)  AS subquery,
 (SELECT 
     @running_opening := 0,
     @running_dp := 0,
@@ -128,13 +134,9 @@ FROM (
     @running_withdrawn := 0,
     @running_cancel := 0,
     @running_balance := 0
-) AS vars;
+) AS vars  
+ ORDER BY ${sortBy} ${sortOrder};
 `;
-        let {startDate, endDate} = queryString;
-        if (!startDate)
-            startDate = new Date();
-        if (!endDate)
-            endDate = new Date();
         const parameters = [];
         parameters.push(startDate);
         parameters.push(endDate);

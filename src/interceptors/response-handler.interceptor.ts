@@ -9,6 +9,7 @@ import { Observable, from } from 'rxjs';
 import { map, switchMap } from 'rxjs/operators';
 import ApiResponse from '../helper/api-response';
 import { LocalizationService } from 'src/services/localization.service';
+import { Request } from 'express';
 
 @Injectable()
 export default class ResponseHandlerInterceptor<T>
@@ -25,8 +26,8 @@ export default class ResponseHandlerInterceptor<T>
 
     return next.handle().pipe(
       switchMap((data) => {
+        console.log(data);
         const response = context.switchToHttp().getResponse();
-
         if (data) {
           return from(this.localizationService.translate(locale, 'backend', data.message))
             .pipe(
