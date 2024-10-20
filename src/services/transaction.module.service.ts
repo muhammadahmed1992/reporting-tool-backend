@@ -900,11 +900,6 @@ WHERE sd.cstdcode = ?;
   
   async setStockInvoice(body: any) {
     try {
-      const allQuantitiesZero = body.tableFormData.every((item: any) => parseInt(item.qty, 10) === 0);
-
-      if (allQuantitiesZero) {
-        throw new TransactionError(Constants.FILL_ORDER_ERROR);
-      }
     const invoiceQuery = `
   INSERT INTO invoice (
       cinvrefno, cinvfkwhs,
@@ -939,7 +934,6 @@ WHERE sd.cstdcode = ?;
         invoiceQuery,
         invoiceParams,
       );
-      body.tableFormData = body.tableFormData.filter(item => parseInt(item.qty, 10) !== 0);
       console.log('--------------------');
       console.log('StockInvoice');
       console.table(body.tableFormData);
