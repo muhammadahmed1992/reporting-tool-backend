@@ -47,6 +47,8 @@
     "fill_customer": "Please select a customer",
     "fill_payment": "Payment not completed",
     "invalid_key": "Invalid Key",
+    "limit": "Limit reached",
+    "limit_error": "Limit reached cant add more than 3 items",
     "success": "Success",
     "close": "Close",
     "error_fetching_imei": "Error fetching IMEI",

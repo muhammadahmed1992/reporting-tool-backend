@@ -49,6 +49,8 @@
     "fill_payment": "Payment not completed",
     "invalid_key": "Invalid Key",
     "success": "Success",
+    "limit": "limit",
+    "limit_error": "Limit reached cant add more than 3 items",
     "close": "Close",
     "error_fetching_imei": "Error fetching IMEI",
     "invalid_key_message": "Registration Key Must Be 5 Characters",
