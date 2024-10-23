@@ -14,6 +14,7 @@ export class ConnectionStringMiddleware implements NestMiddleware {
     const locale = req.headers['accept-language'] || 'id';
 
     const connectionString = decodeURIComponent(req.headers['connection-string'] as string);
+    console.log(connectionString);
     if (!connectionString) {
         return res.status(HttpStatus.BAD_REQUEST).json(ResponseHelper.CreateResponse(null, HttpStatus.BAD_REQUEST, await this.localizationService.translate(locale,'backend', Constants.CONNECTION_STRING_NOT_FOUND)));
     }
