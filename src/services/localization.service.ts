@@ -14,7 +14,7 @@ export class LocalizationService {
 
   private async loadTranslations() {
     const languages = ['en', 'id'];
-    const files = ['menu', 'backend', 'headers'];
+    const files = ['menu', 'backend', 'headers', 'videos'];
     
     for (const lang of languages) {
       this.translations[lang] = {};
