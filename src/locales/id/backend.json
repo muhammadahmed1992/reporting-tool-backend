@@ -10,5 +10,6 @@
     "bad_connection_string_format": "String koneksi yang diberikan tidak dalam format yang benar",
     "unauthorized_user": "Pengguna tidak diizinkan untuk login",
     "stock_code_empty": "Stock code is not selected. Please try again",
-    "fill_order_error": "Please fill order details"
+    "fill_order_error": "Please fill order details",
+    "location_not_found": "Location not found"
 }

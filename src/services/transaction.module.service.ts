@@ -65,10 +65,6 @@ export class TransactionModuleService {
       warehouse.primaryKey = response[0].primarykey;
       warehouse.description = response[0].description;
       finalResponse.Warehouse = warehouse;
-      // const parsedResponse = response.map((item) => ({
-      //   InvoiceNo : ,
-      //   Warehouse: warehouse
-      // }));
 
       return ResponseHelper.CreateResponse<any>(
         finalResponse,
@@ -79,7 +75,7 @@ export class TransactionModuleService {
       return ResponseHelper.CreateResponse<any>(
         null,
         HttpStatus.NOT_FOUND,
-        Constants.DATA_NOT_FOUND,
+        Constants.LOCATION_NOT_FOUND,
       );
     }
   }
@@ -334,10 +330,6 @@ export class TransactionModuleService {
       warehouse.primaryKey = response[0].primarykey;
       warehouse.description = response[0].description;
       finalResponse.Warehouse = warehouse;
-      // const parsedResponse = response.map((item) => ({
-      //   InvoiceNo : ,
-      //   Warehouse: warehouse
-      // }));
 
       return ResponseHelper.CreateResponse<any>(
         finalResponse,
@@ -348,7 +340,7 @@ export class TransactionModuleService {
       return ResponseHelper.CreateResponse<any>(
         null,
         HttpStatus.NOT_FOUND,
-        Constants.DATA_NOT_FOUND,
+        Constants.LOCATION_NOT_FOUND,
       );
     }
   }
@@ -566,10 +558,6 @@ export class TransactionModuleService {
       warehouse.primaryKey = response[0].primarykey;
       warehouse.description = response[0].description;
       finalResponse.Warehouse = warehouse;
-      // const parsedResponse = response.map((item) => ({
-      //   InvoiceNo : ,
-      //   Warehouse: warehouse
-      // }));
 
       return ResponseHelper.CreateResponse<any>(
         finalResponse,
@@ -580,7 +568,7 @@ export class TransactionModuleService {
       return ResponseHelper.CreateResponse<any>(
         null,
         HttpStatus.NOT_FOUND,
-        Constants.DATA_NOT_FOUND,
+        Constants.LOCATION_NOT_FOUND,
       );
     }
   }
@@ -843,10 +831,6 @@ WHERE sd.cstdcode = ?;
       warehouse.primaryKey = response[0].primarykey;
       warehouse.description = response[0].description;
       finalResponse.Warehouse = warehouse;
-      // const parsedResponse = response.map((item) => ({
-      //   InvoiceNo : ,
-      //   Warehouse: warehouse
-      // }));
 
       return ResponseHelper.CreateResponse<any>(
         finalResponse,
@@ -857,7 +841,7 @@ WHERE sd.cstdcode = ?;
       return ResponseHelper.CreateResponse<any>(
         null,
         HttpStatus.NOT_FOUND,
-        Constants.DATA_NOT_FOUND,
+        Constants.LOCATION_NOT_FOUND,
       );
     }
   }

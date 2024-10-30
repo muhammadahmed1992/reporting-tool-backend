@@ -11,4 +11,5 @@ export default class Constants {
     static readonly TRANSACTION_SUCCESS = "transaction_success";
     static readonly TRANSACTION_FAILURE = "transaction_failed";
     static readonly FILL_ORDER_ERROR = "fill_order_error";
+    static readonly LOCATION_NOT_FOUND = "location_not_found";
 }
