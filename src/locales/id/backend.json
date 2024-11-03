@@ -1,15 +1,15 @@
 {
     "no_data_found": "Tidak ada data",
-    "invalid_user": "Nama pengguna atau kata sandi tidak valid!",
+    "invalid_user": "User ID atau Password salah",
     "data_found": "Data berhasil diambil!",
-    "query_success": "Kueri berhasil dijalankan",
-    "query_failed": "Kueri gagal dijalankan",
-    "transaction_success": "Transcation Completed",
-    "transaction_failed": "Transcation Failed",
+    "query_success": "Query berhasil dijalankan",
+    "query_failed": "Query gagal dijalankan",
+    "transaction_success": "Selesai",
+    "transaction_failed": "Transaksi Gagal",
     "connection_string_not_found": "Harap tentukan string koneksi",
     "bad_connection_string_format": "String koneksi yang diberikan tidak dalam format yang benar",
     "unauthorized_user": "Pengguna tidak diizinkan untuk login",
-    "stock_code_empty": "Stock code is not selected. Please try again",
-    "fill_order_error": "Please fill order details",
-    "location_not_found": "Location not found"
+    "stock_code_empty": "Belum isi Kode Stock",
+    "fill_order_error": "Belum isi item",
+    "location_not_found": "Belum isi lokasi"
 }

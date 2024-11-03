@@ -1,110 +1,112 @@
 {
   "cash_drawer_report": {
     "date_drawer_header": "Tanggal",
-    "opening_header": "Pembukaan",
+    "opening_header": "Kas Awal",
     "dp_header": "DP",
     "voucher_header": "Voucher",
     "cash_header": "Tunai",
-    "payroll_header": "Penggajian",
+    "payroll_header": "Piutang",
     "credit_card_header": "Kartu Kredit",
     "debit_card_header": "Kartu Debit",
     "online_header": "Online",
-    "withdrawn_header": "Penarikan",
+    "withdrawn_header": "Pengambilan",
     "cancel_header": "Pembatalan",
     "balance_header": "Saldo"
   },
   "cash_drawer_report_detail": {
     "cashier_header": "Kasir",
     "date_header": "Tanggal",
-    "opening_header": "Pembukaan",
+    "opening_header": "Kas Awal",
     "dp_header": "DP",
     "voucher_header": "Voucher",
     "cash_header": "Tunai",
-    "payroll_header": "Penggajian",
+    "payroll_header": "Piutang",
     "credit_card_header": "Kartu Kredit",
     "debit_card_header": "Kartu Debit",
     "online_header": "Online",
-    "withdrawn_header": "Penarikan",
+    "withdrawn_header": "Pengambilan",
     "cancel_header": "Pembatalan",
     "balance_header": "Saldo"
   },
   "price_report": {
-    "stock_id_header": "ID Stok",
-    "stock_name_header": "Nama Stok",
+    "stock_id_header": "Kode Stock",
+    "stock_name_header": "Nama Barang",
     "price_header": "Harga",
-    "unit_header": "Unit"
+    "Satuan_header": "Unit"
   },
   "stock_report": {
-    "stock_id_header": "ID Stok",
-    "stock_name_header": "Nama Stok",
+    "stock_id_header": "Kode Stock",
+    "stock_name_header": "Nama Barang",
     "location_header": "Lokasi",
-    "qty_header": "Jumlah",
+    "qty_header": "Qty",
     "price_header": "Harga",
     "balance_header": "Saldo"
   },
   "purchasing_report": {
     "invoice_header": "Faktur",
     "date_header": "Tanggal",
-    "supplier_header": "Pemasok",
-    "currency_header": "Mata Uang",
-    "amount_header": "Jumlah"
+    "supplier_header": "Supplier",
+    "currency_header": "Uang",
+    "amount_header": "Saldo"
   },
   "purchasing_report_no_disc": {
     "invoice_header": "Faktur",
     "date_header": "Tanggal",
-    "supplier_header": "Pemasok",
-    "currency_header": "Mata Uang",
-    "amount_header": "Jumlah"
+    "supplier_header": "Supplier",
+    "currency_header": "Uang",
+    "amount_header": "Saldo"
   },
   "purchasing_analyst_report": {
-    "stock_id_header": "ID Stok",
-    "stock_name_header": "Nama Stok",
-    "qty_header": "Jumlah",
-    "currency_header": "Mata Uang",
-    "amount_header": "Jumlah",
-    "amount_tax_header": "Pajak Jumlah"
+    "stock_id_header": "Kode Stock",
+    "stock_name_header": "Nama Barang",
+    "qty_header": "Qty",
+    "currency_header": "Uang",
+    "amount_header": "Saldo",
+    "amount_tax_header": "Termasuk Pajak"
   },
   "purchasing_analyst_report_no_disc": {
-    "stock_id_header": "ID Stok",
-    "stock_name_header": "Nama Stok",
-    "qty_header": "Jumlah",
-    "currency_header": "Mata Uang",
+    "stock_id_header": "Kode Stock",
+    "stock_name_header": "Nama Barang",
+    "qty_header": "Qty",
+    "currency_header": "Uang",
     "amount_header": "Jumlah",
-    "amount_tax_header": "Pajak Jumlah"
+    "amount_tax_header": "Termasuk Pajak"
   },
   "sales_report": {
     "invoice_header": "Faktur",
     "date_header": "Tanggal",
-    "currency_header": "Mata Uang",
+    "customer_header": "Langganan",           
+    "currency_header": "Uang",
     "amount_header": "Jumlah"
   },
   "sales_report_2": {
     "invoice_header": "Faktur",
     "date_header": "Tanggal",
-    "currency_header": "Mata Uang",
+    "customer_header": "Langganan",           
+    "currency_header": "Uang",
     "amount_header": "Jumlah"
   },
   "sales_analyst_report": {
-    "stock_id_header": "ID Stok",
-    "stock_name_header": "Nama Stok",
-    "qty_header": "Jumlah",
-    "currency_header": "Mata Uang",
+    "stock_id_header": "Kode Stock",
+    "stock_name_header": "Nama Barang",
+    "qty_header": "Qty",
+    "currency_header": "Uang",
     "amount_header": "Jumlah",
-    "amount_tax_header": "Pajak Jumlah"
+    "amount_tax_header": "Termasuk Pajak"
   },
   "sales_analyst_report_2": {
-    "stock_id_header": "ID Stok",
-    "stock_name_header": "Nama Stok",
-    "qty_header": "Jumlah",
-    "currency_header": "Mata Uang",
+    "stock_id_header": "Kode Stock",
+    "stock_name_header": "Nama Barang",
+    "qty_header": "Qty",
+    "currency_header": "Uang",
     "amount_header": "Jumlah",
-    "amount_tax_header": "Pajak Jumlah"
+    "amount_tax_header": "Termasuk Pajak"
   },
   "scan_barcode_report": {
     "item_header": "Item",
-    "stock_id_header": "ID Stok",
-    "stock_name_header": "Nama Stok",
-    "qty_header": "Jumlah",
+    "stock_id_header": "Kode Stock",
+    "stock_name_header": "Nama Barang",
+    "qty_header": "Qty",
     "price_header": "Harga",
     "location_header": "Lokasi",
     "balance_header": "Saldo"
@@ -113,33 +115,33 @@
     "invoice": {
       "invoice_no": "No Faktur",
       "date": "Tanggal",
-      "warehouse": "Gudang",
-      "customer": "Pelanggan",
-      "salesman": "Penjual",
+      "warehouse": "Lokasi",
+      "customer": "Langganan",
+      "salesman": "Salesman",
       "tax": "Pajak"
     },
     "table": {
       "item_header": "Barang",
       "id": "ID",
-      "qty_header": "Jumlah",
+      "qty_header": "Qty",
       "price_header": "Harga",
-      "amount_header": "Jumlah Total"
+      "amount_header": "Saldo"
     }
   },
   "sales_order_transaction": {
     "table": {
       "item_header": "Barang",
       "id": "ID",
-      "qty_header": "Jumlah",
+      "qty_header": "Qty",
       "price_header": "Harga",
-      "amount_header": "Jumlah Total"
+      "amount_header": "Saldo"
     },
     "invoice": {
       "invoice_no": "Nomor Faktur",
       "date": "Tanggal",
-      "warehouse": "Gudang",
-      "customer": "Pelanggan",
-      "salesman": "Penjual",
+      "warehouse": "Lokasi",
+      "customer": "Langganan",
+      "salesman": "Salesman",
       "tax": "Pajak"
     }
   },
@@ -147,17 +149,17 @@
     "table": {
       "item_header": "Barang",
       "id": "ID",
-      "qty_header": "Jumlah",
+      "qty_header": "Qty",
       "price_header": "Harga",
-      "amount_header": "Jumlah Total"
+      "amount_header": "Saldo"
     },
     "invoice": {
       "invoice_no": "Nomor Faktur",
       "date": "Tanggal",
-      "warehouse": "Gudang",
-      "customer": "Pelanggan",
-      "salesman": "Penjual",
-      "service_charge": "Biaya Layanan",
+      "warehouse": "Lokasi",
+      "customer": "Langganan",
+      "salesman": "Salesman",
+      "service_charge": "Service Charge",
       "tax": "Pajak",
       "table": "Meja"
     },
@@ -175,12 +177,12 @@
     "invoice": {
       "invoice_no": "No Faktur",
       "date": "Tanggal",
-      "warehouse": "Gudang"
+      "warehouse": "Lokasi"
     },
     "table": {
       "item_header": "Barang",
       "id": "ID",
-      "qty_header": "Jumlah"
+      "qty_header": "Qty"
     }
   }
 }

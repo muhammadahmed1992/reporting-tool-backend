@@ -34,7 +34,7 @@ export class Sales2Report implements ReportStrategy {
         parameters.push(startDate);
         parameters.push(endDate);
         let query = `
-        SELECT Invoice as invoice_header, Date as date_header, Currency as currency_header,
+        SELECT Invoice as invoice_header, Date as date_header, IFNULL(Customer, '') as customer_header,Currency as currency_header,
             FORMAT(Amount,0) AS amount_header,
             FORMAT(IF(@currentGroup <> Currency, 
                 IF(@currentGroup:= Currency, @currentSum:= 0, @currentSum:= Amount), 

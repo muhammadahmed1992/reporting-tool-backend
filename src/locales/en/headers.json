@@ -6,8 +6,8 @@
     "voucher_header": "Voucher",
     "cash_header": "Cash",
     "payroll_header": "Payroll",
-    "credit_card_header": "CreditCard",
-    "debit_card_header": "DebitCard",
+    "credit_card_header": "Credit Card",
+    "debit_card_header": "Debit Card",
     "online_header": "Online",
     "withdrawn_header": "Withdrawn",
     "cancel_header": "Cancel",
@@ -21,15 +21,15 @@
     "voucher_header": "Voucher",
     "cash_header": "Cash",
     "payroll_header": "Payroll",
-    "credit_card_header": "CreditCard",
-    "debit_card_header": "DebitCard",
+    "credit_card_header": "Credit Card",
+    "debit_card_header": "Debit Card",
     "online_header": "Online",
     "withdrawn_header": "Withdrawn",
     "cancel_header": "Cancel",
     "balance_header": "Balance"
   },
   "price_report": {
-    "stock_id_header": "Stock ID",
+    "stock_id_header": "Stock Code",
     "stock_name_header": "Stock Name",
     "price_header": "Price",
     "unit_header": "Unit"
@@ -46,63 +46,65 @@
     "invoice_header": "Invoice",
     "date_header": "Date",
     "supplier_header": "Supplier",
-    "currency_header": "Currency",
+    "currency_header": "Curr",
     "amount_header": "Amount"
   },
   "purchasing_report_no_disc": {
     "invoice_header": "Invoice",
     "date_header": "Date",
     "supplier_header": "Supplier",
-    "currency_header": "Currency",
+    "currency_header": "Curr",
     "amount_header": "Amount"
   },
   "purchasing_analyst_report": {
-    "stock_id_header": "StockID",
-    "stock_name_header": "StockName",
+    "stock_id_header": "Stock Code",
+    "stock_name_header": "Stock Name",
     "qty_header": "Qty",
-    "currency_header": "Currency",
+    "currency_header": "Curr",
     "amount_header": "Amount",
-    "amount_tax_header": "AmountTax"
+    "amount_tax_header": "Incl.Tax"
   },
   "purchasing_analyst_report_no_disc": {
-    "stock_id_header": "StockID",
-    "stock_name_header": "StockName",
+    "stock_id_header": "Stock Code",
+    "stock_name_header": "Stock Name",
     "qty_header": "Qty",
-    "currency_header": "Currency",
+    "currency_header": "Curr",
     "amount_header": "Amount",
-    "amount_tax_header": "AmountTax"
+    "amount_tax_header": "Incl.Tax"
   },
   "sales_report": {
     "invoice_header": "Invoice",
     "date_header": "Date",
-    "currency_header": "Currency",
+    "customer_header": "Customer",       
+    "currency_header": "Curr",
     "amount_header": "Amount"
   },
   "sales_report_2": {
     "invoice_header": "Invoice",
     "date_header": "Date",
-    "currency_header": "Currency",
+    "customer_header": "Customer",           
+    "currency_header": "Curr",
     "amount_header": "Amount"
   },
   "sales_analyst_report": {
-    "stock_id_header": "StockID",
-    "stock_name_header": "StockName",
+    "stock_id_header": "Stock Code",
+    "stock_name_header": "Stock Name",
     "qty_header": "Qty",
-    "currency_header": "Currency",
+    "currency_header": "Curr",
     "amount_header": "Amount",
-    "amount_tax_header": "AmountTax"
+    "amount_tax_header": "Incl.Tax"
   },
   "sales_analyst_report_2": {
-    "stock_id_header": "StockID",
-    "stock_name_header": "StockName",
+    "stock_id_header": "Stock Code",
+    "stock_name_header": "Stock Name",
     "qty_header": "Qty",
-    "currency_header": "Currency",
+    "currency_header": "Curr",
     "amount_header": "Amount",
-    "amount_tax_header": "AmountTax"
+    "amount_tax_header": "Incl.Tax"
   },
   "scan_barcode_report": {
     "item_header": "Item",
-    "stock_id_header": "Stock ID",
+    "stock_id_header": "Stock Code",
     "stock_name_header": "Stock Name",
     "qty_header": "Qty",
     "price_header": "Price",
@@ -156,8 +158,8 @@
       "date": "Date",
       "warehouse": "Warehouse",
       "customer": "Customer",
-      "salesman": "Spg",
-      "service_charge": "Service of Charge",
+      "salesman": "SPG",
+      "service_charge": "Service Charge",
       "tax": "Tax",
       "table": "Table"
     },
