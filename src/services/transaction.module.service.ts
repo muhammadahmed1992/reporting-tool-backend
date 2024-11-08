@@ -212,13 +212,13 @@ export class TransactionModuleService {
         const detailQuery = `
                 INSERT INTO invoicedetail (
                     civdfkstk, civdcode, nivdqtyout, civdpk, civdfkinv, nivdprice,
-                    nivdfactor, nivdzqtyout, nivdamount, nivdorder, civdunit, nivdstkppn,
+                    nivdfactor, nivdzqtyout, nivdamount, nivdorder, civdunit, nivdstkppn, nivdkirim,
                     civdsn, civdmemo, nivdpokok
                 ) 
                 SELECT ?, ?, ?, LEFT(SHA1(UUID()), 23),
                     (SELECT cinvpk FROM invoice WHERE cinvrefno = ? and cinvspecial = 'JL'), 
                     ?, sd.nstdfactor, ? * sd.nstdfactor,
-                    ? * ?, ?, u.cunidesc, s.nstkppn, ' ', ' ', (select nstkbuy from stock where cstkpk= ?) * (? * sd.nstdfactor)
+                    ? * ?, ?, u.cunidesc, s.nstkppn,1, ' ', ' ', (select nstkbuy from stock where cstkpk= ?) * (? * sd.nstdfactor)
                 FROM stockdetail sd
                 LEFT JOIN unit u ON u.cunipk = sd.cstdfkuni
                 LEFT JOIN stock s ON s.cstkpk = ?
@@ -721,13 +721,13 @@ export class TransactionModuleService {
         const detailQuery = `
                 INSERT INTO invoicedetail (
     civdfkstk, civdcode, nivdonhand, nivdqtyout, qtyresep, civdpk, civdfkinv, nivdprice,
-    nivdfactor, nivdzqtyout, nivdamount, nivdorder, civdunit, nivdstkppn,
+    nivdfactor, nivdzqtyout, nivdamount, nivdorder, civdunit, nivdstkppn,nivdkirim,
     civdmemo, nivdpokok, civdpromocard, civdresep
 ) 
 SELECT ?, ?, ?, ?, ?, LEFT(SHA1(UUID()), 23), 
     (SELECT cinvpk FROM invoice WHERE cinvrefno = ? and cinvspecial = 'PS'), -- Subquery for civdfkinv
     ?, sd.nstdfactor, ? * sd.nstdfactor,
-    ? * ?, ?, u.cunidesc, s.nstkppn, 0, (select nstkbuy from stock where cstkpk= ?) * (? * sd.nstdfactor), ' ', ' '
+    ? * ?, ?, u.cunidesc, s.nstkppn, 1,0, (select nstkbuy from stock where cstkpk= ?) * (? * sd.nstdfactor), ' ', ' '
 FROM stockdetail sd
 LEFT JOIN unit u ON u.cunipk = sd.cstdfkuni
 LEFT JOIN stock s ON s.cstkpk = ?
@@ -974,14 +974,14 @@ WHERE sd.cstdcode = ?;
         const nivdamount = row.qty - qty; 
         const detailQuery = `
             INSERT INTO invoicedetail (
-              civdfkstk, civdcode, nivdonhand, nivdadjust, 
+              civdfkstk, civdcode, nivdonhand, nivdadjust, nivdkirim,
               civdpk, civdfkinv, nivdprice, 
               nivdqtyin, nivdzqtyin, nivdqtyout, nivdzqtyout,
               nivdamount, nivdorder, civdunit, 
               nivdstkppn, nivdfactor,
               civdsn, civdmemo, civdfkstk1, disct
             ) Values (
-              ?, ?, ?, ?, 
+              ?, ?, ?, ?, 1,
               LEFT(SHA1(UUID()), 23), (SELECT cinvpk FROM invoice WHERE cinvrefno = ? and cinvspecial = 'OP'),
               (SELECT nstkbuy FROM stock WHERE cstkpk = ?),
               ?, ?, ?, ?,
