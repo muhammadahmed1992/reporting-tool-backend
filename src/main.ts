@@ -3,11 +3,13 @@ import { AppModule } from './app.module';
 import ResponseHandlerInterceptor from './interceptors/response-handler.interceptor';
 import { LocalizationService } from './services/localization.service'; // Import the service
 import { ValidationPipe } from '@nestjs/common';
+import { GenericExceptionsFilter } from './filters/exception.filter';
 
 declare const module: any;
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
   app.useGlobalInterceptors(new ResponseHandlerInterceptor(app.get(LocalizationService)));
+  app.useGlobalFilters(new GenericExceptionsFilter())
   app.useGlobalPipes(
     new ValidationPipe({
       whitelist: true,    // Strip out properties that don't have decorators
