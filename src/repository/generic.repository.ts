@@ -4,85 +4,80 @@ import { DataSource, DataSourceOptions } from 'typeorm';
 import { Request } from 'express';
 import { v4 as uuidv4 } from 'uuid';
 
-/**
- * This is a generic repository I created to encapsulate the data-access layer functionalities.
- */
 @Injectable({ scope: Scope.REQUEST })
 export class GenericRepository implements OnModuleDestroy {
-  private static dataSource: DataSource;
+  private static dataSources = new Map<string, DataSource>();
   private connectionName: string;
-  private lastConnectionString: string | null = null; // Track the last connection string
+  private lastConnectionString: string | null = null;
 
   constructor(@Inject(REQUEST) private readonly request: Request) {
-    this.connectionName = uuidv4(); // Generate a unique name for each connection
+    this.connectionName = uuidv4();
   }
 
-  // Singleton pattern for DataSource initialization
-  private async initializeDataSource(): Promise<void> {
+  // Initialize a new DataSource if needed
+  private async initializeDataSource(): Promise<DataSource> {
     const connectionString = this.request['connection-string'];
+    const existingDataSource = GenericRepository.dataSources.get(this.connectionName);
 
-    // Check if the connection string has changed
-    if (this.lastConnectionString === connectionString && GenericRepository.dataSource && GenericRepository.dataSource.isInitialized) {
-      // No change in connection string, skip reinitialization
-      return;
+    // Use existing DataSource if connection string matches and is initialized
+    if (existingDataSource && existingDataSource.isInitialized && this.lastConnectionString === connectionString) {
+      return existingDataSource;
     }
 
-    // If there is an existing data source, close it
-    if (GenericRepository.dataSource && GenericRepository.dataSource.isInitialized) {
+    // Close the previous DataSource if connection string changed
+    if (existingDataSource && existingDataSource.isInitialized) {
       console.log(`Closing existing DataSource: ${this.connectionName}`);
-      await GenericRepository.dataSource.destroy();
+      await existingDataSource.destroy();
     }
 
     // Initialize a new DataSource
     console.log(`Initializing new DataSource with connection string: ${connectionString}`);
-    this.lastConnectionString = connectionString; // Update to the new connection string
-
+    this.lastConnectionString = connectionString;
+    
     const dataSourceOptions: DataSourceOptions = {
       type: 'mysql',
       url: connectionString,
       entities: [], // Define your entities here
       synchronize: false,
-      name: this.connectionName, // Unique connection name
+      name: this.connectionName,
     };
 
-    GenericRepository.dataSource = new DataSource(dataSourceOptions);
-    await GenericRepository.dataSource.initialize();
+    const dataSource = new DataSource(dataSourceOptions);
+    await dataSource.initialize();
     console.log(`DataSource initialized with name: ${this.connectionName}`);
+    
+    GenericRepository.dataSources.set(this.connectionName, dataSource);
+    return dataSource;
   }
 
-  // Access the singleton DataSource
+  // Retrieve the DataSource for the current instance
   private async getDataSource(): Promise<DataSource> {
-    // Ensure the DataSource is initialized before returning it
-    const connectionString = this.request['connection-string'];
-    if (!GenericRepository.dataSource || !GenericRepository.dataSource.isInitialized || connectionString != this.lastConnectionString) {
-      await this.initializeDataSource();
-    }
-    return GenericRepository.dataSource;
+    return this.initializeDataSource();
   }
 
-  // Query execution logic
+  // Query execution
   async query<T>(sql: string, parameters?: any[]): Promise<T[]> {
-    let result: T[] = [];
     try {
       const dataSource = await this.getDataSource();
-      result = await dataSource.query(sql, parameters);
+      return await dataSource.query(sql, parameters);
     } catch (e: any) {
       console.error('Error executing query:', e.message);
       console.error('Stack trace:', e.stack);
       throw new Error(e);
     }
-    return result;
   }
 
-  // On module destroy, destroy the DataSource if initialized
+  // Cleanup on module destroy
   async onModuleDestroy() {
-    console.log(`DataSource is closing: ${this.connectionName}`);
-    if (GenericRepository.dataSource && GenericRepository.dataSource.isInitialized) {
+    console.log(`Cleaning up DataSource: ${this.connectionName}`);
+    const dataSource = GenericRepository.dataSources.get(this.connectionName);
+    if (dataSource && dataSource.isInitialized) {
       try {
-        await GenericRepository.dataSource.destroy();
+        await dataSource.destroy();
         console.log(`DataSource closed: ${this.connectionName}`);
+        GenericRepository.dataSources.delete(this.connectionName);
       } catch (closeError: any) {
-        console.error('Error closing DataSource during module destroy:', closeError.message);
+        console.error('Error closing DataSource:', closeError.message);
         console.error('Stack trace:', closeError.stack);
         throw new Error(closeError);
       }
