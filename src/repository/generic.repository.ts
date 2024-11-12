@@ -28,6 +28,7 @@ export class GenericRepository implements OnModuleDestroy {
     if (existingDataSource && existingDataSource.isInitialized) {
       console.log(`Closing existing DataSource: ${this.connectionName}`);
       await existingDataSource.destroy();
+      GenericRepository.dataSources.delete(this.connectionName); // Remove from map after destruction
     }
 
     // Initialize a new DataSource
@@ -55,15 +56,20 @@ export class GenericRepository implements OnModuleDestroy {
     return this.initializeDataSource();
   }
 
-  // Query execution
+  // Query execution with automatic connection cleanup
   async query<T>(sql: string, parameters?: any[]): Promise<T[]> {
+    const dataSource = await this.getDataSource();
     try {
-      const dataSource = await this.getDataSource();
       return await dataSource.query(sql, parameters);
     } catch (e: any) {
       console.error('Error executing query:', e.message);
       console.error('Stack trace:', e.stack);
       throw new Error(e);
+    } finally {
+      console.log(`Destroying DataSource after query execution: ${this.connectionName}`);
+      await dataSource.destroy();
+      GenericRepository.dataSources.delete(this.connectionName);
+      console.log(`DataSource destroyed and removed from map: ${this.connectionName}`);
     }
   }
 
