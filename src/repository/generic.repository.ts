@@ -59,11 +59,8 @@ export class GenericRepository implements OnModuleDestroy {
   // Query execution with automatic connection cleanup
   async query<T>(sql: string, parameters?: any[]): Promise<T[]> {
     const dataSource = await this.getDataSource();
-    const dataSource = await this.getDataSource();
     try {
       return await dataSource.query(sql, parameters);
-      const result = await dataSource.query(sql, parameters);
-      return result;
     } catch (e: any) {
       console.error('Error executing query:', e.message);
       console.error('Stack trace:', e.stack);
@@ -73,9 +70,6 @@ export class GenericRepository implements OnModuleDestroy {
       await dataSource.destroy();
       GenericRepository.dataSources.delete(this.connectionName);
       console.log(`DataSource destroyed and removed from map: ${this.connectionName}`);
-    }
-    finally{
-      dataSource.destroy();
     }
   }
 
