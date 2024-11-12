@@ -57,13 +57,17 @@ export class GenericRepository implements OnModuleDestroy {
 
   // Query execution
   async query<T>(sql: string, parameters?: any[]): Promise<T[]> {
+    const dataSource = await this.getDataSource();
     try {
-      const dataSource = await this.getDataSource();
-      return await dataSource.query(sql, parameters);
+      const result = await dataSource.query(sql, parameters);
+      return result;
     } catch (e: any) {
       console.error('Error executing query:', e.message);
       console.error('Stack trace:', e.stack);
       throw new Error(e);
+    }
+    finally{
+      dataSource.destroy();
     }
   }
 
