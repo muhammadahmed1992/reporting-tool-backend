@@ -89,6 +89,7 @@ export class StockBalanceReport implements ReportStrategy {
         query+= ` group by Kode,Nama,Lokasi
          ) d
         JOIN (SELECT @totalBalance := 0) r
+        where qty<>0
         order by ${sortBy} ${sortOrder}`;
         console.log(`query: ${query} `);
         console.log(`Report Name: ${ReportName.Stock_Balance}`);
