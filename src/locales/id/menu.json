@@ -23,7 +23,7 @@
     "select_warehouse": "Pilih Lokasi",
     "select_date": "Pilih Tanggal",
     "select_database": "Pilih Database",
-    "connect": "Connect",
+    "connect": "Connect", 
     "filter": "Filter",
     "clear": "Clear",
     "page": "Halaman",
