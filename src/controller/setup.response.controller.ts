@@ -23,4 +23,9 @@ export class SetupResponseController {
     const response = await this.setupResponseService.getStockNameList();
     return response;
   }
+  @Get('/stock-adjusment/stock-names')
+  async getStockNameForStockAdjusment(): Promise<any> {
+    const response = await this.setupResponseService.getStockNameListForStockAdjusment();
+    return response;
+  }
 }

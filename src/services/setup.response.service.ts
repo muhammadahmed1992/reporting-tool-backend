@@ -40,4 +40,16 @@ export class SetupResponseService {
             return ResponseHelper.CreateResponse<any[]>([], HttpStatus.NOT_FOUND, Constants.DATA_NOT_FOUND);
         }
     }
+
+    async getStockNameListForStockAdjusment(): Promise<ApiResponse<any>> {
+        let query = `select cstdcode, concat(cstdcode, ' - ', Trim(cstkdesc)) as 'stockItem' from stock s join stockdetail d on d.cstdfkstk = s.cstkpk and d.nstdfactor=1;`;
+        
+        const response = await this.genericRepository.query<any>(query);
+        console.log(response);
+        if (response?.length) {
+            return ResponseHelper.CreateResponse<any>(response, HttpStatus.OK, Constants.DATA_SUCCESS);
+        } else {
+            return ResponseHelper.CreateResponse<any[]>([], HttpStatus.NOT_FOUND, Constants.DATA_NOT_FOUND);
+        }
+    }
 }
