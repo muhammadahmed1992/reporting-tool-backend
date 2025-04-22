@@ -33,7 +33,6 @@ export class SetupResponseService {
         let query = `select cstdcode, concat(cstdcode, ' - ', Trim(cstkdesc)) as 'stockItem' from stock s join stockdetail d on d.cstdfkstk = s.cstkpk;`;
 
         const response = await this.genericRepository.query<any>(query);
-        console.log(response);
         if (response?.length) {
             return ResponseHelper.CreateResponse<any>(response, HttpStatus.OK, Constants.DATA_SUCCESS);
         } else {
@@ -42,10 +41,11 @@ export class SetupResponseService {
     }
 
     async getStockNameListForStockAdjusment(): Promise<ApiResponse<any>> {
-        let query = `select cstdcode, concat(cstdcode, ' - ', Trim(cstkdesc)) as 'stockItem' from stock s join stockdetail d on d.cstdfkstk = s.cstkpk and d.nstdfactor=1;`;
+        let query = `select cstdcode, concat(cstdcode, ' - ', Trim(cstkdesc)) as 'stockItem' from stock s join stockdetail d on d.cstdfkstk = s.cstkpk and d.nstdfactor=1;
+        order by cstdcode ASC`;
         
         const response = await this.genericRepository.query<any>(query);
-        console.log(response);
+
         if (response?.length) {
             return ResponseHelper.CreateResponse<any>(response, HttpStatus.OK, Constants.DATA_SUCCESS);
         } else {
