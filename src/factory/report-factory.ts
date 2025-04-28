@@ -17,6 +17,7 @@ import { PurchaseReportNoDisc } from 'src/reports/purchasing-report-no-disc';
 import { PurchaseAnalystReport } from 'src/reports/purchasing-analyst-report';
 import { PurchaseAnalystReportNoDisc } from 'src/reports/purchasing-analyst-report-no-disc';
 import { CashDrawerDetailReport } from 'src/reports/cash-drawer-detail-report';
+import { SearchStockID_Purchase_Price_Report } from 'src/reports/search-stockid-purchase-price-report';
 
 @Injectable()
 export class ReportFactory {
@@ -33,7 +34,8 @@ export class ReportFactory {
         private readonly purchaseReportNoDisc: PurchaseReportNoDisc,
         private readonly purchaseAnaylystReport: PurchaseAnalystReport,
         private readonly purchaseAnalystReportNoDisc: PurchaseAnalystReportNoDisc,
-        private readonly cashDrawerDetailReport: CashDrawerDetailReport
+        private readonly cashDrawerDetailReport: CashDrawerDetailReport,
+        private readonly stockBalancePurchasePriceReport: SearchStockID_Purchase_Price_Report
     ) {}
 
     getStrategy(reportType: string): ReportStrategy {
@@ -64,6 +66,8 @@ export class ReportFactory {
                 return this.purchaseAnalystReportNoDisc;
             case ReportName.Cash_Drawer_Detail:
                 return this.cashDrawerDetailReport;
+            case ReportName.Stock_Balance_BarCode_Purchase_Price:
+                return this.stockBalancePurchasePriceReport;
             default:
                 throw new Error(`Report type '${reportType}' not supported`);
         }

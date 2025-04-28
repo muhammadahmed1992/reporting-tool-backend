@@ -5,5 +5,6 @@ export interface UserDTO {
     IsSalesReportAndCashReportAllowed: boolean,
     IsSalesAndSalesOrderAndPosTransactionAllowed: boolean,
     IsStockAdjusmentAllowed: boolean,
+    IsBarcodeWithPurchasePriceAllowed: boolean,
     IsValid: boolean
 }

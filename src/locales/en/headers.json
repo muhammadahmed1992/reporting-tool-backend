@@ -111,6 +111,15 @@
     "location_header": "Location",
     "balance_header": "Balance"
   },
+  "scan_barcode_report_purchase_price": {
+    "item_header": "Item",
+    "stock_id_header": "Stock Code",
+    "stock_name_header": "Stock Name",
+    "qty_header": "Qty",
+    "price_header": "Price",
+    "location_header": "Location",
+    "balance_header": "Balance"
+  },
   "sales_transaction": {
     "table": {
       "item_header": "Item",

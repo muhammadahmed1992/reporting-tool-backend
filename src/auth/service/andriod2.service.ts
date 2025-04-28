@@ -5,20 +5,20 @@ import ApiResponse from 'src/helper/api-response';
 import ResponseHelper from 'src/helper/response-helper';
 import { UserDTO } from 'src/dto/user.dto';
 import Constants from 'src/helper/constants';
-
 @Injectable({ scope: Scope.REQUEST })
 export class Andriod2Service {
-  constructor(private readonly genericRepository: GenericRepository) {}
+  constructor(private readonly genericRepository: GenericRepository) { }
 
   async validateUser(username: string, password: string): Promise<ApiResponse<any>> {
     const hashedPassword = crypto.createHash('sha1').update(password).digest('hex');
-    const query = `SELECT nandsuspend as IsNotLoginAllowed, 
-            nandlaporan as IsSwitchDatabase, 
-            nandbeli as IsPurchaseReportAllowed, 
-            nandstock as IsStockReportAllowed, 
+    const query = `SELECT nandsuspend as IsNotLoginAllowed,
+            nandlaporan as IsSwitchDatabase,
+            nandbeli as IsPurchaseReportAllowed,
+            nandstock as IsStockReportAllowed,
             nandjual as IsSalesReportAndCashReportAllowed,
             nandpos as IsSalesAndSalesOrderAndPosTransactionAllowed,
-            nandopname as IsStockAdjusmentAllowed 
+            nandopname as IsStockAdjusmentAllowed,
+            nandbeli as IsBarcodeWithPurchasePriceAllowed
             FROM android2 WHERE canddesc = ? AND candpw = ?`;
     const result = await this.genericRepository.query(query, [username, hashedPassword]);
 
@@ -33,7 +33,8 @@ export class Andriod2Service {
         IsStockReportAllowed: !(!((result[0] as any).IsStockReportAllowed)),
         IsSalesReportAndCashReportAllowed: !(!((result[0] as any).IsSalesReportAndCashReportAllowed)),
         IsSalesAndSalesOrderAndPosTransactionAllowed: !(!((result[0] as any).IsSalesAndSalesOrderAndPosTransactionAllowed)),
-        IsStockAdjusmentAllowed: !(!((result[0] as any).IsStockAdjusmentAllowed))
+        IsStockAdjusmentAllowed: !(!((result[0] as any).IsStockAdjusmentAllowed)),
+        IsBarcodeWithPurchasePriceAllowed: !(!((result[0] as any).IsStockAdjusmentAllowed))
       };
       return ResponseHelper.CreateResponse(res, HttpStatus.OK);
     }

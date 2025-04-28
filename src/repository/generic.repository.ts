@@ -34,7 +34,7 @@ export class GenericRepository implements OnModuleDestroy {
     // Initialize a new DataSource
     console.log(`Initializing new DataSource with connection string: ${connectionString}`);
     this.lastConnectionString = connectionString;
-    
+
     const dataSourceOptions: DataSourceOptions = {
       type: 'mysql',
       url: connectionString,
@@ -46,7 +46,7 @@ export class GenericRepository implements OnModuleDestroy {
     const dataSource = new DataSource(dataSourceOptions);
     await dataSource.initialize();
     console.log(`DataSource initialized with name: ${this.connectionName}`);
-    
+
     GenericRepository.dataSources.set(this.connectionName, dataSource);
     return dataSource;
   }
