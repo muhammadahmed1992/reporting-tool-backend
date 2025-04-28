@@ -12,7 +12,7 @@ import { ReportName } from 'src/helper/enums/report-names.enum';
 import Constants from 'src/helper/constants';
 import { QueryStringDTO } from 'src/dto/query-string.dto';
 @Injectable()
-export class SearchStockIDReport implements ReportStrategy {
+export class SearchStockID_Purchase_Price_Report implements ReportStrategy {
     constructor(private readonly genericRepository: GenericRepository) {}
 
     public async generateReport(queryString: QueryStringDTO): Promise<ApiResponse<any>> {
@@ -26,8 +26,8 @@ export class SearchStockIDReport implements ReportStrategy {
         LTRIM(RTRIM(cSTKdesc)) as StockName,
         LTRIM(RTRIM(warehouse.cwhsdesc)) as Location,
         FORMAT(sum(zqtyin-zqtyout),0) as Qty,
-        FORMAT(SUM(sdt.nSTDprice),0) as Price,
-        FORMAT(sum(zqtyin-zqtyout)*nstdprice,0) as Balance
+        FORMAT(SUM(nstkbuy),0) as Price,
+        FORMAT(sum(zqtyin-zqtyout)*nstkbuy,0) as Balance
         from
         (
         

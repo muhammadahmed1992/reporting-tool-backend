@@ -86,4 +86,10 @@ export class ReportsController {
     const result = await this.reportService.generateReport(ReportName.Cash_Drawer_Detail, query);
     return result;
   }
+  
+  @Get('/stock-search-barcode-purchase-price')
+  async stockSearchBarCodePurchasePrice(@Query() query: QueryStringDTO): Promise<any> {
+    const result = await this.reportService.generateReport(ReportName.Stock_Balance_BarCode_Purchase_Price, query);
+    return result;
+  }
 }

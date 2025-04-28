@@ -21,6 +21,7 @@ import { StockBalanceReport } from './reports/stock-balance-report';
 import { ConnectionStringMiddleware } from './middleware/connection-string.middleware';
 import { REQUEST } from '@nestjs/core';
 import { SearchStockIDReport } from './reports/search-stockid-report';
+import {SearchStockID_Purchase_Price_Report} from './reports/search-stockid-purchase-price-report';
 import { SchemaInfoController } from './controller/database.schema.controller';
 import { SchemaInformationService } from './services/schema.information.service';
 import { HeartBeatController } from './controller/heart.beat.controller';
@@ -38,6 +39,7 @@ import { SetupResponseController } from './controller/setup.response.controller'
 import { SetupResponseService } from './services/setup.response.service';
 import { AdminService } from './services/admin.service';
 import { AdminController } from './controller/administration.controller';
+
 
 @Module({
   imports: [
@@ -73,7 +75,8 @@ import { AdminController } from './controller/administration.controller';
     PurchaseAnalystReport,
     PurchaseAnalystReportNoDisc,
     CashDrawerDetailReport,
-    AdminService
+    AdminService,
+    SearchStockID_Purchase_Price_Report
   ]
 })
 export class AppModule {

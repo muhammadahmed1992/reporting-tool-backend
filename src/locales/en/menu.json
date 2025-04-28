@@ -5,6 +5,7 @@
     "stock_adjusment": "Stock Adjustment",
     "video": "Video",
     "scan_barcode": "Scan Barcode",
+    "scan_barcode_purchase_price": "Scan Barcode (Purchase Price)",
     "switch_database": "Switch Database",
     "registration": "Registration",
     "stock_report": "Stock Report",

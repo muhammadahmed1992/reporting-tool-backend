@@ -5,6 +5,7 @@
     "stock_adjusment": "Opname Stock",
     "video": "Video",
     "scan_barcode": "Scan Barcode",
+    "scan_barcode_purchase_price": "Scan Barcode (Purchase Price)",
     "switch_database": "Ganti Database",
     "registration": "Registrasi",
     "stock_report": "Saldo Stock",
