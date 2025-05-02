@@ -10,7 +10,7 @@ import TransactionError from 'src/utils/errors/transaction.error';
 
 @Injectable({ scope: Scope.REQUEST })
 export class TransactionModuleService {
-  constructor(private readonly genericRepository: GenericRepository) {}
+  constructor(private readonly genericRepository: GenericRepository) { }
 
   async salesInvoice(user: string) {
     await this.genericRepository.query(`
@@ -18,7 +18,7 @@ export class TransactionModuleService {
       SET L_jual = '1000'
       WHERE TRIM(L_jual) NOT REGEXP '^[0-9]+$';
     `);
-    
+
     // 2. Next, increment L_opname by 1 only if it's a numeric value.
     await this.genericRepository.query(`
       UPDATE ymk
@@ -44,8 +44,8 @@ export class TransactionModuleService {
     `;
 
     const response = await this.genericRepository.query<any>(query, [user]);
-    
-    
+
+
     // Parse the Warehouse JSON string into an object
     const warehouse = { primaryKey: '', description: '' };
     const finalResponse = {
@@ -121,13 +121,13 @@ export class TransactionModuleService {
   async setSalesInvoice(body: any) {
     try {
       const allQuantitiesZero = body.tableFormData.every((item: any) => parseInt(item.qty, 10) === 0);
-  
+
       // If all quantities are zero, throw an error
       if (allQuantitiesZero) {
         throw new TransactionError(Constants.FILL_ORDER_ERROR);
       }
-    // Insert invoice details first
-    const invoiceQuery = `
+      // Insert invoice details first
+      const invoiceQuery = `
     INSERT INTO invoice (
         cinvrefno, cinvfkwhs, dinvdate, dinvdue, dinvtaxdate, 
         cinvfkent, cinvfkentcode, cinvhadiah, cinvfksam, cinvpk, 
@@ -183,20 +183,20 @@ export class TransactionModuleService {
         '01' -- cinvtambah
     )`;
 
-    const invoiceParams = [
-      body.invoice.invoiceNo,
-      body.invoice.warehouse,
-      body.invoice.date,
-      body.invoice.date,
-      body.invoice.customer.pk,
-      body.invoice.customer.desc,
-      body.invoice.customer.desc,
-      body.invoice.salesman.pk || '..default..............',
-      body.invoice.tax,
-      body.invoice.loginUser,
-      body.invoice.loginUser,
-      body.payment.total
-    ];
+      const invoiceParams = [
+        body.invoice.invoiceNo,
+        body.invoice.warehouse,
+        body.invoice.date,
+        body.invoice.date,
+        body.invoice.customer.pk,
+        body.invoice.customer.desc,
+        body.invoice.customer.desc,
+        body.invoice.salesman.pk || '..default..............',
+        body.invoice.tax,
+        body.invoice.loginUser,
+        body.invoice.loginUser,
+        body.payment.total
+      ];
 
       const invoiceResponse = await this.genericRepository.query<any>(
         invoiceQuery,
@@ -223,7 +223,7 @@ export class TransactionModuleService {
                 LEFT JOIN unit u ON u.cunipk = sd.cstdfkuni
                 LEFT JOIN stock s ON s.cstkpk = ?
                 WHERE sd.cstdcode = ?
-            `; 
+            `;
 
         const detailParams = [
           row.pk,
@@ -254,9 +254,9 @@ export class TransactionModuleService {
       // for avoiding data corruption
       if (error instanceof TransactionError) {
         return ResponseHelper.CreateResponse<any>(
-            null,
-            HttpStatus.BAD_REQUEST,
-            error.message,
+          null,
+          HttpStatus.BAD_REQUEST,
+          error.message,
         );
       }
       const deleteInvoiceDetail = `Delete FROM invoicedetail WHERE civdfkinv = (SELECT cinvpk FROM invoice WHERE cinvrefno = ? and cinvspecial = 'JL')`;
@@ -268,7 +268,7 @@ export class TransactionModuleService {
       await this.genericRepository.query<any>(
         deleteInvoice,
         [body.invoice.invoiceNo],
-      ); 
+      );
       return ResponseHelper.CreateResponse<any>(
         null,
         HttpStatus.INTERNAL_SERVER_ERROR,
@@ -284,7 +284,7 @@ export class TransactionModuleService {
       SET L_so = '1000'
       WHERE TRIM(L_so) NOT REGEXP '^[0-9]+$';
     `);
-    
+
     // 2. Next, increment L_opname by 1 only if it's a numeric value.
     await this.genericRepository.query(`
       UPDATE ymk
@@ -310,7 +310,7 @@ export class TransactionModuleService {
     `;
 
     const response = await this.genericRepository.query<any>(query, [user]);
-    
+
     // Parse the Warehouse JSON string into an object
     const warehouse = { primaryKey: '', description: '' };
     const finalResponse = {
@@ -386,12 +386,12 @@ export class TransactionModuleService {
 
     try {
       const allQuantitiesZero = body.tableFormData.every((item: any) => parseInt(item.qty, 10) === 0);
-  
+
       // If all quantities are zero, throw an error
       if (allQuantitiesZero) {
         throw new TransactionError(Constants.FILL_ORDER_ERROR);
       }
-    const invoiceQuery = `
+      const invoiceQuery = `
     INSERT INTO porder (
         cinvrefno, cinvfkwhs, dinvdate, dinvdue, dinvtaxdate, 
         cinvfkent, cinvfkentcode, cinvhadiah, cinvfksam, cinvpk, 
@@ -407,19 +407,19 @@ export class TransactionModuleService {
         '..rupiah...............', 1, 1, 1, 1, ' ', ' ', 0, 0, 0
     )`;
 
-    const invoiceParams = [
-      body.invoice.invoiceNo,
-      body.invoice.warehouse,
-      body.invoice.date,
-      body.invoice.date,
-      body.invoice.customer.pk,
-      body.invoice.customer.desc,
-      body.invoice.customer.desc,
-      body.invoice.salesman.pk || '..default..............',
-      body.invoice.tax,
-      body.invoice.loginUser,
-      body.invoice.loginUser,
-    ];
+      const invoiceParams = [
+        body.invoice.invoiceNo,
+        body.invoice.warehouse,
+        body.invoice.date,
+        body.invoice.date,
+        body.invoice.customer.pk,
+        body.invoice.customer.desc,
+        body.invoice.customer.desc,
+        body.invoice.salesman.pk || '..default..............',
+        body.invoice.tax,
+        body.invoice.loginUser,
+        body.invoice.loginUser,
+      ];
 
       const invoiceResponse = await this.genericRepository.query<any>(
         invoiceQuery,
@@ -478,9 +478,9 @@ export class TransactionModuleService {
     } catch (error) {
       if (error instanceof TransactionError) {
         return ResponseHelper.CreateResponse<any>(
-            null,
-            HttpStatus.BAD_REQUEST,
-            error.message,
+          null,
+          HttpStatus.BAD_REQUEST,
+          error.message,
         );
       }
       const deleteInvoiceDetail = `Delete FROM porderdetail WHERE civdfkinv = (SELECT cinvpk FROM invoice WHERE cinvrefno = ? and cinvspecial = 'JL')`;
@@ -502,14 +502,14 @@ export class TransactionModuleService {
   }
 
   async posInvoice(user: string) {
-      await this.genericRepository.query(`
+    await this.genericRepository.query(`
         UPDATE ymk
         SET L_pos = '1000'
         WHERE TRIM(L_pos) NOT REGEXP '^[0-9]+$';
       `);
-      
-      // 2. Next, increment L_opname by 1 only if it's a numeric value.
-      await this.genericRepository.query(`
+
+    // 2. Next, increment L_opname by 1 only if it's a numeric value.
+    await this.genericRepository.query(`
         UPDATE ymk
         SET L_pos = CAST(CAST(TRIM(L_pos) AS UNSIGNED) + 1 AS CHAR)
         WHERE TRIM(L_pos) REGEXP '^[0-9]+$';
@@ -534,7 +534,7 @@ export class TransactionModuleService {
     `;
 
     const response = await this.genericRepository.query<any>(query, [user]);
-    
+
     // Parse the Warehouse JSON string into an object
     const warehouse = { primaryKey: '', description: '' };
     const finalResponse = {
@@ -611,13 +611,13 @@ export class TransactionModuleService {
   }
   async setPosInvoice(body: any) {
     try {
-    const allQuantitiesZero = body.tableFormData.every((item: any) => parseInt(item.qty, 10) === 0);
+      const allQuantitiesZero = body.tableFormData.every((item: any) => parseInt(item.qty, 10) === 0);
 
-    // If all quantities are zero, throw an error
-    if (allQuantitiesZero) {
-      throw new TransactionError(Constants.FILL_ORDER_ERROR);
-    }
-    const invoiceQuery = `
+      // If all quantities are zero, throw an error
+      if (allQuantitiesZero) {
+        throw new TransactionError(Constants.FILL_ORDER_ERROR);
+      }
+      const invoiceQuery = `
     INSERT INTO invoice (
         cinvrefno, cinvfkwhs, dinvdate, dinvdue, dinvtaxdate, 
         cinvfkent, cinvfkentcode, cinvfksam, ninvtax, cinvmeja, 
@@ -640,27 +640,27 @@ export class TransactionModuleService {
     )
     `;
 
-    // Map the parameters to the query
-    const invoiceParams = [
-      body.invoice.invoiceNo, // cinvrefno
-      body.invoice.warehouse, // cinvfkwhs
-      body.invoice.customer.pk || '', // cinvfkent
-      body.invoice.customer.desc || '', // cinvfkentcode
-      body.invoice.salesman.pk || '..default..............', // cinvfksam
-      body.invoice.tax, // ninvtax
-      body.invoice.table || ' ', // cinvmeja (Table)
-      body.payment.voucher, // ninvvoucher (Voucher)
-      body.payment.cash - body.payment.change, // ninvtunai (Cash payment)
-      body.payment.creditCard, // ninvcredit (Credit Card payment)
-      body.payment.debitCard, // ninvdebit (Debit Card payment)
-      body.payment.online, // ninvmobile (Online payment)
-      body.invoice.service, // ninvfreight (Service charge)
-      body.invoice.loginUser, // cinvuser
-      body.invoice.loginUser, // oleh
-      body.payment.total,// ninvvalue (ninvvoucher+ninvtunai+ninvcredit+ninvdebit+ninvmobile)
-      body.payment.total,// ninvvalue1 (ninvvoucher+ninvtunai+ninvcredit+ninvdebit+ninvmobile)
-      body.payment.change
-    ];
+      // Map the parameters to the query
+      const invoiceParams = [
+        body.invoice.invoiceNo, // cinvrefno
+        body.invoice.warehouse, // cinvfkwhs
+        body.invoice.customer.pk || '', // cinvfkent
+        body.invoice.customer.desc || '', // cinvfkentcode
+        body.invoice.salesman.pk || '..default..............', // cinvfksam
+        body.invoice.tax, // ninvtax
+        body.invoice.table || ' ', // cinvmeja (Table)
+        body.payment.voucher, // ninvvoucher (Voucher)
+        body.payment.cash - body.payment.change, // ninvtunai (Cash payment)
+        body.payment.creditCard, // ninvcredit (Credit Card payment)
+        body.payment.debitCard, // ninvdebit (Debit Card payment)
+        body.payment.online, // ninvmobile (Online payment)
+        body.invoice.service, // ninvfreight (Service charge)
+        body.invoice.loginUser, // cinvuser
+        body.invoice.loginUser, // oleh
+        body.payment.total,// ninvvalue (ninvvoucher+ninvtunai+ninvcredit+ninvdebit+ninvmobile)
+        body.payment.total,// ninvvalue1 (ninvvoucher+ninvtunai+ninvcredit+ninvdebit+ninvmobile)
+        body.payment.change
+      ];
       const invoiceResponse = await this.genericRepository.query<any>(
         invoiceQuery,
         invoiceParams,
@@ -714,10 +714,10 @@ export class TransactionModuleService {
         where cstdcode=?
          and (IFNULL(?, cwhspk) = cwhspk or cwhspk is null)
         `;
-      const qtyResponse = await this.genericRepository.query<any>(qtyQuery, [
-        row.stock_id_header, body.invoice.warehouse
-      ]);
-      const qty = parseInt(qtyResponse[0].Qty) || 0;
+        const qtyResponse = await this.genericRepository.query<any>(qtyQuery, [
+          row.stock_id_header, body.invoice.warehouse
+        ]);
+        const qty = parseInt(qtyResponse[0].Qty) || 0;
         const detailQuery = `
                 INSERT INTO invoicedetail (
     civdfkstk, civdcode, nivdonhand, nivdqtyout, qtyresep, civdpk, civdfkinv, nivdprice,
@@ -735,30 +735,30 @@ WHERE sd.cstdcode = ?;
 
             `;
 
-            const detailParams = [
-              row.pk,              // civdfkstk
-              row.stock_id_header, // civdcode
-              qty,             // nivdonhand
-              row.qty,             // nivdqtyout
-              row.qty,             // qtyresep
-              body.invoice.invoiceNo, // cinvrefno (subquery in SELECT)
-              row.price,           // nivdprice
-              row.qty,             // quantity * nstdfactor
-              row.qty,             // quantity
-              row.price,           // nivdamount
-              i + 1,               // nivdorder
-              row.pk,
-              row.qty,
-              row.pk,              // s.cstkpk (to match stock in JOIN)
-              row.stock_id_header, // sd.cstdcode
-          ];
-          
+        const detailParams = [
+          row.pk,              // civdfkstk
+          row.stock_id_header, // civdcode
+          qty,             // nivdonhand
+          row.qty,             // nivdqtyout
+          row.qty,             // qtyresep
+          body.invoice.invoiceNo, // cinvrefno (subquery in SELECT)
+          row.price,           // nivdprice
+          row.qty,             // quantity * nstdfactor
+          row.qty,             // quantity
+          row.price,           // nivdamount
+          i + 1,               // nivdorder
+          row.pk,
+          row.qty,
+          row.pk,              // s.cstkpk (to match stock in JOIN)
+          row.stock_id_header, // sd.cstdcode
+        ];
+
         const detailResponse = await this.genericRepository.query<any>(
           detailQuery,
           detailParams,
         );
       }
-      
+
       return ResponseHelper.CreateResponse<any>(
         null,
         HttpStatus.OK,
@@ -767,9 +767,9 @@ WHERE sd.cstdcode = ?;
     } catch (error) {
       if (error instanceof TransactionError) {
         return ResponseHelper.CreateResponse<any>(
-            null,
-            HttpStatus.BAD_REQUEST,
-            error.message,
+          null,
+          HttpStatus.BAD_REQUEST,
+          error.message,
         );
       }
       const deleteInvoiceDetail = `Delete FROM invoicedetail WHERE civdfkinv = (SELECT cinvpk FROM invoice WHERE cinvrefno = ? and cinvspecial = 'JL')`;
@@ -781,7 +781,7 @@ WHERE sd.cstdcode = ?;
       await this.genericRepository.query<any>(
         deleteInvoice,
         [body.invoice.invoiceNo],
-      ); 
+      );
       return ResponseHelper.CreateResponse<any>(
         null,
         HttpStatus.INTERNAL_SERVER_ERROR,
@@ -791,14 +791,14 @@ WHERE sd.cstdcode = ?;
   }
 
   async stockInvoice(user: string) {
-      await this.genericRepository.query(`
+    await this.genericRepository.query(`
         UPDATE ymk
         SET L_opname = '1000'
         WHERE TRIM(L_opname) NOT REGEXP '^[0-9]+$';
       `);
-      
-      // 2. Next, increment L_opname by 1 only if it's a numeric value.
-      await this.genericRepository.query(`
+
+    // 2. Next, increment L_opname by 1 only if it's a numeric value.
+    await this.genericRepository.query(`
         UPDATE ymk
         SET L_opname = CAST(CAST(TRIM(L_opname) AS UNSIGNED) + 1 AS CHAR)
         WHERE TRIM(L_opname) REGEXP '^[0-9]+$';
@@ -817,7 +817,7 @@ WHERE sd.cstdcode = ?;
   `;
 
     const response = await this.genericRepository.query<any>(query, [user]);
-    
+
     // Parse the Warehouse JSON string into an object
     const warehouse = { primaryKey: '', description: '' };
     const finalResponse = {
@@ -881,10 +881,10 @@ WHERE sd.cstdcode = ?;
       );
     }
   }
-  
+
   async setStockInvoice(body: any) {
     try {
-    const invoiceQuery = `
+      const invoiceQuery = `
   INSERT INTO invoice (
       cinvrefno, cinvfkwhs,
       dinvdate, dinvdue, dinvtaxdate, dinvtglsj,
@@ -904,16 +904,16 @@ WHERE sd.cstdcode = ?;
   );
   `;
 
-    const invoiceParams = [
-      body.invoice.invoiceNo,
-      body.invoice.warehouse,
-      body.invoice.date,
-      body.invoice.date,
-      body.invoice.date,
-      body.invoice.date,
-      body.invoice.loginUser,
-      body.invoice.loginUser,
-    ];
+      const invoiceParams = [
+        body.invoice.invoiceNo,
+        body.invoice.warehouse,
+        body.invoice.date,
+        body.invoice.date,
+        body.invoice.date,
+        body.invoice.date,
+        body.invoice.loginUser,
+        body.invoice.loginUser,
+      ];
       const invoiceResponse = await this.genericRepository.query<any>(
         invoiceQuery,
         invoiceParams,
@@ -963,15 +963,15 @@ WHERE sd.cstdcode = ?;
         INNER JOIN unit ON cSTDfkUNI=cUNIpk 
         where cstdcode=? and (IFNULL(?, cwhspk) = cwhspk or cwhspk is null)
         `;
-      const qtyResponse = await this.genericRepository.query<any>(qtyQuery, [
-        row.stock_id_header, body.invoice.warehouse
-      ]);
-      const qty = parseInt(qtyResponse[0].Qty) || 0;
+        const qtyResponse = await this.genericRepository.query<any>(qtyQuery, [
+          row.stock_id_header, body.invoice.warehouse
+        ]);
+        const qty = parseInt(qtyResponse[0].Qty) || 0;
         const nivdqtyin = qty < row.qty ? row.qty - qty : 0;
         const nivdzqtyin = qty < row.qty ? row.qty - qty : 0;
         const nivdqtyout = qty >= row.qty ? qty - row.qty : 0;
         const nivdzqtyout = qty >= row.qty ? qty - row.qty : 0;
-        const nivdamount = row.qty - qty; 
+        const nivdamount = row.qty - qty;
         const detailQuery = `
             INSERT INTO invoicedetail (
               civdfkstk, civdcode, nivdonhand, nivdadjust, nivdkirim,
@@ -991,22 +991,22 @@ WHERE sd.cstdcode = ?;
               '', '', '', ''
             )
         `;
-        
+
         const detailParams = [
-          row.pk, row.stock_id_header, qty, 
-          row.qty, body.invoice.invoiceNo, row.pk, 
+          row.pk, row.stock_id_header, qty,
+          row.qty, body.invoice.invoiceNo, row.pk,
           nivdqtyin, nivdzqtyin, nivdqtyout, nivdzqtyout,  // Pre-calculated values
           nivdamount, row.pk, i + 1,  // nivdamount and sequence number
           row.pk  // Stock PK for retrieving unit information
         ];
-        
+
 
         const detailResponse = await this.genericRepository.query<any>(
           detailQuery,
           detailParams,
         );
       }
-      
+
       return ResponseHelper.CreateResponse<any>(
         null,
         HttpStatus.OK,
@@ -1015,9 +1015,9 @@ WHERE sd.cstdcode = ?;
     } catch (error) {
       if (error instanceof TransactionError) {
         return ResponseHelper.CreateResponse<any>(
-            null,
-            HttpStatus.BAD_REQUEST,
-            error.message,
+          null,
+          HttpStatus.BAD_REQUEST,
+          error.message,
         );
       }
       const deleteInvoiceDetail = `Delete FROM invoicedetail WHERE civdfkinv = (SELECT cinvpk FROM invoice WHERE cinvrefno = ? and cinvspecial = 'JL')`;
@@ -1029,7 +1029,7 @@ WHERE sd.cstdcode = ?;
       await this.genericRepository.query<any>(
         deleteInvoice,
         [body.invoice.invoiceNo],
-      ); 
+      );
       return ResponseHelper.CreateResponse<any>(
         null,
         HttpStatus.INTERNAL_SERVER_ERROR,

@@ -18,6 +18,7 @@ import { PurchaseAnalystReport } from 'src/reports/purchasing-analyst-report';
 import { PurchaseAnalystReportNoDisc } from 'src/reports/purchasing-analyst-report-no-disc';
 import { CashDrawerDetailReport } from 'src/reports/cash-drawer-detail-report';
 import { SearchStockID_Purchase_Price_Report } from 'src/reports/search-stockid-purchase-price-report';
+import { StockBalanceReport_Purchase_Price } from 'src/reports/stock-balance-report-purchase-price';
 
 @Injectable()
 export class ReportFactory {
@@ -35,15 +36,16 @@ export class ReportFactory {
         private readonly purchaseAnaylystReport: PurchaseAnalystReport,
         private readonly purchaseAnalystReportNoDisc: PurchaseAnalystReportNoDisc,
         private readonly cashDrawerDetailReport: CashDrawerDetailReport,
-        private readonly stockBalancePurchasePriceReport: SearchStockID_Purchase_Price_Report
-    ) {}
+        private readonly stockBalancePurchasePriceReport: SearchStockID_Purchase_Price_Report,
+        private readonly stockBalanceReportPurchasePrice: StockBalanceReport_Purchase_Price
+    ) { }
 
     getStrategy(reportType: string): ReportStrategy {
         switch (reportType) {
             case ReportName.Cash_Drawer:
                 return this.cashDrawerReport;
             case ReportName.Price_List:
-                    return this.priceListReport;
+                return this.priceListReport;
             case ReportName.Sales:
                 return this.salesReport;
             case ReportName.Sales_Analyst:
@@ -60,7 +62,7 @@ export class ReportFactory {
                 return this.purchaseReport;
             case ReportName.Purchase_Report_No_Disc:
                 return this.purchaseReportNoDisc;
-            case ReportName.Purchase_Analyst_Report: 
+            case ReportName.Purchase_Analyst_Report:
                 return this.purchaseAnaylystReport;
             case ReportName.Purchase_Analyst_Report_No_Disc:
                 return this.purchaseAnalystReportNoDisc;
@@ -68,6 +70,8 @@ export class ReportFactory {
                 return this.cashDrawerDetailReport;
             case ReportName.Stock_Balance_BarCode_Purchase_Price:
                 return this.stockBalancePurchasePriceReport;
+            case ReportName.Stock_Balance_Report_Purchase_Price:
+                return this.stockBalanceReportPurchasePrice;
             default:
                 throw new Error(`Report type '${reportType}' not supported`);
         }
