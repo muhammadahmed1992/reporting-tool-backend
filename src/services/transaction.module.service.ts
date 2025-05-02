@@ -883,6 +883,8 @@ WHERE sd.cstdcode = ?;
   }
 
   async setStockInvoice(body: any) {
+    console.log('stock invoice');
+    console.log(body);
     try {
       const invoiceQuery = `
   INSERT INTO invoice (
@@ -921,8 +923,33 @@ WHERE sd.cstdcode = ?;
       console.log('--------------------');
       console.log('StockInvoice');
       console.table(body.tableFormData);
-      for (let i = 0; i < body.tableFormData.length; i++) {
-        const row = body.tableFormData[i];
+
+      /*
+        Merging the same items as per client request.
+      */
+
+      const map = new Map();
+
+      for (const item of body.tableFormData) {
+        const key = `${item.pk}-${item.stock_id_header}-${item.stock_name}`;
+
+        if (!map.has(key)) {
+          map.set(key, {
+            ...item,
+            qty: parseFloat(item.qty)
+          });
+        } else {
+          const existing = map.get(key);
+          existing.qty += parseFloat(item.qty);
+        }
+      }
+
+      const result = Array.from(map.values());
+
+      console.log('merged result');
+      console.log(result);
+      for (let i = 0; i < result.length; i++) {
+        const row = result[i];
         const qtyQuery = `
             select 
         sum(zqtyin-zqtyout) as Qty
