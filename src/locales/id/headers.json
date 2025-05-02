@@ -42,6 +42,14 @@
     "price_header": "Harga",
     "balance_header": "Saldo"
   },
+  "stock_balance_report_purchase_price": {
+    "stock_id_header": "Kode Stock",
+    "stock_name_header": "Nama Barang",
+    "location_header": "Lokasi",
+    "qty_header": "Qty",
+    "price_header": "Harga",
+    "balance_header": "Saldo"
+  },
   "purchasing_report": {
     "invoice_header": "Faktur",
     "date_header": "Tanggal",
@@ -75,14 +83,14 @@
   "sales_report": {
     "invoice_header": "Faktur",
     "date_header": "Tanggal",
-    "customer_header": "Langganan",           
+    "customer_header": "Langganan",
     "currency_header": "Uang",
     "amount_header": "Jumlah"
   },
   "sales_report_2": {
     "invoice_header": "Faktur",
     "date_header": "Tanggal",
-    "customer_header": "Langganan",           
+    "customer_header": "Langganan",
     "currency_header": "Uang",
     "amount_header": "Jumlah"
   },

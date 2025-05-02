@@ -18,7 +18,8 @@ export class Andriod2Service {
             nandjual as IsSalesReportAndCashReportAllowed,
             nandpos as IsSalesAndSalesOrderAndPosTransactionAllowed,
             nandopname as IsStockAdjusmentAllowed,
-            nandbeli as IsBarcodeWithPurchasePriceAllowed
+            nandbeli as IsBarcodeWithPurchasePriceAllowed,
+            nandbeli as IsStockReportPurchasePriceAllowed
             FROM android2 WHERE canddesc = ? AND candpw = ?`;
     const result = await this.genericRepository.query(query, [username, hashedPassword]);
 
@@ -34,7 +35,9 @@ export class Andriod2Service {
         IsSalesReportAndCashReportAllowed: !(!((result[0] as any).IsSalesReportAndCashReportAllowed)),
         IsSalesAndSalesOrderAndPosTransactionAllowed: !(!((result[0] as any).IsSalesAndSalesOrderAndPosTransactionAllowed)),
         IsStockAdjusmentAllowed: !(!((result[0] as any).IsStockAdjusmentAllowed)),
-        IsBarcodeWithPurchasePriceAllowed: !(!((result[0] as any).IsStockAdjusmentAllowed))
+        IsBarcodeWithPurchasePriceAllowed: !(!((result[0] as any).IsStockAdjusmentAllowed)),
+        IsStockReportPurchasePriceAllowed: !(!((result[0] as any).IsStockReportPurchasePriceAllowed)),
+
       };
       return ResponseHelper.CreateResponse(res, HttpStatus.OK);
     }

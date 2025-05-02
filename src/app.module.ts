@@ -19,9 +19,9 @@ import { SalesAnalyst2Report } from './reports/sales-analyst-2-report';
 import { Sales2Report } from './reports/sales-2-report';
 import { StockBalanceReport } from './reports/stock-balance-report';
 import { ConnectionStringMiddleware } from './middleware/connection-string.middleware';
-import { REQUEST } from '@nestjs/core';
 import { SearchStockIDReport } from './reports/search-stockid-report';
-import {SearchStockID_Purchase_Price_Report} from './reports/search-stockid-purchase-price-report';
+import { SearchStockID_Purchase_Price_Report } from './reports/search-stockid-purchase-price-report';
+import { StockBalanceReport_Purchase_Price } from './reports/stock-balance-report-purchase-price';
 import { SchemaInfoController } from './controller/database.schema.controller';
 import { SchemaInformationService } from './services/schema.information.service';
 import { HeartBeatController } from './controller/heart.beat.controller';
@@ -41,19 +41,20 @@ import { AdminService } from './services/admin.service';
 import { AdminController } from './controller/administration.controller';
 
 
+
 @Module({
   imports: [
     AuthModule,
   ],
   controllers: [
-                ReportsController, 
-                SchemaInfoController, 
-                HeartBeatController, 
-                LocalizationController, 
-                TransactionModuleController, 
-                SetupResponseController,
-                AdminController
-              ],
+    ReportsController,
+    SchemaInfoController,
+    HeartBeatController,
+    LocalizationController,
+    TransactionModuleController,
+    SetupResponseController,
+    AdminController
+  ],
   providers: [
     LocalizationService,
     ReportService,
@@ -76,7 +77,8 @@ import { AdminController } from './controller/administration.controller';
     PurchaseAnalystReportNoDisc,
     CashDrawerDetailReport,
     AdminService,
-    SearchStockID_Purchase_Price_Report
+    SearchStockID_Purchase_Price_Report,
+    StockBalanceReport_Purchase_Price
   ]
 })
 export class AppModule {
