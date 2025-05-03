@@ -3,6 +3,7 @@ import { REQUEST } from '@nestjs/core';
 import { DataSource, DataSourceOptions } from 'typeorm';
 import { Request } from 'express';
 import { v4 as uuidv4 } from 'uuid';
+import ResponseHelper from 'src/helper/response-helper';
 
 @Injectable({ scope: Scope.REQUEST })
 export class GenericRepository implements OnModuleDestroy {
@@ -42,13 +43,17 @@ export class GenericRepository implements OnModuleDestroy {
       synchronize: false,
       name: this.connectionName,
     };
-
     const dataSource = new DataSource(dataSourceOptions);
-    await dataSource.initialize();
-    console.log(`DataSource initialized with name: ${this.connectionName}`);
+    try {
+      await dataSource.initialize();
+      console.log(`DataSource initialized with name: ${this.connectionName}`);
 
-    GenericRepository.dataSources.set(this.connectionName, dataSource);
-    return dataSource;
+      GenericRepository.dataSources.set(this.connectionName, dataSource);
+      return dataSource;
+    } catch (e) {
+      console.error('Error while initializing datasource. Contact software engineer.');
+      return dataSource;
+    }
   }
 
   // Retrieve the DataSource for the current instance
