@@ -288,7 +288,7 @@ export class TransactionModuleService {
           HttpStatus.OK,
           Constants.TRANSACTION_SUCCESS);
       }
-      const receipt = ReceiptFormatter.salesOrder(receiptResponse);
+      const receipt = await this.formatter.sales(receiptResponse);
       console.log(receipt);
       return ResponseHelper.CreateResponse<any>(
         receipt,
@@ -530,7 +530,8 @@ export class TransactionModuleService {
        * Now Querying Data for Printing Sales Order Receipt...
        */
       const receiptQuery = `
-      select cinvrefno,oleh,ninvfreight,csamdesc,pheader,pfooter,cwhsdesc,ninvvalue,
+      select cinvrefno,oleh,ninvfreight,csamdesc,pheader,pfooter,cwhsdesc,
+      format(ninvvalue,0) as ninvvalue,
       sum(1) as total_item,
       sum(nivdqtyout) as total_qty,
       format(sum(nivdamount)*(1-ninvdisc1/100)*(1-ninvdisc2/100)*(1-ninvdisc3/100)-ninvdisc,0) as subtotal,
@@ -559,7 +560,7 @@ export class TransactionModuleService {
           HttpStatus.OK,
           Constants.TRANSACTION_SUCCESS);
       }
-      const receipt = ReceiptFormatter.salesOrder(receiptResponse);
+      const receipt = await this.formatter.salesOrder(receiptResponse);
       console.log(receipt);
       return ResponseHelper.CreateResponse<any>(
         receipt,
@@ -579,7 +580,7 @@ export class TransactionModuleService {
         deleteInvoiceDetail,
         [body.invoice.invoiceNo],
       );
-      const deleteInvoice = `Delete FROM porderdetail WHERE cinvrefno = ?`;
+      const deleteInvoice = `Delete FROM porder WHERE cinvrefno = ?`;
       await this.genericRepository.query<any>(
         deleteInvoice,
         [body.invoice.invoiceNo],
@@ -892,7 +893,7 @@ WHERE sd.cstdcode = ?;
           HttpStatus.OK,
           Constants.TRANSACTION_SUCCESS);
       }
-      const receipt = ReceiptFormatter.pointOfSales(receiptResponse);
+      const receipt = await this.formatter.pointOfSales(receiptResponse);
       console.log(receipt);
       return ResponseHelper.CreateResponse<any>(
         receipt,
@@ -1192,7 +1193,6 @@ SET @cinvpk := LEFT(SHA1(UUID()), 23);
         " where cinvpk= ? ";
       const params = [invoicePkNo];
       const receiptResponse = await this.genericRepository.query<any>(receiptQuery, params);
-      console.log(receiptResponse);
       if (!receiptResponse || (Array.isArray(receiptResponse) && receiptResponse.length === 0)) {
         return ResponseHelper.CreateResponse<any>(
           [],

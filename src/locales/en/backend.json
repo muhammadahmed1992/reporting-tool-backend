@@ -12,5 +12,18 @@
   "stock_code_empty": "Stock code is not selected. Please try again",
   "fill_order_error": "Please fill order details",
   "location_not_found": "Location not found",
-  "receipt_label": "Receipt"
+  "receipt_label": "Receipt",
+  "sales_order_label": "Sales Order",
+  "subtotal_rp_label": "Subtotal Rp.",
+  "tax_label": "Tax Rp.",
+  "total_label": "Total Rp.",
+  "total_qty_label": "Total Qty",
+  "items_label": "items",
+  "member_label": "Member",
+  "waiter_label": "Waiter",
+  "location_label": "Location",
+  "sales_label": "Sales",
+  "service_label": "Service Rp.",
+  "cash_label": "Cash Rp.",
+  "change_label": "Change Rp."
 }
