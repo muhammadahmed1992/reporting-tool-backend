@@ -1,16 +1,17 @@
 import { HttpStatus, Injectable, Scope } from '@nestjs/common';
-import { ReportFactory } from './../factory/report-factory';
 import ApiResponse from 'src/helper/api-response';
 import { GenericRepository } from 'src/repository/generic.repository';
-import { TransactionSalesDto } from '../dto/transaction-sales.dto';
 import ResponseHelper from 'src/helper/response-helper';
 import Constants from 'src/helper/constants';
 import { TransactionSalesTableDto } from 'src/dto/transaction-sales-table.dto';
 import TransactionError from 'src/utils/errors/transaction.error';
+import { ReceiptFormatter } from 'src/utils/receipt-formatter';
 
 @Injectable({ scope: Scope.REQUEST })
 export class TransactionModuleService {
-  constructor(private readonly genericRepository: GenericRepository) { }
+  constructor(private readonly genericRepository: GenericRepository,
+    private readonly formatter: ReceiptFormatter
+  ) { }
 
   async salesInvoice(user: string) {
     await this.genericRepository.query(`
@@ -118,6 +119,7 @@ export class TransactionModuleService {
     }
   }
 
+  // Sales Transaction Processing
   async setSalesInvoice(body: any) {
     try {
       const allQuantitiesZero = body.tableFormData.every((item: any) => parseInt(item.qty, 10) === 0);
@@ -128,6 +130,7 @@ export class TransactionModuleService {
       }
       // Insert invoice details first
       const invoiceQuery = `
+    SET @cinvpk := LEFT(SHA1(UUID()), 23);
     INSERT INTO invoice (
         cinvrefno, cinvfkwhs, dinvdate, dinvdue, dinvtaxdate, 
         cinvfkent, cinvfkentcode, cinvhadiah, cinvfksam, cinvpk, 
@@ -142,7 +145,7 @@ export class TransactionModuleService {
     ) VALUES (
         ?, ?, STR_TO_DATE(?, '%d-%m-%Y'), CURDATE(), 
         STR_TO_DATE(?, '%d-%m-%Y'), ?, ?, ?, 
-        ?, LEFT(SHA1(UUID()), 23), ?, ?, 
+        ?, @cinvpk, ?, ?, 
         CONCAT(DATE_FORMAT(NOW(), '%d-%m-%Y %H:%i'), ' ', ?), 
         'JL', -- cinvspecial
         'n/a', -- cinvtransfer
@@ -181,7 +184,9 @@ export class TransactionModuleService {
         CURDATE(), -- nivdtime
         ?,
         '01' -- cinvtambah
-    )`;
+    );
+    SELECT CAST(@cinvpk AS CHAR) AS InvoicePkNo;
+    `;
 
       const invoiceParams = [
         body.invoice.invoiceNo,
@@ -198,10 +203,19 @@ export class TransactionModuleService {
         body.payment.total
       ];
 
-      const invoiceResponse = await this.genericRepository.query<any>(
+      const [_, invoiceResponse, pkres] = await this.genericRepository.query<any>(
         invoiceQuery,
         invoiceParams,
       );
+      if (!invoiceResponse || invoiceResponse.affectedRows === 0) {
+        return ResponseHelper.CreateResponse<any>(
+          null,
+          HttpStatus.INTERNAL_SERVER_ERROR,
+          Constants.TRANSACTION_FAILURE,
+        );
+      }
+      // Handle invoice response
+      const invoicePkNo = pkres[0].InvoicePkNo;
       body.tableFormData = body.tableFormData.filter(item => parseInt(item.qty, 10) !== 0);
       console.log('--------------------');
       console.log('SalesInvoice');
@@ -216,7 +230,7 @@ export class TransactionModuleService {
                     civdsn, civdmemo, nivdpokok
                 ) 
                 SELECT ?, ?, ?, LEFT(SHA1(UUID()), 23),
-                    (SELECT cinvpk FROM invoice WHERE cinvrefno = ? and cinvspecial = 'JL'), 
+                    ?, 
                     ?, sd.nstdfactor, ? * sd.nstdfactor,
                     ? * ?, ?, u.cunidesc, s.nstkppn,1, ' ', ' ', (select nstkbuy from stock where cstkpk= ?) * (? * sd.nstdfactor)
                 FROM stockdetail sd
@@ -229,7 +243,7 @@ export class TransactionModuleService {
           row.pk,
           row.stock_id_header,
           row.qty,
-          body.invoice.invoiceNo,
+          invoicePkNo,
           row.price,
           row.qty,
           row.qty,
@@ -245,8 +259,39 @@ export class TransactionModuleService {
           detailParams,
         );
       }
+      /**
+       * Now Querying Data for Printing Sales Receipt...
+       */
+      const receiptQuery = `
+        select cinvmeja,cinvrefno,ninvdp,ninvvoucher,ninvtunai+ninvkembali as ninvtunai_ninvkembali,ninvpiutang,ninvcredit,ninvdebit,
+        ninvmobile,ninvkembali,ninvvalue,oleh,ninvfreight,csamdesc,pheader,pfooter,cwhsdesc,
+        sum(1) as total_item,sum(nivdqtyout) as total_qty,
+        format(sum(nivdamount)*(1-ninvdisc1/100)*(1-ninvdisc2/100)*(1-ninvdisc3/100)-ninvdisc,0) as subtotal,
+        format(sum(if(nivdstkppn=1,((nivdamount)*(1-ninvdisc1/100)*(1-ninvdisc2/100)*(1-ninvdisc3/100)-ninvdisc)*ninvtax/100,0)),0) as tax,
+        cstkdesc,format(nivdqtyout,0) as qty,civdunit,format(nivdamount/nivdqtyout,0) as price,
+        format(nivdamount,0) as amount,cinvfkentcode
+        from invoice
+        inner join invoicedetail on cinvpk=civdfkinv
+        inner join stock on cstkpk=civdfkstk
+        inner join salesman on cinvfksam=csampk
+        inner join warehouse on cinvfkwhs=cwhspk
+        inner join ymk
+        where cinvpk=?
+        group by cinvmeja,cinvrefno,ninvdp,ninvvoucher,ninvtunai+ninvkembali,ninvpiutang,ninvcredit,ninvdebit,cinvfkentcode,
+        ninvmobile,ninvkembali,ninvvalue,oleh,ninvfreight,csamdesc,pheader,pfooter,cwhsdesc,cstkdesc,nivdqtyout,civdunit,nivdamount
+  `;
+      const params = [invoicePkNo];
+      const receiptResponse = await this.genericRepository.query<any>(receiptQuery, params);
+      if (!receiptResponse || (Array.isArray(receiptResponse) && receiptResponse.length === 0)) {
+        return ResponseHelper.CreateResponse<any>(
+          [],
+          HttpStatus.OK,
+          Constants.TRANSACTION_SUCCESS);
+      }
+      const receipt = ReceiptFormatter.salesOrder(receiptResponse);
+      console.log(receipt);
       return ResponseHelper.CreateResponse<any>(
-        null,
+        receipt,
         HttpStatus.OK,
         Constants.TRANSACTION_SUCCESS,
       );
@@ -382,6 +427,7 @@ export class TransactionModuleService {
     }
   }
 
+  // Sales Order Transaction Processing
   async setSalesOrderInvoice(body: any) {
 
     try {
@@ -392,20 +438,23 @@ export class TransactionModuleService {
         throw new TransactionError(Constants.FILL_ORDER_ERROR);
       }
       const invoiceQuery = `
+    SET @cinvpk := LEFT(SHA1(UUID()), 23);
     INSERT INTO porder (
         cinvrefno, cinvfkwhs, dinvdate, dinvdue, dinvtaxdate, 
         cinvfkent, cinvfkentcode, cinvhadiah, cinvfksam, cinvpk, 
         ninvtax, cinvuser, oleh, ninvexpire, cinvspecial, 
         cinvtransfer, cinvfkexc, kunci, ninvrate, ninvjenis, 
-        ninvoption, cinvremark, cinvremark1, ninvdp, xkirim, ninvclose
+        ninvoption, cinvremark, cinvremark1, ninvdp, xkirim, ninvclose, ninvvalue
     ) VALUES (
         ?, ?, STR_TO_DATE(?, '%d-%m-%Y'), CURDATE(), 
         STR_TO_DATE(?, '%d-%m-%Y'), ?, ?, ?, 
-        ?, LEFT(SHA1(UUID()), 23), ?, ?, 
+        ?, @cinvpk, ?, ?, 
         CONCAT(DATE_FORMAT(NOW(), '%d-%m-%Y %H:%i'), ' ', ?), 
         (SELECT soexpire FROM ymk2), 'SO', 'n/a', 
-        '..rupiah...............', 1, 1, 1, 1, ' ', ' ', 0, 0, 0
-    )`;
+        '..rupiah...............', 1, 1, 1, 1, ' ', ' ', 0, 0, 0, ?
+    );
+    SELECT CAST(@cinvpk AS CHAR) AS InvoicePkNo;
+    `;
 
       const invoiceParams = [
         body.invoice.invoiceNo,
@@ -419,13 +468,21 @@ export class TransactionModuleService {
         body.invoice.tax,
         body.invoice.loginUser,
         body.invoice.loginUser,
+        body.payment.total
       ];
-
-      const invoiceResponse = await this.genericRepository.query<any>(
+      const [_, invoiceResponse, pkres] = await this.genericRepository.query<any>(
         invoiceQuery,
         invoiceParams,
       );
-      const invoicePK = body.invoiceNo;
+      if (!invoiceResponse || invoiceResponse.affectedRows === 0) {
+        return ResponseHelper.CreateResponse<any>(
+          null,
+          HttpStatus.INTERNAL_SERVER_ERROR,
+          Constants.TRANSACTION_FAILURE,
+        );
+      }
+      // Handle invoice response
+      const invoicePkNo = pkres[0].InvoicePkNo;
       body.tableFormData = body.tableFormData.filter(item => parseInt(item.qty, 10) !== 0);
       console.log('--------------------');
       console.log('SalesOrderInvoice');
@@ -440,7 +497,7 @@ export class TransactionModuleService {
                     civdmemo
                 ) 
                 SELECT ?, ?, ?, LEFT(SHA1(UUID()), 23),
-                    (SELECT cinvpk FROM porder WHERE cinvrefno = ? and cinvspecial = 'SO'), 
+                    ?, 
                     ?, sd.nstdfactor, ? * sd.nstdfactor,
                     ? * ?, ?, u.cunidesc, s.nstkppn, ' '
                 FROM stockdetail sd
@@ -454,7 +511,7 @@ export class TransactionModuleService {
           row.pk,
           row.stock_id_header,
           row.qty,
-          body.invoice.invoiceNo,
+          invoicePkNo,
           row.price,
           row.qty,
           row.qty,
@@ -469,9 +526,43 @@ export class TransactionModuleService {
           detailParams,
         );
       }
-
+      /**
+       * Now Querying Data for Printing Sales Order Receipt...
+       */
+      const receiptQuery = `
+      select cinvrefno,oleh,ninvfreight,csamdesc,pheader,pfooter,cwhsdesc,ninvvalue,
+      sum(1) as total_item,
+      sum(nivdqtyout) as total_qty,
+      format(sum(nivdamount)*(1-ninvdisc1/100)*(1-ninvdisc2/100)*(1-ninvdisc3/100)-ninvdisc,0) as subtotal,
+      format(sum(if(nivdstkppn=1,((nivdamount)*(1-ninvdisc1/100)*(1-ninvdisc2/100)*(1-ninvdisc3/100)-ninvdisc)*ninvtax/100,0)),0) as tax,
+      cstkdesc,
+      format(nivdqtyout,0) as qty,
+      civdunit,
+      format(nivdamount/nivdqtyout,0) as price,
+      format(nivdamount,0) as amount,
+      cinvfkentcode
+      from porder
+      inner join porderdetail on cinvpk=civdfkinv
+      inner join stock on cstkpk=civdfkstk
+      inner join salesman on cinvfksam=csampk
+      inner join warehouse on cinvfkwhs=cwhspk
+      inner join ymk
+      where cinvpk=?
+      group by cinvrefno,oleh,ninvfreight,csamdesc,pheader,pfooter,cwhsdesc,ninvvalue,
+      cstkdesc,nivdqtyout,civdunit,nivdamount,cinvfkentcode
+`;
+      const params = [invoicePkNo];
+      const receiptResponse = await this.genericRepository.query<any>(receiptQuery, params);
+      if (!receiptResponse || (Array.isArray(receiptResponse) && receiptResponse.length === 0)) {
+        return ResponseHelper.CreateResponse<any>(
+          [],
+          HttpStatus.OK,
+          Constants.TRANSACTION_SUCCESS);
+      }
+      const receipt = ReceiptFormatter.salesOrder(receiptResponse);
+      console.log(receipt);
       return ResponseHelper.CreateResponse<any>(
-        null,
+        receipt,
         HttpStatus.OK,
         Constants.TRANSACTION_SUCCESS,
       );
@@ -609,6 +700,8 @@ export class TransactionModuleService {
       );
     }
   }
+
+  // Point Of Sales Transaction Processing
   async setPosInvoice(body: any) {
     try {
       const allQuantitiesZero = body.tableFormData.every((item: any) => parseInt(item.qty, 10) === 0);
@@ -618,6 +711,7 @@ export class TransactionModuleService {
         throw new TransactionError(Constants.FILL_ORDER_ERROR);
       }
       const invoiceQuery = `
+    SET @cinvpk := LEFT(SHA1(UUID()), 23);
     INSERT INTO invoice (
         cinvrefno, cinvfkwhs, dinvdate, dinvdue, dinvtaxdate, 
         cinvfkent, cinvfkentcode, cinvfksam, ninvtax, cinvmeja, 
@@ -631,13 +725,15 @@ export class TransactionModuleService {
     ) VALUES (
         ?, ?, CURDATE(), CURDATE(), CURDATE(), 
         ?, ?, ?, ?, ?,
-        ?, ?, ?, ?, ?, ?, LEFT(SHA1(UUID()), 23),
+        ?, ?, ?, ?, ?, ?, @cinvpk,
         ?, CONCAT(DATE_FORMAT(NOW(), '%d-%m-%Y %H:%i'), ' ', ?),
         HOUR(NOW()), ?, ?,
         'PS', 'n/a',  '..rupiah...............', 1, 1, 1,
         '', '', '', '', '', '', '', '', '', '', '', '', '', '',
         0, 0, 0, ?, 0, 0, 0, 0, 0, 0, 0, 0
-    )
+    );
+  
+  SELECT CAST(@cinvpk AS CHAR) AS InvoicePkNo;
     `;
 
       // Map the parameters to the query
@@ -661,12 +757,19 @@ export class TransactionModuleService {
         body.payment.total,// ninvvalue1 (ninvvoucher+ninvtunai+ninvcredit+ninvdebit+ninvmobile)
         body.payment.change
       ];
-      const invoiceResponse = await this.genericRepository.query<any>(
+      const [_, invoiceResponse, pkres] = await this.genericRepository.query<any>(
         invoiceQuery,
         invoiceParams,
       );
+      if (!invoiceResponse || invoiceResponse.affectedRows === 0) {
+        return ResponseHelper.CreateResponse<any>(
+          null,
+          HttpStatus.INTERNAL_SERVER_ERROR,
+          Constants.TRANSACTION_FAILURE,
+        );
+      }
       // Handle invoice response
-      const invoicePK = body.invoiceNo;
+      const invoicePkNo = pkres[0].InvoicePkNo;
       body.tableFormData = body.tableFormData.filter(item => parseInt(item.qty, 10) !== 0);
       console.log('--------------------');
       console.log('POSInvoice');
@@ -725,7 +828,7 @@ export class TransactionModuleService {
     civdmemo, nivdpokok, civdpromocard, civdresep
 ) 
 SELECT ?, ?, ?, ?, ?, LEFT(SHA1(UUID()), 23), 
-    (SELECT cinvpk FROM invoice WHERE cinvrefno = ? and cinvspecial = 'PS'), -- Subquery for civdfkinv
+    ?, -- Subquery for civdfkinv
     ?, sd.nstdfactor, ? * sd.nstdfactor,
     ? * ?, ?, u.cunidesc, s.nstkppn, 1,0, (select nstkbuy from stock where cstkpk= ?) * (? * sd.nstdfactor), ' ', ' '
 FROM stockdetail sd
@@ -741,7 +844,7 @@ WHERE sd.cstdcode = ?;
           qty,             // nivdonhand
           row.qty,             // nivdqtyout
           row.qty,             // qtyresep
-          body.invoice.invoiceNo, // cinvrefno (subquery in SELECT)
+          invoicePkNo, // cinvrefno (subquery in SELECT)
           row.price,           // nivdprice
           row.qty,             // quantity * nstdfactor
           row.qty,             // quantity
@@ -759,12 +862,46 @@ WHERE sd.cstdcode = ?;
         );
       }
 
+      /**
+       * Now Querying Data for Printing Point Of Sales Receipt...
+       */
+      const receiptQuery = `
+        select cinvmeja,cinvrefno,ninvdp,ninvvoucher,ninvtunai+ninvkembali as ninvtunai_ninvkembali,ninvpiutang,ninvcredit,ninvdebit,
+        ninvmobile,ninvkembali,ninvvalue,oleh,ninvfreight,csamdesc,pheader,pfooter,cwhsdesc,
+        sum(1) as total_item,sum(nivdqtyout) as total_qty,
+        sum(nivdamount)*(1-ninvdisc1/100)*(1-ninvdisc2/100)*(1-ninvdisc3/100)-ninvdisc as subtotal,
+        sum(if(nivdstkppn=1,((nivdamount)*(1-ninvdisc1/100)*(1-ninvdisc2/100)*(1-ninvdisc3/100)-
+        ninvdisc)*ninvtax/100,0)) as tax,
+        cstkdesc,format(nivdqtyout,0) as qty,civdunit,format(nivdamount/nivdqtyout,0) as price,
+        format(nivdamount,0) as amount
+        from invoice
+        inner join invoicedetail on cinvpk=civdfkinv
+        inner join stock on cstkpk=civdfkstk
+        inner join salesman on cinvfksam=csampk
+        inner join warehouse on cinvfkwhs=cwhspk
+        inner join ymk
+        where cinvpk=?
+        group by cinvmeja,cinvrefno,ninvdp,ninvvoucher,ninvtunai+ninvkembali,ninvpiutang,ninvcredit,ninvdebit,
+        ninvmobile,ninvkembali,ninvvalue,oleh,ninvfreight,csamdesc,pheader,pfooter,cwhsdesc,cstkdesc,nivdqtyout,civdunit,nivdamount
+      `;
+      const params = [invoicePkNo];
+      const receiptResponse = await this.genericRepository.query<any>(receiptQuery, params);
+      if (!receiptResponse || (Array.isArray(receiptResponse) && receiptResponse.length === 0)) {
+        return ResponseHelper.CreateResponse<any>(
+          [],
+          HttpStatus.OK,
+          Constants.TRANSACTION_SUCCESS);
+      }
+      const receipt = ReceiptFormatter.pointOfSales(receiptResponse);
+      console.log(receipt);
       return ResponseHelper.CreateResponse<any>(
-        null,
+        receipt,
         HttpStatus.OK,
         Constants.TRANSACTION_SUCCESS,
       );
     } catch (error) {
+      console.log(`hi from catch`);
+      console.log(error);
       if (error instanceof TransactionError) {
         return ResponseHelper.CreateResponse<any>(
           null,
@@ -882,11 +1019,14 @@ WHERE sd.cstdcode = ?;
     }
   }
 
+  // Stock Adjustment Transaction Processing
   async setStockInvoice(body: any) {
-    console.log('stock invoice');
+    console.log('stock adjustment');
     console.log(body);
     try {
       const invoiceQuery = `
+SET @cinvpk := LEFT(SHA1(UUID()), 23);
+
   INSERT INTO invoice (
       cinvrefno, cinvfkwhs,
       dinvdate, dinvdue, dinvtaxdate, dinvtglsj,
@@ -898,12 +1038,14 @@ WHERE sd.cstdcode = ?;
   ) VALUES (
       ?, ?,
       STR_TO_DATE(?, '%d-%m-%Y'), STR_TO_DATE(?, '%d-%m-%Y'), STR_TO_DATE(?, '%d-%m-%Y'), STR_TO_DATE(?, '%d-%m-%Y'),
-      LEFT(SHA1(UUID()), 23), ?, CONCAT(DATE_FORMAT(NOW(), '%d-%m-%Y %H:%i'), ' ', ?),
+      @cinvpk, ?, CONCAT(DATE_FORMAT(NOW(), '%d-%m-%Y %H:%i'), ' ', ?),
        '..opname...............',  '..default..............',  'OP', '..rupiah...............',
        'OPNAME', 1, 1, 1,
         '','','','',
         0
   );
+  
+  SELECT CAST(@cinvpk AS CHAR) AS InvoicePkNo;
   `;
 
       const invoiceParams = [
@@ -916,12 +1058,20 @@ WHERE sd.cstdcode = ?;
         body.invoice.loginUser,
         body.invoice.loginUser,
       ];
-      const invoiceResponse = await this.genericRepository.query<any>(
+      const [_, invoiceResponse, pkres] = await this.genericRepository.query<any>(
         invoiceQuery,
         invoiceParams,
       );
-      console.log('--------------------');
-      console.log('StockInvoice');
+      if (!invoiceResponse || invoiceResponse.affectedRows === 0) {
+        return ResponseHelper.CreateResponse<any>(
+          null,
+          HttpStatus.INTERNAL_SERVER_ERROR,
+          Constants.TRANSACTION_FAILURE,
+        );
+      }
+      const invoicePkNo = pkres[0].InvoicePkNo;
+      console.log('---------------------------');
+      console.log('Stock Adjustment Invoice');
       console.table(body.tableFormData);
 
       /*
@@ -931,7 +1081,7 @@ WHERE sd.cstdcode = ?;
       const map = new Map();
 
       for (const item of body.tableFormData) {
-        const key = `${item.pk}-${item.stock_id_header}-${item.stock_name}`;
+        const key = `${item.pk}`;
 
         if (!map.has(key)) {
           map.set(key, {
@@ -945,9 +1095,6 @@ WHERE sd.cstdcode = ?;
       }
 
       const result = Array.from(map.values());
-
-      console.log('merged result');
-      console.log(result);
       for (let i = 0; i < result.length; i++) {
         const row = result[i];
         const qtyQuery = `
@@ -1009,7 +1156,7 @@ WHERE sd.cstdcode = ?;
               civdsn, civdmemo, civdfkstk1, disct
             ) Values (
               ?, ?, ?, ?, 1,
-              LEFT(SHA1(UUID()), 23), (SELECT cinvpk FROM invoice WHERE cinvrefno = ? and cinvspecial = 'OP'),
+              LEFT(SHA1(UUID()), 23), ?,
               (SELECT nstkbuy FROM stock WHERE cstkpk = ?),
               ?, ?, ?, ?,
               (? * (SELECT nstkbuy FROM stock WHERE cstkpk = ?)), ?,
@@ -1021,7 +1168,7 @@ WHERE sd.cstdcode = ?;
 
         const detailParams = [
           row.pk, row.stock_id_header, qty,
-          row.qty, body.invoice.invoiceNo, row.pk,
+          row.qty, invoicePkNo, row.pk,
           nivdqtyin, nivdzqtyin, nivdqtyout, nivdzqtyout,  // Pre-calculated values
           nivdamount, row.pk, i + 1,  // nivdamount and sequence number
           row.pk  // Stock PK for retrieving unit information
@@ -1034,12 +1181,35 @@ WHERE sd.cstdcode = ?;
         );
       }
 
+      /*
+        Now Querying Data for printing receipt...
+      */
+      const receiptQuery = "select cinvrefno,oleh,cstkdesc,format(nivdadjust,0) as qty,civdunit,cwhsdesc " +
+        " from invoice " +
+        " inner join invoicedetail on cinvpk=civdfkinv " +
+        " inner join stock on cstkpk=civdfkstk " +
+        " inner join warehouse on cinvfkwhs=cwhspk " +
+        " where cinvpk= ? ";
+      const params = [invoicePkNo];
+      const receiptResponse = await this.genericRepository.query<any>(receiptQuery, params);
+      console.log(receiptResponse);
+      if (!receiptResponse || (Array.isArray(receiptResponse) && receiptResponse.length === 0)) {
+        return ResponseHelper.CreateResponse<any>(
+          [],
+          HttpStatus.OK,
+          Constants.TRANSACTION_SUCCESS);
+      }
+
+      const receipt = await this.formatter.stockAdjustment(receiptResponse);
+      console.log('stock adjustment receipt:');
+      console.log(receipt);
       return ResponseHelper.CreateResponse<any>(
-        null,
+        receipt,
         HttpStatus.OK,
         Constants.TRANSACTION_SUCCESS,
       );
     } catch (error) {
+      console.log(error);
       if (error instanceof TransactionError) {
         return ResponseHelper.CreateResponse<any>(
           null,

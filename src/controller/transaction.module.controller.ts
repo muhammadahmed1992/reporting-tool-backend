@@ -29,7 +29,6 @@ export class TransactionModuleController {
 
   @Get('/:user/sales-order')
   async salesOrder(@Param('user') loggedInUser: string) {
-    console.log(loggedInUser);
     const response =
       await this.transactionModuleService.salesOrderInvoice(loggedInUser);
     return response;
@@ -49,7 +48,6 @@ export class TransactionModuleController {
 
   @Get('/:user/pos')
   async posInvoice(@Param('user') loggedInUser: string) {
-    console.log(loggedInUser);
     const response =
       await this.transactionModuleService.posInvoice(loggedInUser);
     return response;
@@ -69,7 +67,6 @@ export class TransactionModuleController {
 
   @Get('/:user/stock')
   async stockInvoice(@Param('user') loggedInUser: string) {
-    console.log(loggedInUser);
     const response =
       await this.transactionModuleService.stockInvoice(loggedInUser);
     return response;

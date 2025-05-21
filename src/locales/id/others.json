@@ -1,5 +1,19 @@
 {
-    "select_stock_group": "Pilih Golongan",
-    "select_warehouse": "Pilih Lokasi",
-    "select_date": "Pilih Tanggal"
+  "no_paired_printers_found": "No paired printers found",
+  "select_bluetooth_devices": "Available Bluetooth Devices",
+  "allow_bluetooth_permission": "Bluetooth permission required",
+  "bluetooth_is_off": "Bluetooth is off",
+  "turn_on_bluetooth": "Please turn on Bluetooth and try again.",
+  "bluetooth_error": "Bluetooth Error",
+  "bluetooth_scan_failed": "Failed to scan for Bluetooth devices.",
+  "no_device_found": "No devices found. Try refreshing.",
+  "no_device_found_bluetooth": "No Bluetooth devices are available for printing.",
+  "failed_scan": "Scan failed",
+  "unable_to_scan": "Unable to scan Bluetooth devices.",
+  "refresh": "Refresh Devices",
+  "device_name": "Device Name",
+  "pairing_status": "Pairing Status",
+  "paired": "Paired",
+  "un_paired": "Un-Paired",
+  "device_selected": "Device On/Off"
 }

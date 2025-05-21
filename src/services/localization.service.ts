@@ -1,4 +1,4 @@
-import { HttpStatus, Injectable } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import fs from 'fs';
 import path from 'path';
 
@@ -7,20 +7,19 @@ export class LocalizationService {
   private translations: Record<string, any> = {};
 
   constructor() {
-      this.loadTranslations().then(() => {
-        console.log(`translations has been loaded`)
+    this.loadTranslations().then(() => {
+      console.log(`translations has been loaded`)
     });
   }
 
   private async loadTranslations() {
     const languages = ['en', 'id'];
-    const files = ['menu', 'backend', 'headers'];
-    
+    const files = ['menu', 'backend', 'headers', 'others'];
+
     for (const lang of languages) {
       this.translations[lang] = {};
       for (const file of files) {
         const filePath = path.join(__dirname, `../locales/${lang}/${file}.json`);
-        console.log(`filePaths: ${filePath}`);
         if (fs.existsSync(filePath)) {
           this.translations[lang][file] = JSON.parse(fs.readFileSync(filePath, 'utf-8'));
         }

@@ -27,13 +27,9 @@ export class GenericRepository implements OnModuleDestroy {
 
     // Close the previous DataSource if connection string changed
     if (existingDataSource && existingDataSource.isInitialized) {
-      console.log(`Closing existing DataSource: ${this.connectionName}`);
       await existingDataSource.destroy();
       GenericRepository.dataSources.delete(this.connectionName); // Remove from map after destruction
     }
-
-    // Initialize a new DataSource
-    console.log(`Initializing new DataSource with connection string: ${connectionString}`);
     this.lastConnectionString = connectionString;
 
     const dataSourceOptions: DataSourceOptions = {
@@ -42,12 +38,11 @@ export class GenericRepository implements OnModuleDestroy {
       entities: [], // Define your entities here
       synchronize: false,
       name: this.connectionName,
+      multipleStatements: true,
     };
     const dataSource = new DataSource(dataSourceOptions);
     try {
       await dataSource.initialize();
-      console.log(`DataSource initialized with name: ${this.connectionName}`);
-
       GenericRepository.dataSources.set(this.connectionName, dataSource);
       return dataSource;
     } catch (e) {
@@ -62,7 +57,7 @@ export class GenericRepository implements OnModuleDestroy {
   }
 
   // Query execution with automatic connection cleanup
-  async query<T>(sql: string, parameters?: any[]): Promise<T[]> {
+  async query<T = any>(sql: string, parameters?: any[]): Promise<any> {
     const dataSource = await this.getDataSource();
     try {
       return await dataSource.query(sql, parameters);
@@ -71,21 +66,17 @@ export class GenericRepository implements OnModuleDestroy {
       console.error('Stack trace:', e.stack);
       throw new Error(e);
     } finally {
-      console.log(`Destroying DataSource after query execution: ${this.connectionName}`);
       await dataSource.destroy();
       GenericRepository.dataSources.delete(this.connectionName);
-      console.log(`DataSource destroyed and removed from map: ${this.connectionName}`);
     }
   }
 
   // Cleanup on module destroy
   async onModuleDestroy() {
-    console.log(`Cleaning up DataSource: ${this.connectionName}`);
     const dataSource = GenericRepository.dataSources.get(this.connectionName);
     if (dataSource && dataSource.isInitialized) {
       try {
         await dataSource.destroy();
-        console.log(`DataSource closed: ${this.connectionName}`);
         GenericRepository.dataSources.delete(this.connectionName);
       } catch (closeError: any) {
         console.error('Error closing DataSource:', closeError.message);
