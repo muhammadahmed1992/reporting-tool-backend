@@ -4,11 +4,14 @@
     {
       "type": "node",
       "request": "launch",
-      "name": "Debug NestJS App",
-      "runtimeExecutable": "npm",
-      "runtimeArgs": ["run", "start:debug"],
-      "skipFiles": ["<node_internals>/**"],
-      "outFiles": ["${workspaceFolder}/dist/**/*.js"]
+      "name": "Debug NestJS",
+      "runtimeArgs": ["-r", "ts-node/register", "-r", "tsconfig-paths/register"],
+      "args": ["${workspaceFolder}/src/main.ts"],
+      "cwd": "${workspaceFolder}",
+      "skipFiles": ["<node_internals>/**", "node_modules/**"],
+      "env": {
+        "TS_NODE_PROJECT": "${workspaceFolder}/tsconfig.json"
+      }
     }
   ]
 }

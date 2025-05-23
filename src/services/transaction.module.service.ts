@@ -6,11 +6,16 @@ import Constants from 'src/helper/constants';
 import { TransactionSalesTableDto } from 'src/dto/transaction-sales-table.dto';
 import TransactionError from 'src/utils/errors/transaction.error';
 import { ReceiptFormatter } from 'src/utils/receipt-formatter';
+import { PrinterConfigService } from './printer.config.service';
+import { LocaleService } from './locale.service';
 
-@Injectable({ scope: Scope.REQUEST })
+@Injectable()
 export class TransactionModuleService {
-  constructor(private readonly genericRepository: GenericRepository,
-    private readonly formatter: ReceiptFormatter
+  constructor(
+    private readonly genericRepository: GenericRepository,
+    private readonly formatter: ReceiptFormatter,
+    private readonly printerConfig: PrinterConfigService,
+
   ) { }
 
   async salesInvoice(user: string) {
@@ -263,32 +268,44 @@ export class TransactionModuleService {
        * Now Querying Data for Printing Sales Receipt...
        */
       const receiptQuery = `
-        select cinvmeja,cinvrefno,ninvdp,ninvvoucher,ninvtunai+ninvkembali as ninvtunai_ninvkembali,ninvpiutang,ninvcredit,ninvdebit,
-        ninvmobile,ninvkembali,ninvvalue,oleh,ninvfreight,csamdesc,pheader,pfooter,cwhsdesc,
-        sum(1) as total_item,sum(nivdqtyout) as total_qty,
-        format(sum(nivdamount)*(1-ninvdisc1/100)*(1-ninvdisc2/100)*(1-ninvdisc3/100)-ninvdisc,0) as subtotal,
-        format(sum(if(nivdstkppn=1,((nivdamount)*(1-ninvdisc1/100)*(1-ninvdisc2/100)*(1-ninvdisc3/100)-ninvdisc)*ninvtax/100,0)),0) as tax,
-        cstkdesc,format(nivdqtyout,0) as qty,civdunit,format(nivdamount/nivdqtyout,0) as price,
-        format(nivdamount,0) as amount,cinvfkentcode
-        from invoice
-        inner join invoicedetail on cinvpk=civdfkinv
-        inner join stock on cstkpk=civdfkstk
-        inner join salesman on cinvfksam=csampk
-        inner join warehouse on cinvfkwhs=cwhspk
-        inner join ymk
-        where cinvpk=?
-        group by cinvmeja,cinvrefno,ninvdp,ninvvoucher,ninvtunai+ninvkembali,ninvpiutang,ninvcredit,ninvdebit,cinvfkentcode,
-        ninvmobile,ninvkembali,ninvvalue,oleh,ninvfreight,csamdesc,pheader,pfooter,cwhsdesc,cstkdesc,nivdqtyout,civdunit,nivdamount
-  `;
-      const params = [invoicePkNo];
-      const receiptResponse = await this.genericRepository.query<any>(receiptQuery, params);
-      if (!receiptResponse || (Array.isArray(receiptResponse) && receiptResponse.length === 0)) {
+select LTRIM(RTRIM(cinvmeja)) as cinvmeja,cinvrefno,ninvdp,ninvvoucher,(ninvtunai+ninvkembali) as ninvtunai_ninvkembali,ninvpiutang,ninvcredit,ninvdebit,
+ninvmobile,ninvkembali,ninvvalue,oleh,ninvfreight,LTRIM(RTRIM(csamdesc)) as csamdesc,LTRIM(RTRIM(pheader)) as pheader,
+LTRIM(RTRIM(pfooter)) as pfooter,LTRIM(RTRIM(cwhsdesc)) as cwhsdesc,
+sum(1) as total_item,sum(nivdqtyout) as total_qty,
+format(sum(nivdamount)*(1-ninvdisc1/100)*(1-ninvdisc2/100)*(1-ninvdisc3/100)-ninvdisc,0) as subtotal,
+format(sum(if(nivdstkppn=1,((nivdamount)*(1-ninvdisc1/100)*(1-ninvdisc2/100)*(1-ninvdisc3/100)-ninvdisc)*ninvtax/100,0)),0) as tax,
+LTRIM(RTRIM(cinvfkentcode)) as cinvfkentcode
+from invoice
+inner join invoicedetail on cinvpk=civdfkinv
+inner join stock on cstkpk=civdfkstk
+inner join salesman on cinvfksam=csampk
+inner join warehouse on cinvfkwhs=cwhspk
+inner join ymk
+where cinvpk=?
+group by cinvmeja,cinvrefno,ninvdp,ninvvoucher,ninvtunai+ninvkembali,ninvpiutang,ninvcredit,ninvdebit,ninvmobile,ninvkembali,ninvvalue,oleh,ninvfreight,csamdesc,pheader,pfooter,cwhsdesc;
+
+select LTRIM(RTRIM(cstkdesc)) as cstkdesc,format(nivdqtyout,0) as qty,LTRIM(RTRIM(civdunit)) as civdunit,format(nivdamount/nivdqtyout,0) as price,
+format(nivdamount,0) as amount
+from invoice
+inner join invoicedetail on cinvpk=civdfkinv
+inner join stock on cstkpk=civdfkstk
+where cinvpk=?;
+
+`;
+      const params = [invoicePkNo, invoicePkNo];
+      const [receiptMasterResponse, receiptDetailResponse] = await this.genericRepository.query<any>(receiptQuery, params);
+      console.log(`master response`);
+      console.log(receiptMasterResponse);
+      console.log(`detail response`);
+      console.log(receiptDetailResponse);
+      if (!receiptMasterResponse || (Array.isArray(receiptDetailResponse) && receiptDetailResponse.length === 0)) {
         return ResponseHelper.CreateResponse<any>(
           [],
           HttpStatus.OK,
           Constants.TRANSACTION_SUCCESS);
       }
-      const receipt = await this.formatter.sales(receiptResponse);
+      this.formatter.setWidth(this.printerConfig.getPrinterWidth());
+      const receipt = await this.formatter.sales(receiptMasterResponse, receiptDetailResponse);
       console.log(receipt);
       return ResponseHelper.CreateResponse<any>(
         receipt,
@@ -530,18 +547,12 @@ export class TransactionModuleService {
        * Now Querying Data for Printing Sales Order Receipt...
        */
       const receiptQuery = `
-      select cinvrefno,oleh,ninvfreight,csamdesc,pheader,pfooter,cwhsdesc,
-      format(ninvvalue,0) as ninvvalue,
-      sum(1) as total_item,
-      sum(nivdqtyout) as total_qty,
+      -- Master Query
+      select cinvrefno,oleh,ninvfreight,LTRIM(RTRIM(csamdesc)) as csamdesc,pheader,pfooter,LTRIM(RTRIM(cwhsdesc)) as cwhsdesc
+      ,ninvvalue,cinvfkentcode,
+      sum(1) as total_item,sum(nivdqtyout) as total_qty,
       format(sum(nivdamount)*(1-ninvdisc1/100)*(1-ninvdisc2/100)*(1-ninvdisc3/100)-ninvdisc,0) as subtotal,
-      format(sum(if(nivdstkppn=1,((nivdamount)*(1-ninvdisc1/100)*(1-ninvdisc2/100)*(1-ninvdisc3/100)-ninvdisc)*ninvtax/100,0)),0) as tax,
-      cstkdesc,
-      format(nivdqtyout,0) as qty,
-      civdunit,
-      format(nivdamount/nivdqtyout,0) as price,
-      format(nivdamount,0) as amount,
-      cinvfkentcode
+      format(sum(if(nivdstkppn=1,((nivdamount)*(1-ninvdisc1/100)*(1-ninvdisc2/100)*(1-ninvdisc3/100)-ninvdisc)*ninvtax/100,0)),0) as tax
       from porder
       inner join porderdetail on cinvpk=civdfkinv
       inner join stock on cstkpk=civdfkstk
@@ -549,18 +560,31 @@ export class TransactionModuleService {
       inner join warehouse on cinvfkwhs=cwhspk
       inner join ymk
       where cinvpk=?
-      group by cinvrefno,oleh,ninvfreight,csamdesc,pheader,pfooter,cwhsdesc,ninvvalue,
-      cstkdesc,nivdqtyout,civdunit,nivdamount,cinvfkentcode
+      group by cinvrefno,oleh,ninvfreight,csamdesc,pheader,pfooter,cwhsdesc,ninvvalue, cinvfkentcode;
+
+      -- Detail Query
+      select LTRIM(RTRIM(cstkdesc)) as cstkdesc,format(nivdqtyout,0) as qty,LTRIM(RTRIM(civdunit)) as civdunit
+      ,format(nivdamount/nivdqtyout,0) as price,
+      format(nivdamount,0) as amount
+      from porder
+      inner join porderdetail on cinvpk=civdfkinv
+      inner join stock on cstkpk=civdfkstk
+      where cinvpk=?;
 `;
-      const params = [invoicePkNo];
-      const receiptResponse = await this.genericRepository.query<any>(receiptQuery, params);
-      if (!receiptResponse || (Array.isArray(receiptResponse) && receiptResponse.length === 0)) {
+      const params = [invoicePkNo, invoicePkNo];
+      const [receiptMasterResponse, receiptDetailResponse] = await this.genericRepository.query<any>(receiptQuery, params);
+      console.log(`master response`);
+      console.log(receiptMasterResponse);
+      console.log(`detail response`);
+      console.log(receiptDetailResponse);
+      if (!receiptMasterResponse || (Array.isArray(receiptDetailResponse) && receiptDetailResponse.length === 0)) {
         return ResponseHelper.CreateResponse<any>(
           [],
           HttpStatus.OK,
           Constants.TRANSACTION_SUCCESS);
       }
-      const receipt = await this.formatter.salesOrder(receiptResponse);
+      this.formatter.setWidth(this.printerConfig.getPrinterWidth())
+      const receipt = await this.formatter.salesOrder(receiptMasterResponse, receiptDetailResponse);
       console.log(receipt);
       return ResponseHelper.CreateResponse<any>(
         receipt,
@@ -568,6 +592,8 @@ export class TransactionModuleService {
         Constants.TRANSACTION_SUCCESS,
       );
     } catch (error) {
+      console.log(error);
+      console.log('in my catch');
       if (error instanceof TransactionError) {
         return ResponseHelper.CreateResponse<any>(
           null,
@@ -585,6 +611,7 @@ export class TransactionModuleService {
         deleteInvoice,
         [body.invoice.invoiceNo],
       );
+      console.log
       return ResponseHelper.CreateResponse<any>(
         null,
         HttpStatus.INTERNAL_SERVER_ERROR,
@@ -867,33 +894,50 @@ WHERE sd.cstdcode = ?;
        * Now Querying Data for Printing Point Of Sales Receipt...
        */
       const receiptQuery = `
-        select cinvmeja,cinvrefno,ninvdp,ninvvoucher,ninvtunai+ninvkembali as ninvtunai_ninvkembali,ninvpiutang,ninvcredit,ninvdebit,
-        ninvmobile,ninvkembali,ninvvalue,oleh,ninvfreight,csamdesc,pheader,pfooter,cwhsdesc,
-        sum(1) as total_item,sum(nivdqtyout) as total_qty,
-        sum(nivdamount)*(1-ninvdisc1/100)*(1-ninvdisc2/100)*(1-ninvdisc3/100)-ninvdisc as subtotal,
-        sum(if(nivdstkppn=1,((nivdamount)*(1-ninvdisc1/100)*(1-ninvdisc2/100)*(1-ninvdisc3/100)-
-        ninvdisc)*ninvtax/100,0)) as tax,
-        cstkdesc,format(nivdqtyout,0) as qty,civdunit,format(nivdamount/nivdqtyout,0) as price,
-        format(nivdamount,0) as amount
-        from invoice
-        inner join invoicedetail on cinvpk=civdfkinv
-        inner join stock on cstkpk=civdfkstk
-        inner join salesman on cinvfksam=csampk
-        inner join warehouse on cinvfkwhs=cwhspk
-        inner join ymk
-        where cinvpk=?
-        group by cinvmeja,cinvrefno,ninvdp,ninvvoucher,ninvtunai+ninvkembali,ninvpiutang,ninvcredit,ninvdebit,
-        ninvmobile,ninvkembali,ninvvalue,oleh,ninvfreight,csamdesc,pheader,pfooter,cwhsdesc,cstkdesc,nivdqtyout,civdunit,nivdamount
+select LTRIM(RTRIM(cinvmeja)) as cinvmeja,cinvrefno,ninvdp,
+format(ninvvoucher,0) as ninvvoucher,
+format((ninvtunai+ninvkembali),0) as ninvtunai_ninvkembali,
+ninvpiutang,
+format(ninvcredit,0) as ninvcredit,format(ninvdebit,0) as ninvdebit,
+format(ninvmobile,0) as ninvmobile,format(ninvkembali, 0) as ninvkembali,format(ninvvalue, 0) as ninvvalue,oleh,
+ninvfreight,LTRIM(RTRIM(csamdesc)) as csamdesc,LTRIM(RTRIM(pheader)) as pheader,
+LTRIM(RTRIM(pfooter)) as pfooter,LTRIM(RTRIM(cwhsdesc)) as cwhsdesc,
+sum(1) as total_item,sum(nivdqtyout) as total_qty,
+format(sum(nivdamount)*(1-ninvdisc1/100)*(1-ninvdisc2/100)*(1-ninvdisc3/100)-ninvdisc,0) as subtotal,
+format(sum(if(nivdstkppn=1,((nivdamount)*(1-ninvdisc1/100)*(1-ninvdisc2/100)*(1-ninvdisc3/100)-ninvdisc)*ninvtax/100,0)),0) as tax,
+LTRIM(RTRIM(cinvfkentcode)) as cinvfkentcode
+from invoice
+inner join invoicedetail on cinvpk=civdfkinv
+inner join stock on cstkpk=civdfkstk
+inner join salesman on cinvfksam=csampk
+inner join warehouse on cinvfkwhs=cwhspk
+inner join ymk
+where cinvpk=?
+group by cinvmeja,cinvrefno,ninvdp,ninvvoucher,ninvtunai+ninvkembali,ninvpiutang,ninvcredit,ninvdebit,ninvmobile,ninvkembali,ninvvalue,oleh,ninvfreight,csamdesc,pheader,pfooter,cwhsdesc;
+
+select LTRIM(RTRIM(cstkdesc)) as cstkdesc,format(nivdqtyout,0) as qty,LTRIM(RTRIM(civdunit)) as civdunit,
+format(nivdamount/nivdqtyout,0) as price,
+format(nivdamount,0) as amount
+from invoice
+inner join invoicedetail on cinvpk=civdfkinv
+inner join stock on cstkpk=civdfkstk
+where cinvpk=?;
+
       `;
-      const params = [invoicePkNo];
-      const receiptResponse = await this.genericRepository.query<any>(receiptQuery, params);
-      if (!receiptResponse || (Array.isArray(receiptResponse) && receiptResponse.length === 0)) {
+      const params = [invoicePkNo, invoicePkNo];
+      const [receiptMasterResponse, receiptDetailResponse] = await this.genericRepository.query<any>(receiptQuery, params);
+      console.log(`master response`);
+      console.log(receiptMasterResponse);
+      console.log(`detail response`);
+      console.log(receiptDetailResponse);
+      if (!receiptMasterResponse || (Array.isArray(receiptDetailResponse) && receiptDetailResponse.length === 0)) {
         return ResponseHelper.CreateResponse<any>(
           [],
           HttpStatus.OK,
           Constants.TRANSACTION_SUCCESS);
       }
-      const receipt = await this.formatter.pointOfSales(receiptResponse);
+      this.formatter.setWidth(this.printerConfig.getPrinterWidth());
+      const receipt = await this.formatter.pointOfSales(receiptMasterResponse, receiptDetailResponse);
       console.log(receipt);
       return ResponseHelper.CreateResponse<any>(
         receipt,
@@ -1199,7 +1243,7 @@ SET @cinvpk := LEFT(SHA1(UUID()), 23);
           HttpStatus.OK,
           Constants.TRANSACTION_SUCCESS);
       }
-
+      this.formatter.setWidth(this.printerConfig.getPrinterWidth());
       const receipt = await this.formatter.stockAdjustment(receiptResponse);
       console.log('stock adjustment receipt:');
       console.log(receipt);

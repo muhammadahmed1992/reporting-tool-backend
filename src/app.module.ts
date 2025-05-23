@@ -40,6 +40,8 @@ import { SetupResponseService } from './services/setup.response.service';
 import { AdminService } from './services/admin.service';
 import { AdminController } from './controller/administration.controller';
 import { ReceiptFormatter } from './utils/receipt-formatter';
+import { PrinterConfigService } from './services/printer.config.service';
+import { LocaleService } from './services/locale.service';
 
 
 
@@ -80,7 +82,9 @@ import { ReceiptFormatter } from './utils/receipt-formatter';
     AdminService,
     SearchStockID_Purchase_Price_Report,
     StockBalanceReport_Purchase_Price,
-    ReceiptFormatter
+    ReceiptFormatter,
+    PrinterConfigService,
+    LocaleService
   ]
 })
 export class AppModule {

@@ -25,5 +25,10 @@
   "sales_label": "Sales",
   "service_label": "Service Rp.",
   "cash_label": "Cash Rp.",
-  "change_label": "Change Rp."
+  "change_label": "Change Rp.",
+  "discount_label": "Discount Rp.",
+  "voucher_label": "Voucher Rp.",
+  "mobile_label": "Online Rp.",
+  "credit_label": "QRIS Rp.",
+  "debit_label": "Debit Card Rp."
 }
