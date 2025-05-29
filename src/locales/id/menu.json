@@ -60,5 +60,6 @@
   "registration_set_success": "Kode Registrasi berhasil",
   "invalid_key_warning": "Harap isi Kode Registrasi",
   "limit": "Demo Version",
-  "limit_error": "Harap Registrasi untuk Full version"
+  "limit_error": "Harap Registrasi untuk Full version",
+  "printer": "Setup printer"
 }

@@ -21,5 +21,11 @@
   "connected": "Connected!",
   "connected_device": "This app is now using {printerName} for printing",
   "connection_error": "Connection error",
-  "connection_error_detail": "Pl try to reconnect with your device"
+  "connection_error_detail": "Pl try to reconnect with your device",
+  "print_complete": "Printing Complete",
+  "print_complete_success": "Printing has been completed successfully.",
+  "print_error": "Printing Error",
+  "print_error_msg": "There is an error while printing. Please check your printer.",
+  "print_inprogress": "Printing",
+  "print_inprogress_msg": "Printing is in progress. Please wait."
 }

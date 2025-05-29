@@ -38,10 +38,10 @@ export class ReceiptFormatter {
 
     let items = '';
     for (const detail of invoiceDetails) {
-      const name = detail.cstkdesc.padEnd(14).slice(0, 14);
-      const qty = String(detail.qty).padStart(3);
+      const name = detail.cstkdesc.trim();
+      const qty = String(detail.qty);
       const unit = detail.civdunit;
-      items += `${ReceiptFormatter.formatStockItemLine(name, qty, unit)}${ReceiptFormatter.LineHeight}`;
+      items += `${ReceiptFormatter.formatStockItemLine(name, qty, unit, this.RECEIPT_WIDTH)}${ReceiptFormatter.LineHeight}`;
     }
 
     const receiptNo = `${ReceiptFormatter.LineHeight}   ${this.translations['receipt_label']}: ${first.cinvrefno}`;
@@ -310,7 +310,7 @@ export class ReceiptFormatter {
     return ' '.repeat(spaces) + cleanText;
   }
 
-  private static formatStockItemLine(itemName, qty, unit, LINE_WIDTH: number = 32, paddingLeft = 3) {
+  private static formatStockItemLine(itemName, qty, unit, LINE_WIDTH: number = 32, paddingLeft = 0) {
     const qtyUnit = `${qty} ${unit.trim()}`; // e.g., "1 Pcs"
     const leftPaddedName = ' '.repeat(paddingLeft) + itemName.trim();
 
