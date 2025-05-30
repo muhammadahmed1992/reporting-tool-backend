@@ -113,6 +113,8 @@ export class ReceiptFormatter {
       lines.push(`   ${this.translations["member_label"]}      : ${cinvfkentcode?.trim()}`);
       lines.push(`   ${this.translations["waiter_label"]}      : ${csamdesc?.trim()}`);
       lines.push(`   ${this.translations["location_label"]}    : ${cwhsdesc?.trim()}`);
+      lines.push('');
+      lines.push('');
       lines.push(this.centerMultilineText(pfooter.trim()));
       lines.push('');
       lines.push('');
@@ -287,6 +289,8 @@ export class ReceiptFormatter {
       lines.push(`   ${this.translations["member_label"]}      : ${cinvfkentcode?.trim()}`);
       lines.push(`   ${this.translations["waiter_label"]}      : ${csamdesc?.trim()}`);
       lines.push(`   ${this.translations["location_label"]}    : ${cwhsdesc?.trim()}`);
+      lines.push('');
+      lines.push('');
       lines.push(this.centerMultilineText(pfooter.trim()));
       lines.push('');
       lines.push('');
