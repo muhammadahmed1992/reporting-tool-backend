@@ -78,7 +78,6 @@ export class ReceiptFormatter {
       lines.push(this.centerAlign(`${oleh}`));
       lines.push(this.centerAlign(`* ${this.translations['sales_order_label']} *`));
 
-      let maxAmount = items[0].amount;
       for (const item of items) {
 
         // Line 1: Item name with 3 leading spaces
@@ -87,12 +86,10 @@ export class ReceiptFormatter {
         // Line 2: Qty, unit, unit price, and total amount (right-aligned)
         lines.push(this.formatItemDetailsLine(item.qty, item.civdunit, item.price, item.amount));
 
-        if (item.amount > maxAmount)
-          maxAmount = item.amount;
-
       }
+      const amounts = items.map((i) => i.amount) as string[];
       // Add dashed line under the equals sign
-      lines.push(this.formatDashedLine(maxAmount));
+      lines.push(this.formatDashedLine(this.getMaxWithFormattedOriginal(amounts).original));
       // Summary
 
       lines.push(this.formatSummaryLine(`  ${this.translations['subtotal_rp_label']}`, subtotal));
@@ -101,11 +98,11 @@ export class ReceiptFormatter {
       }
 
       // Add dashed line under the equals sign
-      lines.push(this.formatDashedLine(subtotal));
+      lines.push(this.formatDashedLine(this.getMaxWithFormattedOriginal([subtotal, tax]).original));
 
       lines.push(this.formatSummaryLine(this.translations['total_label'], ninvvalue));
       // Add dashed line under the equals sign
-      lines.push(this.formatDashedLine(ninvvalue));
+      lines.push(this.formatDashedLine(this.getMaxWithFormattedOriginal([ninvvalue]).original));
 
       lines.push(this.formatItemNameLine(`${this.translations['total_qty_label']} = ${total_qty} (${total_item} ${this.translations["items_label"]})`));
 
@@ -160,20 +157,17 @@ export class ReceiptFormatter {
     }
 
     // Items
-    let maxAmount = items[0].amount;
     for (const item of items) {
       // Line 1: Item name with 3 leading spaces
       lines.push(this.formatItemNameLine(item.cstkdesc.trim()));
 
       // Line 2: Qty, unit, unit price, and total amount (right-aligned)
       lines.push(this.formatItemDetailsLine(item.qty, item.civdunit, item.price, item.amount));
-
-      if (item.amount > maxAmount)
-        maxAmount = item.amount;
     }
 
     // Add dashed line under the equals sign
-    lines.push(this.formatDashedLine(maxAmount));
+    const amounts = items.map((i) => i.amount) as string[];
+    lines.push(this.formatDashedLine(this.getMaxWithFormattedOriginal(amounts).original));
     // Summary
 
     lines.push(this.formatSummaryLine(`  ${this.translations['subtotal_rp_label']}`, subtotal));
@@ -254,7 +248,6 @@ export class ReceiptFormatter {
       lines.push(this.centerAlign(`${oleh}`));
       lines.push(this.centerAlign(`* ${this.translations['sales_label']} * `));
 
-      let maxAmount = items[0].amount;
       for (const item of items) {
 
         // Line 1: Item name with 3 leading spaces
@@ -263,25 +256,27 @@ export class ReceiptFormatter {
         // Line 2: Qty, unit, unit price, and total amount (right-aligned)
         lines.push(this.formatItemDetailsLine(item.qty, item.civdunit, item.price, item.amount));
 
-        if (item.amount > maxAmount)
-          maxAmount = item.amount;
-
       }
+
+      const amounts = items.map((i) => i.amount) as string[];
       // Add dashed line under the equals sign
-      lines.push(this.formatDashedLine(maxAmount));
+      lines.push(this.formatDashedLine(this.getMaxWithFormattedOriginal(amounts).original));
       // Summary
 
+      const summariesAmount = [];
       lines.push(this.formatSummaryLine(`  ${this.translations['subtotal_rp_label']}`, subtotal));
+      summariesAmount.push(subtotal);
       if (this.toNumber(tax) > 0) {
         lines.push(this.formatSummaryLine(`  ${this.translations['tax_label']}`, tax));
+        summariesAmount.push(tax);
       }
 
       // Add dashed line under the equals sign
-      lines.push(this.formatDashedLine(subtotal));
+      lines.push(this.formatDashedLine(this.getMaxWithFormattedOriginal(summariesAmount).original));
 
       lines.push(this.formatSummaryLine(this.translations['total_label'], ninvvalue));
       // Add dashed line under the equals sign
-      lines.push(this.formatDashedLine(ninvvalue));
+      lines.push(this.formatDashedLine(this.getMaxWithFormattedOriginal([ninvvalue]).original));
 
       lines.push(this.formatItemNameLine(`${this.translations['total_qty_label']} = ${total_qty}(${total_item} ${this.translations["items_label"]})`));
 
@@ -396,10 +391,12 @@ export class ReceiptFormatter {
 
   // For subtotal, total etc: "Subtotal Rp. =     70,000"
   private formatSummaryLine(label: string, amount: string): string {
+
     // Calculate the proportional equals column
     const equalsCol = Math.floor((this.RECEIPT_WIDTH * this.EQUALS_COL) / this.RECEIPT_WIDTH);
 
-    const left = `${this.pad(label, equalsCol - 1, 'right')} `; // leave space before '='
+    // leave space before '='
+    const left = `${this.pad(label, equalsCol - 1, 'right')} `;
     const equals = '=';
     const right = `${this.pad(amount, this.RECEIPT_WIDTH - equalsCol - 1, 'right')}`;
 
@@ -410,10 +407,6 @@ export class ReceiptFormatter {
   private formatDashedLine(amount?: string): string {
     // Calculate the proportional equals column
     const start = Math.floor((this.RECEIPT_WIDTH * this.EQUALS_COL) / this.RECEIPT_WIDTH);
-    // let length = ((this.RECEIPT_WIDTH - start)) + amount.length; // for space after '='
-    // if (start + length > this.RECEIPT_WIDTH) {
-    //   length = this.RECEIPT_WIDTH - start;
-    // }
     return ' '.repeat(start) + '-'.repeat(amount.length + 2);
   }
 
