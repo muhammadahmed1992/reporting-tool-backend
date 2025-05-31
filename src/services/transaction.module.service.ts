@@ -269,9 +269,10 @@ export class TransactionModuleService {
        */
       const receiptQuery = `
 select LTRIM(RTRIM(cinvmeja)) as cinvmeja,cinvrefno,ninvdp,ninvvoucher,(ninvtunai+ninvkembali) as ninvtunai_ninvkembali,ninvpiutang,ninvcredit,ninvdebit,
-ninvmobile,ninvkembali,ninvvalue,oleh,ninvfreight,LTRIM(RTRIM(csamdesc)) as csamdesc,LTRIM(RTRIM(pheader)) as pheader,
+ninvmobile,ninvkembali,format(ninvvalue, 0) as ninvvalue,oleh,ninvfreight,LTRIM(RTRIM(csamdesc)) as csamdesc,LTRIM(RTRIM(pheader)) as pheader,
 LTRIM(RTRIM(pfooter)) as pfooter,LTRIM(RTRIM(cwhsdesc)) as cwhsdesc,
-sum(1) as total_item,sum(nivdqtyout) as total_qty,
+sum(1) as total_item,
+format(sum(nivdqtyout),0) as total_qty,
 format(sum(nivdamount)*(1-ninvdisc1/100)*(1-ninvdisc2/100)*(1-ninvdisc3/100)-ninvdisc,0) as subtotal,
 format(sum(if(nivdstkppn=1,((nivdamount)*(1-ninvdisc1/100)*(1-ninvdisc2/100)*(1-ninvdisc3/100)-ninvdisc)*ninvtax/100,0)),0) as tax,
 LTRIM(RTRIM(cinvfkentcode)) as cinvfkentcode
@@ -549,8 +550,8 @@ where cinvpk=?;
       const receiptQuery = `
       -- Master Query
       select cinvrefno,oleh,ninvfreight,LTRIM(RTRIM(csamdesc)) as csamdesc,pheader,pfooter,LTRIM(RTRIM(cwhsdesc)) as cwhsdesc
-      ,ninvvalue,cinvfkentcode,
-      sum(1) as total_item,sum(nivdqtyout) as total_qty,
+      ,format(ninvvalue,0) as ninvvalue,cinvfkentcode,
+      sum(1) as total_item,format(sum(nivdqtyout),0) as total_qty,
       format(sum(nivdamount)*(1-ninvdisc1/100)*(1-ninvdisc2/100)*(1-ninvdisc3/100)-ninvdisc,0) as subtotal,
       format(sum(if(nivdstkppn=1,((nivdamount)*(1-ninvdisc1/100)*(1-ninvdisc2/100)*(1-ninvdisc3/100)-ninvdisc)*ninvtax/100,0)),0) as tax
       from porder
@@ -902,7 +903,7 @@ format(ninvcredit,0) as ninvcredit,format(ninvdebit,0) as ninvdebit,
 format(ninvmobile,0) as ninvmobile,format(ninvkembali, 0) as ninvkembali,format(ninvvalue, 0) as ninvvalue,oleh,
 ninvfreight,LTRIM(RTRIM(csamdesc)) as csamdesc,LTRIM(RTRIM(pheader)) as pheader,
 LTRIM(RTRIM(pfooter)) as pfooter,LTRIM(RTRIM(cwhsdesc)) as cwhsdesc,
-sum(1) as total_item,sum(nivdqtyout) as total_qty,
+sum(1) as total_item,format(sum(nivdqtyout),0) as total_qty,
 format(sum(nivdamount)*(1-ninvdisc1/100)*(1-ninvdisc2/100)*(1-ninvdisc3/100)-ninvdisc,0) as subtotal,
 format(sum(if(nivdstkppn=1,((nivdamount)*(1-ninvdisc1/100)*(1-ninvdisc2/100)*(1-ninvdisc3/100)-ninvdisc)*ninvtax/100,0)),0) as tax,
 LTRIM(RTRIM(cinvfkentcode)) as cinvfkentcode

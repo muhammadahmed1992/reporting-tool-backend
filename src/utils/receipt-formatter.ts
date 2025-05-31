@@ -23,7 +23,14 @@ export class ReceiptFormatter {
   private RECEIPT_WIDTH = 32;
   private EQUALS_COL = 19;
   private translations: Record<string, string>;
+  private ESC = '\x1B';
+  private FS = '\x1C';
+  private GS = '\x1D'
+  // Reset to normal font
+  private resetFont = this.ESC + '@';
 
+  // Set text to double height and width
+  private doubleFont = this.ESC + '!' + '\x30';
   public setWidth(width: number) {
     this.RECEIPT_WIDTH = width;
     //Setting Equal sign value according to the printer width: which is the 62.5% of printer width:
@@ -76,8 +83,7 @@ export class ReceiptFormatter {
       // Adding Multiple new lines before printing the date time.
       lines.push(ReceiptFormatter.ReceiptDistance);
       lines.push(this.centerAlign(`${oleh}`));
-      lines.push(this.centerAlign(`* ${this.translations['sales_order_label']} *`));
-
+      lines.push(this.centerAlign(`${this.doubleFont} * ${this.translations['sales_order_label']} * ${this.resetFont}`));
       for (const item of items) {
 
         // Line 1: Item name with 3 leading spaces
@@ -91,8 +97,9 @@ export class ReceiptFormatter {
       // Add dashed line under the equals sign
       lines.push(this.formatDashedLine(this.getMaxWithFormattedOriginal(amounts).original));
       // Summary
-
-      lines.push(this.formatSummaryLine(`  ${this.translations['subtotal_rp_label']}`, subtotal));
+      if (subtotal !== ninvvalue) {
+        lines.push(this.formatSummaryLine(`  ${this.translations['subtotal_rp_label']}`, subtotal));
+      }
       if (tax > 0) {
         lines.push(this.formatSummaryLine(`  ${this.translations['tax_label']}`, tax));
       }
@@ -106,10 +113,12 @@ export class ReceiptFormatter {
 
       lines.push(this.formatItemNameLine(`${this.translations['total_qty_label']} = ${total_qty} (${total_item} ${this.translations["items_label"]})`));
 
-      lines.push(`   ${this.translations["receipt_label"]}     : ${cinvrefno}`);
-      lines.push(`   ${this.translations["member_label"]}      : ${cinvfkentcode?.trim()}`);
-      lines.push(`   ${this.translations["waiter_label"]}      : ${csamdesc?.trim()}`);
-      lines.push(`   ${this.translations["location_label"]}    : ${cwhsdesc?.trim()}`);
+      lines.push(`${this.translations["receipt_label"]}     : ${cinvrefno}`);
+      lines.push(`${this.translations["member_label"]}      : ${cinvfkentcode?.trim()}`);
+      if (csamdesc?.trim() != "Tidak Ada") {
+        lines.push(`${this.translations["waiter_label"]}      : ${csamdesc?.trim()}`);
+      }
+      lines.push(`${this.translations["location_label"]}    : ${cwhsdesc?.trim()}`);
       lines.push('');
       lines.push('');
       lines.push(this.centerMultilineText(pfooter.trim()));
@@ -147,13 +156,17 @@ export class ReceiptFormatter {
     await this.setTranslations();
     const lines: string[] = [];
     lines.push(this.centerMultilineText(pheader.trim()));
+    lines.push(ReceiptFormatter.ReceiptDistance);
     lines.push(this.centerAlign(`${oleh}`));
+    lines.push(ReceiptFormatter.ReceiptDistance);
+
+    lines.push(this.centerAlign(`${this.doubleFont} * ${this.translations['pos_label']} * ${this.resetFont}`));
     // Adding Multiple new lines before printing the date time...
     lines.push(ReceiptFormatter.ReceiptDistance);
 
     if (cinvmeja) {
-      lines.push(` Table: ${cinvmeja}`);
-      lines.push(`--------${'-'.repeat(cinvmeja.length)}`);
+      lines.push(this.centerAlign(`${this.doubleFont} ${this.translations["table_label"]}: ${cinvmeja} ${this.resetFont}`));
+      lines.push(`------ ${'-'.repeat(cinvmeja.length)}`);
     }
 
     // Items
@@ -170,34 +183,36 @@ export class ReceiptFormatter {
     lines.push(this.formatDashedLine(this.getMaxWithFormattedOriginal(amounts).original));
     // Summary
 
-    lines.push(this.formatSummaryLine(`  ${this.translations['subtotal_rp_label']}`, subtotal));
+    if (subtotal !== ninvvalue) {
+      lines.push(this.formatSummaryLine(`${this.translations['subtotal_rp_label']}`, subtotal));
+    }
 
     if (this.toNumber(tax) > 0) {
-      lines.push(this.formatSummaryLine(`  ${this.translations['tax_label']}`, tax));
+      lines.push(this.formatSummaryLine(`${this.translations['tax_label']}`, tax));
     }
     if (this.toNumber(ninvfreight) > 0) {
-      lines.push(this.formatSummaryLine(`  ${this.translations['service_label']}`, ninvfreight));
+      lines.push(this.formatSummaryLine(`${this.translations['service_label']}`, ninvfreight));
     }
 
     // Add dashed line under the equals sign
     lines.push(this.formatDashedLine(this.getMaxWithFormattedOriginal([subtotal, tax, ninvfreight]).original));
 
-    lines.push(this.formatSummaryLine(`  ${this.translations['total_label']}`, ninvvalue));
+    lines.push(this.formatSummaryLine(`${this.translations['total_label']}`, ninvvalue));
 
     if (this.toNumber(ninvvoucher) > 0) {
-      lines.push(this.formatSummaryLine(`  ${this.translations['voucher_label']}`, ninvvoucher));
+      lines.push(this.formatSummaryLine(`${this.translations['voucher_label']}`, ninvvoucher));
     }
     if (this.toNumber(ninvtunai_ninvkembali) > 0) {
-      lines.push(this.formatSummaryLine(`  ${this.translations['cash_label']}`, ninvtunai_ninvkembali));
+      lines.push(this.formatSummaryLine(`${this.translations['cash_label']}`, ninvtunai_ninvkembali));
     }
     if (this.toNumber(ninvdebit) > 0) {
-      lines.push(this.formatSummaryLine(`  ${this.translations['debit_label']}`, ninvdebit));
+      lines.push(this.formatSummaryLine(`${this.translations['debit_label']}`, ninvdebit));
     }
     if (this.toNumber(ninvcredit) > 0) {
-      lines.push(this.formatSummaryLine(`  ${this.translations['credit_label']}`, ninvcredit));
+      lines.push(this.formatSummaryLine(`${this.translations['credit_label']}`, ninvcredit));
     }
     if (this.toNumber(ninvmobile) > 0) {
-      lines.push(this.formatSummaryLine(`  ${this.translations['mobile_label']}`, ninvmobile));
+      lines.push(this.formatSummaryLine(`${this.translations['mobile_label']}`, ninvmobile));
     }
 
     const result = this.getMaxWithFormattedOriginal([ninvvalue, ninvvoucher, ninvtunai_ninvkembali, ninvdebit, ninvcredit, ninvmobile]).original;
@@ -207,8 +222,8 @@ export class ReceiptFormatter {
     if (ninvkembali > 0) {
       lines.push(this.formatSummaryLine(`  ${this.translations['change_label']}`, ninvkembali));
     }
-    lines.push(this.formatItemNameLine(`${this.translations['total_qty_label']} = ${total_qty}(${total_item} ${this.translations["items_label"]})`));
-    lines.push(`   ${this.translations["receipt_label"]}     : ${cinvrefno}`);
+    lines.push(this.formatItemNameLine(`${this.translations['total_qty_label']} = ${total_qty} (${total_item} ${this.translations["items_label"]})`));
+    lines.push(`${this.translations["receipt_label"]}     : ${cinvrefno}`);
     lines.push('');
     lines.push('');
     lines.push(this.centerMultilineText(pfooter.trim()));
@@ -246,7 +261,7 @@ export class ReceiptFormatter {
       // Adding Multiple new lines before printing the date time.
       lines.push(ReceiptFormatter.ReceiptDistance);
       lines.push(this.centerAlign(`${oleh}`));
-      lines.push(this.centerAlign(`* ${this.translations['sales_label']} * `));
+      lines.push(this.centerAlign(`${this.doubleFont} * ${this.translations['sales_label']} * ${this.resetFont}`));
 
       for (const item of items) {
 
@@ -264,10 +279,13 @@ export class ReceiptFormatter {
       // Summary
 
       const summariesAmount = [];
-      lines.push(this.formatSummaryLine(`  ${this.translations['subtotal_rp_label']}`, subtotal));
-      summariesAmount.push(subtotal);
+      if (subtotal !== ninvvalue) {
+        lines.push(this.formatSummaryLine(`${this.translations['subtotal_rp_label']}`, subtotal));
+        summariesAmount.push(subtotal);
+      }
+
       if (this.toNumber(tax) > 0) {
-        lines.push(this.formatSummaryLine(`  ${this.translations['tax_label']}`, tax));
+        lines.push(this.formatSummaryLine(`${this.translations['tax_label']}`, tax));
         summariesAmount.push(tax);
       }
 
@@ -278,12 +296,14 @@ export class ReceiptFormatter {
       // Add dashed line under the equals sign
       lines.push(this.formatDashedLine(this.getMaxWithFormattedOriginal([ninvvalue]).original));
 
-      lines.push(this.formatItemNameLine(`${this.translations['total_qty_label']} = ${total_qty}(${total_item} ${this.translations["items_label"]})`));
+      lines.push(this.formatItemNameLine(`${this.translations['total_qty_label']} = ${total_qty} (${total_item} ${this.translations["items_label"]})`));
 
-      lines.push(`   ${this.translations["receipt_label"]}     : ${cinvrefno}`);
-      lines.push(`   ${this.translations["member_label"]}      : ${cinvfkentcode?.trim()}`);
-      lines.push(`   ${this.translations["waiter_label"]}      : ${csamdesc?.trim()}`);
-      lines.push(`   ${this.translations["location_label"]}    : ${cwhsdesc?.trim()}`);
+      lines.push(`${this.translations["receipt_label"]}     : ${cinvrefno}`);
+      lines.push(`${this.translations["member_label"]}      : ${cinvfkentcode?.trim()}`);
+      if (csamdesc?.trim() !== 'Tidak Ada') {
+        lines.push(`${this.translations["waiter_label"]}      : ${csamdesc?.trim()}`);
+      }
+      lines.push(`${this.translations["location_label"]}    : ${cwhsdesc?.trim()}`);
       lines.push('');
       lines.push('');
       lines.push(this.centerMultilineText(pfooter.trim()));
@@ -406,8 +426,10 @@ export class ReceiptFormatter {
   // Dashes under the '=' column
   private formatDashedLine(amount?: string): string {
     // Calculate the proportional equals column
+    console.log(`inside dashed function value: ${amount}`);
     const start = Math.floor((this.RECEIPT_WIDTH * this.EQUALS_COL) / this.RECEIPT_WIDTH);
-    return ' '.repeat(start) + '-'.repeat(amount.length + 2);
+    console.log(`start of = is: ${start}`);
+    return ' '.repeat(start) + '-'.repeat(amount.length + (this.RECEIPT_WIDTH - start - amount.length));
   }
 
   toNumber = (value: string | number): number =>
@@ -419,6 +441,7 @@ export class ReceiptFormatter {
     const nums = values.map(v => Number(v.replace(/,/g, '')));
     const maxNum = Math.max(...nums);
     const index = nums.indexOf(maxNum);
+    console.log(`before dashes to be print: value is ${values[index]} and length is: ${values[index].length}`);
     return { max: maxNum, original: values[index] };
   }
 }
