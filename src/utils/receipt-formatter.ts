@@ -219,7 +219,7 @@ export class ReceiptFormatter {
 
     // Add dashed line under the equals sign
     lines.push(this.formatDashedLine(result));
-    if (ninvkembali > 0) {
+    if (this.toNumber(ninvkembali) > 0) {
       lines.push(this.formatSummaryLine(`  ${this.translations['change_label']}`, ninvkembali));
     }
     lines.push(this.formatItemNameLine(`${this.translations['total_qty_label']} = ${total_qty} (${total_item} ${this.translations["items_label"]})`));
