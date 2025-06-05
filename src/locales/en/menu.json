@@ -60,5 +60,6 @@
   "registration_set_success": "Registration key has been set",
   "invalid_key_warning": "Please enter a valid registration key",
   "limit": "Demo Version",
-  "limit_error": "Please register for Full version"
+  "limit_error": "Please register for Full version",
+  "printer": "Setup printer"
 }

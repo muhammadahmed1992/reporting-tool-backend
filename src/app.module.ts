@@ -39,6 +39,9 @@ import { SetupResponseController } from './controller/setup.response.controller'
 import { SetupResponseService } from './services/setup.response.service';
 import { AdminService } from './services/admin.service';
 import { AdminController } from './controller/administration.controller';
+import { ReceiptFormatter } from './utils/receipt-formatter';
+import { PrinterConfigService } from './services/printer.config.service';
+import { LocaleService } from './services/locale.service';
 
 
 
@@ -78,7 +81,10 @@ import { AdminController } from './controller/administration.controller';
     CashDrawerDetailReport,
     AdminService,
     SearchStockID_Purchase_Price_Report,
-    StockBalanceReport_Purchase_Price
+    StockBalanceReport_Purchase_Price,
+    ReceiptFormatter,
+    PrinterConfigService,
+    LocaleService
   ]
 })
 export class AppModule {
