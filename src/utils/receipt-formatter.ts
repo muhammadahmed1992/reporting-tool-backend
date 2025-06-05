@@ -28,7 +28,14 @@ export class ReceiptFormatter {
   private GS = '\x1D'
   // Reset to normal font
   private resetFont = this.ESC + '@';
+  private ESC = '\x1B';
+  private FS = '\x1C';
+  private GS = '\x1D'
+  // Reset to normal font
+  private resetFont = this.ESC + '@';
 
+  // Set text to double height and width
+  private doubleFont = this.ESC + '!' + '\x30';
   // Set text to double height and width
   private doubleFont = this.ESC + '!' + '\x30';
   public setWidth(width: number) {
@@ -91,7 +98,9 @@ export class ReceiptFormatter {
 
       }
       const amounts = items.map((i) => i.amount) as string[];
+      const amounts = items.map((i) => i.amount) as string[];
       // Add dashed line under the equals sign
+      lines.push(this.formatDashedLine(this.getMaxWithFormattedOriginal(amounts).original));
       lines.push(this.formatDashedLine(this.getMaxWithFormattedOriginal(amounts).original));
       // Summary
       let isSummaryExists = false;
@@ -156,6 +165,7 @@ export class ReceiptFormatter {
     await this.setTranslations();
     const lines: string[] = [];
     lines.push(this.centerMultilineText(pheader.trim()));
+    lines.push(ReceiptFormatter.ReceiptDistance);
     lines.push(this.centerAlign(`${oleh}`));
     lines.push(this.centerAlign(`* ${this.translations['pos_label']} *`));
 
@@ -174,6 +184,8 @@ export class ReceiptFormatter {
     }
 
     // Add dashed line under the equals sign
+    const amounts = items.map((i) => i.amount) as string[];
+    lines.push(this.formatDashedLine(this.getMaxWithFormattedOriginal(amounts).original));
     const amounts = items.map((i) => i.amount) as string[];
     lines.push(this.formatDashedLine(this.getMaxWithFormattedOriginal(amounts).original));
     // Summary
@@ -197,20 +209,26 @@ export class ReceiptFormatter {
     }
 
     lines.push(this.formatSummaryLine(`${this.translations['total_label']}`, ninvvalue));
+    lines.push(this.formatSummaryLine(`${this.translations['total_label']}`, ninvvalue));
 
     if (this.toNumber(ninvvoucher) > 0) {
+      lines.push(this.formatSummaryLine(`${this.translations['voucher_label']}`, ninvvoucher));
       lines.push(this.formatSummaryLine(`${this.translations['voucher_label']}`, ninvvoucher));
     }
     if (this.toNumber(ninvtunai_ninvkembali) > 0) {
       lines.push(this.formatSummaryLine(`${this.translations['cash_label']}`, ninvtunai_ninvkembali));
+      lines.push(this.formatSummaryLine(`${this.translations['cash_label']}`, ninvtunai_ninvkembali));
     }
     if (this.toNumber(ninvdebit) > 0) {
+      lines.push(this.formatSummaryLine(`${this.translations['debit_label']}`, ninvdebit));
       lines.push(this.formatSummaryLine(`${this.translations['debit_label']}`, ninvdebit));
     }
     if (this.toNumber(ninvcredit) > 0) {
       lines.push(this.formatSummaryLine(`${this.translations['credit_label']}`, ninvcredit));
+      lines.push(this.formatSummaryLine(`${this.translations['credit_label']}`, ninvcredit));
     }
     if (this.toNumber(ninvmobile) > 0) {
+      lines.push(this.formatSummaryLine(`${this.translations['mobile_label']}`, ninvmobile));
       lines.push(this.formatSummaryLine(`${this.translations['mobile_label']}`, ninvmobile));
     }
 
@@ -274,7 +292,10 @@ export class ReceiptFormatter {
       }
 
       const amounts = items.map((i) => i.amount) as string[];
+
+      const amounts = items.map((i) => i.amount) as string[];
       // Add dashed line under the equals sign
+      lines.push(this.formatDashedLine(this.getMaxWithFormattedOriginal(amounts).original));
       lines.push(this.formatDashedLine(this.getMaxWithFormattedOriginal(amounts).original));
       // Summary
 
@@ -284,7 +305,15 @@ export class ReceiptFormatter {
         summariesAmount.push(subtotal);
       }
 
+      const summariesAmount = [];
+      if (subtotal !== ninvvalue) {
+        lines.push(this.formatSummaryLine(`${this.translations['subtotal_rp_label']}`, subtotal));
+        summariesAmount.push(subtotal);
+      }
+
       if (this.toNumber(tax) > 0) {
+        lines.push(this.formatSummaryLine(`${this.translations['tax_label']}`, tax));
+        summariesAmount.push(tax);
         lines.push(this.formatSummaryLine(`${this.translations['tax_label']}`, tax));
         summariesAmount.push(tax);
       }
@@ -413,9 +442,12 @@ export class ReceiptFormatter {
   // For subtotal, total etc: "Subtotal Rp. =     70,000"
   private formatSummaryLine(label: string, amount: string): string {
 
+
     // Calculate the proportional equals column
     const equalsCol = Math.floor((this.RECEIPT_WIDTH * this.EQUALS_COL) / this.RECEIPT_WIDTH);
 
+    // leave space before '='
+    const left = `${this.pad(label, equalsCol - 1, 'right')} `;
     // leave space before '='
     const left = `${this.pad(label, equalsCol - 1, 'right')} `;
     const equals = '=';
@@ -428,7 +460,10 @@ export class ReceiptFormatter {
   private formatDashedLine(amount?: string): string {
     // Calculate the proportional equals column
     console.log(`inside dashed function value: ${amount}`);
+    console.log(`inside dashed function value: ${amount}`);
     const start = Math.floor((this.RECEIPT_WIDTH * this.EQUALS_COL) / this.RECEIPT_WIDTH);
+    console.log(`start of = is: ${start}`);
+    return ' '.repeat(start) + '-'.repeat(amount.length + (this.RECEIPT_WIDTH - start - amount.length));
     console.log(`start of = is: ${start}`);
     return ' '.repeat(start) + '-'.repeat(amount.length + (this.RECEIPT_WIDTH - start - amount.length));
   }
@@ -442,6 +477,7 @@ export class ReceiptFormatter {
     const nums = values.map(v => Number(v.replace(/,/g, '')));
     const maxNum = Math.max(...nums);
     const index = nums.indexOf(maxNum);
+    console.log(`before dashes to be print: value is ${values[index]} and length is: ${values[index].length}`);
     console.log(`before dashes to be print: value is ${values[index]} and length is: ${values[index].length}`);
     return { max: maxNum, original: values[index] };
   }
