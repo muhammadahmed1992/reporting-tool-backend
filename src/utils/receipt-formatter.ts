@@ -23,7 +23,14 @@ export class ReceiptFormatter {
   private RECEIPT_WIDTH = 32;
   private EQUALS_COL = 19;
   private translations: Record<string, string>;
+  private ESC = '\x1B';
+  private FS = '\x1C';
+  private GS = '\x1D'
+  // Reset to normal font
+  private resetFont = this.ESC + '@';
 
+  // Set text to double height and width
+  private doubleFont = this.ESC + '!' + '\x30';
   public setWidth(width: number) {
     this.RECEIPT_WIDTH = width;
     //Setting Equal sign value according to the printer width: which is the 62.5% of printer width:
@@ -44,10 +51,10 @@ export class ReceiptFormatter {
       items += `${ReceiptFormatter.formatStockItemLine(name, qty, unit, this.RECEIPT_WIDTH)}${ReceiptFormatter.LineHeight}`;
     }
 
-    const receiptNo = `${ReceiptFormatter.LineHeight}   ${this.translations['receipt_label']}: ${first.cinvrefno}`;
-    const location = `${ReceiptFormatter.LineHeight}   ${first.cwhsdesc.trim()}${ReceiptFormatter.ReceiptDistance}`;
+    const receiptNo = `${ReceiptFormatter.LineHeight}${this.translations['receipt_label']}: ${first.cinvrefno}`;
+    const location = `${ReceiptFormatter.LineHeight}${first.cwhsdesc.trim()}${ReceiptFormatter.ReceiptDistance}`;
 
-    return `${metadata}${items}${receiptNo}${location}`;
+    return `${metadata}${items}${receiptNo}${location}${ReceiptFormatter.LineHeight}${ReceiptFormatter.LineHeight}`;
   }
 
   async salesOrder(masterData: any, detailData: any): Promise<string> {
@@ -72,13 +79,8 @@ export class ReceiptFormatter {
       const lines: string[] = [];
 
       lines.push(this.centerMultilineText(pheader.trim()));
-
-      // Adding Multiple new lines before printing the date time.
-      lines.push(ReceiptFormatter.ReceiptDistance);
       lines.push(this.centerAlign(`${oleh}`));
       lines.push(this.centerAlign(`* ${this.translations['sales_order_label']} *`));
-
-      let maxAmount = items[0].amount;
       for (const item of items) {
 
         // Line 1: Item name with 3 leading spaces
@@ -87,32 +89,37 @@ export class ReceiptFormatter {
         // Line 2: Qty, unit, unit price, and total amount (right-aligned)
         lines.push(this.formatItemDetailsLine(item.qty, item.civdunit, item.price, item.amount));
 
-        if (item.amount > maxAmount)
-          maxAmount = item.amount;
-
       }
+      const amounts = items.map((i) => i.amount) as string[];
       // Add dashed line under the equals sign
-      lines.push(this.formatDashedLine(maxAmount));
+      lines.push(this.formatDashedLine(this.getMaxWithFormattedOriginal(amounts).original));
       // Summary
-
-      lines.push(this.formatSummaryLine(`  ${this.translations['subtotal_rp_label']}`, subtotal));
-      if (tax > 0) {
-        lines.push(this.formatSummaryLine(`  ${this.translations['tax_label']}`, tax));
+      let isSummaryExists = false;
+      if (subtotal !== ninvvalue) {
+        isSummaryExists =true;
+        lines.push(this.formatSummaryLine(`${this.translations['subtotal_rp_label']}`, subtotal));
+      }
+      if (this.toNumber(tax) > 0) {
+        isSummaryExists =true;
+        lines.push(this.formatSummaryLine(`${this.translations['tax_label']}`, tax));
       }
 
-      // Add dashed line under the equals sign
-      lines.push(this.formatDashedLine(subtotal));
+      if (isSummaryExists) {
+        // Add dashed line under the equals sign
+        lines.push(this.formatDashedLine(this.getMaxWithFormattedOriginal([subtotal, tax]).original));
+      }
 
       lines.push(this.formatSummaryLine(this.translations['total_label'], ninvvalue));
-      // Add dashed line under the equals sign
-      lines.push(this.formatDashedLine(ninvvalue));
-
+      lines.push('');
       lines.push(this.formatItemNameLine(`${this.translations['total_qty_label']} = ${total_qty} (${total_item} ${this.translations["items_label"]})`));
 
-      lines.push(`   ${this.translations["receipt_label"]}     : ${cinvrefno}`);
-      lines.push(`   ${this.translations["member_label"]}      : ${cinvfkentcode?.trim()}`);
-      lines.push(`   ${this.translations["waiter_label"]}      : ${csamdesc?.trim()}`);
-      lines.push(`   ${this.translations["location_label"]}    : ${cwhsdesc?.trim()}`);
+      lines.push(`${this.translations["receipt_label"]}     : ${cinvrefno}`);
+      lines.push(`${this.translations["member_label"]}      : ${cinvfkentcode?.trim()}`);
+      if (csamdesc?.trim() != "Tidak Ada") {
+        lines.push(`${this.translations["waiter_label"]}      : ${csamdesc?.trim()}`);
+      }
+      lines.push(`${this.translations["location_label"]}    : ${cwhsdesc?.trim()}`);
+      lines.push('');
       lines.push(this.centerMultilineText(pfooter.trim()));
       lines.push('');
       lines.push('');
@@ -134,7 +141,8 @@ export class ReceiptFormatter {
     const {
       pheader, pfooter, cinvmeja, cinvrefno, ninvvalue,
       ninvtunai_ninvkembali, ninvfreight, tax, subtotal,
-      total_item, total_qty, oleh, ninvvoucher, ninvdebit, ninvcredit, ninvmobile, ninvkembali
+      total_item, total_qty, oleh, ninvvoucher, ninvdebit, ninvcredit, ninvmobile, ninvkembali,cinvfkentcode
+      ,csamdesc
     } = firstRow;
 
     const items: any[] = detailData.map(row => ({
@@ -149,71 +157,77 @@ export class ReceiptFormatter {
     const lines: string[] = [];
     lines.push(this.centerMultilineText(pheader.trim()));
     lines.push(this.centerAlign(`${oleh}`));
-    // Adding Multiple new lines before printing the date time...
-    lines.push(ReceiptFormatter.ReceiptDistance);
+    lines.push(this.centerAlign(`* ${this.translations['pos_label']} *`));
 
+    console.log(`tableNumber: ${cinvmeja}`);
     if (cinvmeja) {
-      lines.push(` Table: ${cinvmeja}`);
-      lines.push(`--------${'-'.repeat(cinvmeja.length)}`);
+      lines.push(this.centerAlign(`${this.translations["table_label"]}: ${cinvmeja}`));
     }
 
     // Items
-    let maxAmount = items[0].amount;
     for (const item of items) {
       // Line 1: Item name with 3 leading spaces
       lines.push(this.formatItemNameLine(item.cstkdesc.trim()));
 
       // Line 2: Qty, unit, unit price, and total amount (right-aligned)
       lines.push(this.formatItemDetailsLine(item.qty, item.civdunit, item.price, item.amount));
-
-      if (item.amount > maxAmount)
-        maxAmount = item.amount;
     }
 
     // Add dashed line under the equals sign
-    lines.push(this.formatDashedLine(maxAmount));
+    const amounts = items.map((i) => i.amount) as string[];
+    lines.push(this.formatDashedLine(this.getMaxWithFormattedOriginal(amounts).original));
     // Summary
-
-    lines.push(this.formatSummaryLine(`  ${this.translations['subtotal_rp_label']}`, subtotal));
-
+    let isSummaryExists = false;
+    if (subtotal !== ninvvalue) {
+      isSummaryExists =true;
+      lines.push(this.formatSummaryLine(`${this.translations['subtotal_rp_label']}`, subtotal));
+    }
     if (this.toNumber(tax) > 0) {
-      lines.push(this.formatSummaryLine(`  ${this.translations['tax_label']}`, tax));
+      isSummaryExists =true;
+      lines.push(this.formatSummaryLine(`${this.translations['tax_label']}`, tax));
     }
     if (this.toNumber(ninvfreight) > 0) {
-      lines.push(this.formatSummaryLine(`  ${this.translations['service_label']}`, ninvfreight));
+      isSummaryExists = true;
+      lines.push(this.formatSummaryLine(`${this.translations['service_label']}`, ninvfreight));
     }
 
-    // Add dashed line under the equals sign
-    lines.push(this.formatDashedLine(this.getMaxWithFormattedOriginal([subtotal, tax, ninvfreight]).original));
+    if (isSummaryExists) {
+      // Add dashed line under the equals sign
+      lines.push(this.formatDashedLine(this.getMaxWithFormattedOriginal([subtotal, tax, ninvfreight]).original));
+    }
 
-    lines.push(this.formatSummaryLine(`  ${this.translations['total_label']}`, ninvvalue));
+    lines.push(this.formatSummaryLine(`${this.translations['total_label']}`, ninvvalue));
 
     if (this.toNumber(ninvvoucher) > 0) {
-      lines.push(this.formatSummaryLine(`  ${this.translations['voucher_label']}`, ninvvoucher));
+      lines.push(this.formatSummaryLine(`${this.translations['voucher_label']}`, ninvvoucher));
     }
     if (this.toNumber(ninvtunai_ninvkembali) > 0) {
-      lines.push(this.formatSummaryLine(`  ${this.translations['cash_label']}`, ninvtunai_ninvkembali));
+      lines.push(this.formatSummaryLine(`${this.translations['cash_label']}`, ninvtunai_ninvkembali));
     }
     if (this.toNumber(ninvdebit) > 0) {
-      lines.push(this.formatSummaryLine(`  ${this.translations['debit_label']}`, ninvdebit));
+      lines.push(this.formatSummaryLine(`${this.translations['debit_label']}`, ninvdebit));
     }
     if (this.toNumber(ninvcredit) > 0) {
-      lines.push(this.formatSummaryLine(`  ${this.translations['credit_label']}`, ninvcredit));
+      lines.push(this.formatSummaryLine(`${this.translations['credit_label']}`, ninvcredit));
     }
     if (this.toNumber(ninvmobile) > 0) {
-      lines.push(this.formatSummaryLine(`  ${this.translations['mobile_label']}`, ninvmobile));
+      lines.push(this.formatSummaryLine(`${this.translations['mobile_label']}`, ninvmobile));
     }
 
     const result = this.getMaxWithFormattedOriginal([ninvvalue, ninvvoucher, ninvtunai_ninvkembali, ninvdebit, ninvcredit, ninvmobile]).original;
 
-    // Add dashed line under the equals sign
-    lines.push(this.formatDashedLine(result));
-    if (ninvkembali > 0) {
-      lines.push(this.formatSummaryLine(`  ${this.translations['change_label']}`, ninvkembali));
+    if (this.toNumber(ninvkembali) > 0) {
+      // Add dashed line under the equals sign
+      lines.push(this.formatDashedLine(result));
+      lines.push(this.formatSummaryLine(`${this.translations['change_label']}`, ninvkembali));
     }
-    lines.push(this.formatItemNameLine(`${this.translations['total_qty_label']} = ${total_qty}(${total_item} ${this.translations["items_label"]})`));
-    lines.push(`   ${this.translations["receipt_label"]}     : ${cinvrefno}`);
     lines.push('');
+    lines.push(this.formatItemNameLine(`${this.translations['total_qty_label']} = ${total_qty} (${total_item} ${this.translations["items_label"]})`));
+    lines.push(`${this.translations["receipt_label"]}     : ${cinvrefno}`);
+    lines.push(`${this.translations["member_label"]}      : ${cinvfkentcode?.trim()}`);
+    if (csamdesc?.trim() != "Tidak Ada") {
+      lines.push(`${this.translations["waiter_label"]}      : ${csamdesc?.trim()}`);
+    }
     lines.push('');
     lines.push(this.centerMultilineText(pfooter.trim()));
     lines.push('');
@@ -246,13 +260,9 @@ export class ReceiptFormatter {
       const lines: string[] = [];
 
       lines.push(this.centerMultilineText(pheader.trim()));
-
-      // Adding Multiple new lines before printing the date time.
-      lines.push(ReceiptFormatter.ReceiptDistance);
       lines.push(this.centerAlign(`${oleh}`));
-      lines.push(this.centerAlign(`* ${this.translations['sales_label']} * `));
+      lines.push(this.centerAlign(`* ${this.translations['sales_label']} *`));
 
-      let maxAmount = items[0].amount;
       for (const item of items) {
 
         // Line 1: Item name with 3 leading spaces
@@ -261,32 +271,42 @@ export class ReceiptFormatter {
         // Line 2: Qty, unit, unit price, and total amount (right-aligned)
         lines.push(this.formatItemDetailsLine(item.qty, item.civdunit, item.price, item.amount));
 
-        if (item.amount > maxAmount)
-          maxAmount = item.amount;
-
       }
+
+      const amounts = items.map((i) => i.amount) as string[];
       // Add dashed line under the equals sign
-      lines.push(this.formatDashedLine(maxAmount));
+      lines.push(this.formatDashedLine(this.getMaxWithFormattedOriginal(amounts).original));
       // Summary
 
-      lines.push(this.formatSummaryLine(`  ${this.translations['subtotal_rp_label']}`, subtotal));
-      if (this.toNumber(tax) > 0) {
-        lines.push(this.formatSummaryLine(`  ${this.translations['tax_label']}`, tax));
+      const summariesAmount = [];
+      if (subtotal !== ninvvalue) {
+        lines.push(this.formatSummaryLine(`${this.translations['subtotal_rp_label']}`, subtotal));
+        summariesAmount.push(subtotal);
       }
 
-      // Add dashed line under the equals sign
-      lines.push(this.formatDashedLine(subtotal));
+      if (this.toNumber(tax) > 0) {
+        lines.push(this.formatSummaryLine(`${this.translations['tax_label']}`, tax));
+        summariesAmount.push(tax);
+      }
+
+      if (summariesAmount.length > 0) {
+        // Add dashed line under the equals sign
+        lines.push(this.formatDashedLine(this.getMaxWithFormattedOriginal(summariesAmount).original));
+      }
 
       lines.push(this.formatSummaryLine(this.translations['total_label'], ninvvalue));
-      // Add dashed line under the equals sign
-      lines.push(this.formatDashedLine(ninvvalue));
+      
+      lines.push('');
+      lines.push(this.formatItemNameLine(`${this.translations['total_qty_label']} = ${total_qty} (${total_item} ${this.translations["items_label"]})`));
 
-      lines.push(this.formatItemNameLine(`${this.translations['total_qty_label']} = ${total_qty}(${total_item} ${this.translations["items_label"]})`));
 
-      lines.push(`   ${this.translations["receipt_label"]}     : ${cinvrefno}`);
-      lines.push(`   ${this.translations["member_label"]}      : ${cinvfkentcode?.trim()}`);
-      lines.push(`   ${this.translations["waiter_label"]}      : ${csamdesc?.trim()}`);
-      lines.push(`   ${this.translations["location_label"]}    : ${cwhsdesc?.trim()}`);
+      lines.push(`${this.translations["receipt_label"]}     : ${cinvrefno}`);
+      lines.push(`${this.translations["member_label"]}      : ${cinvfkentcode?.trim()}`);
+      if (csamdesc?.trim() !== 'Tidak Ada') {
+        lines.push(`${this.translations["waiter_label"]}      : ${csamdesc?.trim()}`);
+      }
+      lines.push(`${this.translations["location_label"]}    : ${cwhsdesc?.trim()}`);
+      lines.push('');
       lines.push(this.centerMultilineText(pfooter.trim()));
       lines.push('');
       lines.push('');
@@ -370,7 +390,7 @@ export class ReceiptFormatter {
     const totalProportion = this.RECEIPT_WIDTH;
     const qtyUnitProportion = 9;
     const priceProportion = 9;
-    const totalProportionLength = 10;
+    const totalProportionLength = 11;
 
     // Calculate actual widths proportionally
     const qtyUnitWidth = Math.floor((qtyUnitProportion / totalProportion) * this.RECEIPT_WIDTH);
@@ -392,10 +412,12 @@ export class ReceiptFormatter {
 
   // For subtotal, total etc: "Subtotal Rp. =     70,000"
   private formatSummaryLine(label: string, amount: string): string {
+
     // Calculate the proportional equals column
     const equalsCol = Math.floor((this.RECEIPT_WIDTH * this.EQUALS_COL) / this.RECEIPT_WIDTH);
 
-    const left = `${this.pad(label, equalsCol - 1, 'right')} `; // leave space before '='
+    // leave space before '='
+    const left = `${this.pad(label, equalsCol - 1, 'right')} `;
     const equals = '=';
     const right = `${this.pad(amount, this.RECEIPT_WIDTH - equalsCol - 1, 'right')}`;
 
@@ -405,12 +427,10 @@ export class ReceiptFormatter {
   // Dashes under the '=' column
   private formatDashedLine(amount?: string): string {
     // Calculate the proportional equals column
+    console.log(`inside dashed function value: ${amount}`);
     const start = Math.floor((this.RECEIPT_WIDTH * this.EQUALS_COL) / this.RECEIPT_WIDTH);
-    // let length = ((this.RECEIPT_WIDTH - start)) + amount.length; // for space after '='
-    // if (start + length > this.RECEIPT_WIDTH) {
-    //   length = this.RECEIPT_WIDTH - start;
-    // }
-    return ' '.repeat(start) + '-'.repeat(amount.length + 2);
+    console.log(`start of = is: ${start}`);
+    return ' '.repeat(start) + '-'.repeat(amount.length + (this.RECEIPT_WIDTH - start - amount.length));
   }
 
   toNumber = (value: string | number): number =>
@@ -422,6 +442,7 @@ export class ReceiptFormatter {
     const nums = values.map(v => Number(v.replace(/,/g, '')));
     const maxNum = Math.max(...nums);
     const index = nums.indexOf(maxNum);
+    console.log(`before dashes to be print: value is ${values[index]} and length is: ${values[index].length}`);
     return { max: maxNum, original: values[index] };
   }
 }

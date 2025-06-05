@@ -30,5 +30,7 @@
   "voucher_label": "Voucher Rp.",
   "mobile_label": "Online Rp.",
   "credit_label": "QRIS Rp.",
-  "debit_label": "Debit Card Rp."
+  "debit_label": "Debit Card Rp.",
+  "pos_label": "Point of Sales",
+  "table_label": "Table"
 }

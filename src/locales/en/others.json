@@ -15,7 +15,7 @@
   "pairing_status": "Pairing Status",
   "paired": "Paired",
   "un_paired": "Un-Paired",
-  "device_selected": "Device On/Off",
+  "device_selected": "Setting On/Off",
   "bluetooth_on": "Bluetooth is ON",
   "bluetooth_connected_success": "Bluetooth is successfully turned on",
   "connected": "Connected!",
@@ -27,5 +27,7 @@
   "print_error": "Printing Error",
   "print_error_msg": "There is an error while printing. Please check your printer.",
   "print_inprogress": "Printing",
-  "print_inprogress_msg": "Printing is in progress. Please wait."
+  "print_inprogress_msg": "Printing is in progress. Please wait.",
+  "no_printer_setup": "No printer Setup",
+  "connect_printer_first": "No printer is connected. Please goback to setup printer screen."
 }
