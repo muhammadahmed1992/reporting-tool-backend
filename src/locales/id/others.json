@@ -24,5 +24,7 @@
   "print_inprogress": "Printing",
   "unknown_device": "Unknown device",
   "no_printer_setup": "No printer Setup",
-  "connect_printer_first": "No printer is connected. Please goback to setup printer screen."
+  "connect_printer_first": "No printer is connected. Please goback to setup printer screen.",
+  "fill": "Fill",
+  "clear": "Clear"
 }

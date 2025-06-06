@@ -27,17 +27,12 @@ export class ReceiptFormatter {
   private FS = '\x1C';
   private GS = '\x1D'
   // Reset to normal font
-  private resetFont = this.ESC + '@';
-  private ESC = '\x1B';
-  private FS = '\x1C';
-  private GS = '\x1D'
   // Reset to normal font
   private resetFont = this.ESC + '@';
 
   // Set text to double height and width
   private doubleFont = this.ESC + '!' + '\x30';
-  // Set text to double height and width
-  private doubleFont = this.ESC + '!' + '\x30';
+
   public setWidth(width: number) {
     this.RECEIPT_WIDTH = width;
     //Setting Equal sign value according to the printer width: which is the 62.5% of printer width:
@@ -98,18 +93,17 @@ export class ReceiptFormatter {
 
       }
       const amounts = items.map((i) => i.amount) as string[];
-      const amounts = items.map((i) => i.amount) as string[];
       // Add dashed line under the equals sign
       lines.push(this.formatDashedLine(this.getMaxWithFormattedOriginal(amounts).original));
       lines.push(this.formatDashedLine(this.getMaxWithFormattedOriginal(amounts).original));
       // Summary
       let isSummaryExists = false;
       if (subtotal !== ninvvalue) {
-        isSummaryExists =true;
+        isSummaryExists = true;
         lines.push(this.formatSummaryLine(`${this.translations['subtotal_rp_label']}`, subtotal));
       }
       if (this.toNumber(tax) > 0) {
-        isSummaryExists =true;
+        isSummaryExists = true;
         lines.push(this.formatSummaryLine(`${this.translations['tax_label']}`, tax));
       }
 
@@ -186,16 +180,14 @@ export class ReceiptFormatter {
     // Add dashed line under the equals sign
     const amounts = items.map((i) => i.amount) as string[];
     lines.push(this.formatDashedLine(this.getMaxWithFormattedOriginal(amounts).original));
-    const amounts = items.map((i) => i.amount) as string[];
-    lines.push(this.formatDashedLine(this.getMaxWithFormattedOriginal(amounts).original));
     // Summary
     let isSummaryExists = false;
     if (subtotal !== ninvvalue) {
-      isSummaryExists =true;
+      isSummaryExists = true;
       lines.push(this.formatSummaryLine(`${this.translations['subtotal_rp_label']}`, subtotal));
     }
     if (this.toNumber(tax) > 0) {
-      isSummaryExists =true;
+      isSummaryExists = true;
       lines.push(this.formatSummaryLine(`${this.translations['tax_label']}`, tax));
     }
     if (this.toNumber(ninvfreight) > 0) {
@@ -292,19 +284,11 @@ export class ReceiptFormatter {
       }
 
       const amounts = items.map((i) => i.amount) as string[];
-
-      const amounts = items.map((i) => i.amount) as string[];
       // Add dashed line under the equals sign
       lines.push(this.formatDashedLine(this.getMaxWithFormattedOriginal(amounts).original));
       lines.push(this.formatDashedLine(this.getMaxWithFormattedOriginal(amounts).original));
+
       // Summary
-
-      const summariesAmount = [];
-      if (subtotal !== ninvvalue) {
-        lines.push(this.formatSummaryLine(`${this.translations['subtotal_rp_label']}`, subtotal));
-        summariesAmount.push(subtotal);
-      }
-
       const summariesAmount = [];
       if (subtotal !== ninvvalue) {
         lines.push(this.formatSummaryLine(`${this.translations['subtotal_rp_label']}`, subtotal));
@@ -445,9 +429,6 @@ export class ReceiptFormatter {
 
     // Calculate the proportional equals column
     const equalsCol = Math.floor((this.RECEIPT_WIDTH * this.EQUALS_COL) / this.RECEIPT_WIDTH);
-
-    // leave space before '='
-    const left = `${this.pad(label, equalsCol - 1, 'right')} `;
     // leave space before '='
     const left = `${this.pad(label, equalsCol - 1, 'right')} `;
     const equals = '=';
