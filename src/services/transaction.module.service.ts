@@ -15,8 +15,7 @@ export class TransactionModuleService {
     private readonly genericRepository: GenericRepository,
     private readonly formatter: ReceiptFormatter,
     private readonly printerConfig: PrinterConfigService,
-
-  ) { }
+  ) {}
 
   async salesInvoice(user: string) {
     await this.genericRepository.query(`
@@ -51,7 +50,6 @@ export class TransactionModuleService {
 
     const response = await this.genericRepository.query<any>(query, [user]);
 
-
     // Parse the Warehouse JSON string into an object
     const warehouse = { primaryKey: '', description: '' };
     const finalResponse = {
@@ -72,17 +70,9 @@ export class TransactionModuleService {
       warehouse.description = response[0].description;
       finalResponse.Warehouse = warehouse;
 
-      return ResponseHelper.CreateResponse<any>(
-        finalResponse,
-        HttpStatus.OK,
-        Constants.DATA_SUCCESS,
-      );
+      return ResponseHelper.CreateResponse<any>(finalResponse, HttpStatus.OK, Constants.DATA_SUCCESS);
     } else {
-      return ResponseHelper.CreateResponse<any>(
-        null,
-        HttpStatus.NOT_FOUND,
-        Constants.LOCATION_NOT_FOUND,
-      );
+      return ResponseHelper.CreateResponse<any>(null, HttpStatus.NOT_FOUND, Constants.LOCATION_NOT_FOUND);
     }
   }
 
@@ -104,23 +94,12 @@ export class TransactionModuleService {
         cstdcode = ?;
     `;
 
-    const response =
-      await this.genericRepository.query<TransactionSalesTableDto>(query, [
-        stockId,
-      ]);
+    const response = await this.genericRepository.query<TransactionSalesTableDto>(query, [stockId]);
 
     if (response?.length) {
-      return ResponseHelper.CreateResponse<any>(
-        response,
-        HttpStatus.OK,
-        Constants.DATA_SUCCESS,
-      );
+      return ResponseHelper.CreateResponse<any>(response, HttpStatus.OK, Constants.DATA_SUCCESS);
     } else {
-      return ResponseHelper.CreateResponse<any>(
-        null,
-        HttpStatus.NOT_FOUND,
-        Constants.DATA_NOT_FOUND,
-      );
+      return ResponseHelper.CreateResponse<any>(null, HttpStatus.NOT_FOUND, Constants.DATA_NOT_FOUND);
     }
   }
 
@@ -199,29 +178,22 @@ export class TransactionModuleService {
         body.invoice.date,
         body.invoice.date,
         body.invoice.customer.pk,
-        body.invoice.customer.desc,
-        body.invoice.customer.desc,
+        body.invoice.customer.desc.split('-')[0],
+        body.invoice.customer.desc.split('-')[1],
         body.invoice.salesman.pk || '..default..............',
         body.invoice.tax,
         body.invoice.loginUser,
         body.invoice.loginUser,
-        body.payment.total
+        body.payment.total,
       ];
 
-      const [_, invoiceResponse, pkres] = await this.genericRepository.query<any>(
-        invoiceQuery,
-        invoiceParams,
-      );
+      const [_, invoiceResponse, pkres] = await this.genericRepository.query<any>(invoiceQuery, invoiceParams);
       if (!invoiceResponse || invoiceResponse.affectedRows === 0) {
-        return ResponseHelper.CreateResponse<any>(
-          null,
-          HttpStatus.INTERNAL_SERVER_ERROR,
-          Constants.TRANSACTION_FAILURE,
-        );
+        return ResponseHelper.CreateResponse<any>(null, HttpStatus.INTERNAL_SERVER_ERROR, Constants.TRANSACTION_FAILURE);
       }
       // Handle invoice response
       const invoicePkNo = pkres[0].InvoicePkNo;
-      body.tableFormData = body.tableFormData.filter(item => parseInt(item.qty, 10) !== 0);
+      body.tableFormData = body.tableFormData.filter((item) => parseInt(item.qty, 10) !== 0);
       console.log('--------------------');
       console.log('SalesInvoice');
       console.table(body.tableFormData);
@@ -244,34 +216,20 @@ export class TransactionModuleService {
                 WHERE sd.cstdcode = ?
             `;
 
-        const detailParams = [
-          row.pk,
-          row.stock_id_header,
-          row.qty,
-          invoicePkNo,
-          row.price,
-          row.qty,
-          row.qty,
-          row.price,
-          i + 1,
-          row.pk,
-          row.qty,
-          row.pk,
-          row.stock_id_header,
-        ];
-        const detailResponse = await this.genericRepository.query<any>(
-          detailQuery,
-          detailParams,
-        );
+        const detailParams = [row.pk, row.stock_id_header, row.qty, invoicePkNo, row.price, row.qty, row.qty, row.price, i + 1, row.pk, row.qty, row.pk, row.stock_id_header];
+        const detailResponse = await this.genericRepository.query<any>(detailQuery, detailParams);
       }
       /**
        * Now Querying Data for Printing Sales Receipt...
        */
       const receiptQuery = `
 select LTRIM(RTRIM(cinvmeja)) as cinvmeja,cinvrefno,ninvdp,ninvvoucher,(ninvtunai+ninvkembali) as ninvtunai_ninvkembali,ninvpiutang,ninvcredit,ninvdebit,
-ninvmobile,ninvkembali,ninvvalue,oleh,ninvfreight,LTRIM(RTRIM(csamdesc)) as csamdesc,LTRIM(RTRIM(pheader)) as pheader,
+ninvmobile,ninvkembali,format(ninvvalue, 0) as ninvvalue,oleh,format(ninvfreight,0) as ninvfreight,LTRIM(RTRIM(csamdesc)) as csamdesc,LTRIM(RTRIM(pheader)) as pheader,
 LTRIM(RTRIM(pfooter)) as pfooter,LTRIM(RTRIM(cwhsdesc)) as cwhsdesc,
-sum(1) as total_item,sum(nivdqtyout) as total_qty,
+sum(1) as total_item,
+format(sum(nivdqtyout),0) as total_qty,
+sum(1) as total_item,
+format(sum(nivdqtyout),0) as total_qty,
 format(sum(nivdamount)*(1-ninvdisc1/100)*(1-ninvdisc2/100)*(1-ninvdisc3/100)-ninvdisc,0) as subtotal,
 format(sum(if(nivdstkppn=1,((nivdamount)*(1-ninvdisc1/100)*(1-ninvdisc2/100)*(1-ninvdisc3/100)-ninvdisc)*ninvtax/100,0)),0) as tax,
 LTRIM(RTRIM(cinvfkentcode)) as cinvfkentcode
@@ -299,48 +257,26 @@ where cinvpk=?;
       console.log(`detail response`);
       console.log(receiptDetailResponse);
       if (!receiptMasterResponse || (Array.isArray(receiptDetailResponse) && receiptDetailResponse.length === 0)) {
-        return ResponseHelper.CreateResponse<any>(
-          [],
-          HttpStatus.OK,
-          Constants.TRANSACTION_SUCCESS);
+        return ResponseHelper.CreateResponse<any>([], HttpStatus.OK, Constants.TRANSACTION_SUCCESS);
       }
       this.formatter.setWidth(this.printerConfig.getPrinterWidth());
       const receipt = await this.formatter.sales(receiptMasterResponse, receiptDetailResponse);
       console.log(receipt);
-      return ResponseHelper.CreateResponse<any>(
-        receipt,
-        HttpStatus.OK,
-        Constants.TRANSACTION_SUCCESS,
-      );
+      return ResponseHelper.CreateResponse<any>(receipt, HttpStatus.OK, Constants.TRANSACTION_SUCCESS);
     } catch (error) {
       // for avoiding data corruption
       if (error instanceof TransactionError) {
-        return ResponseHelper.CreateResponse<any>(
-          null,
-          HttpStatus.BAD_REQUEST,
-          error.message,
-        );
+        return ResponseHelper.CreateResponse<any>(null, HttpStatus.BAD_REQUEST, error.message);
       }
       const deleteInvoiceDetail = `Delete FROM invoicedetail WHERE civdfkinv = (SELECT cinvpk FROM invoice WHERE cinvrefno = ? and cinvspecial = 'JL')`;
-      await this.genericRepository.query<any>(
-        deleteInvoiceDetail,
-        [body.invoice.invoiceNo],
-      );
+      await this.genericRepository.query<any>(deleteInvoiceDetail, [body.invoice.invoiceNo]);
       const deleteInvoice = `Delete FROM invoice WHERE cinvrefno = ?`;
-      await this.genericRepository.query<any>(
-        deleteInvoice,
-        [body.invoice.invoiceNo],
-      );
-      return ResponseHelper.CreateResponse<any>(
-        null,
-        HttpStatus.INTERNAL_SERVER_ERROR,
-        Constants.TRANSACTION_FAILURE,
-      );
+      await this.genericRepository.query<any>(deleteInvoice, [body.invoice.invoiceNo]);
+      return ResponseHelper.CreateResponse<any>(null, HttpStatus.INTERNAL_SERVER_ERROR, Constants.TRANSACTION_FAILURE);
     }
   }
 
   async salesOrderInvoice(user: string) {
-
     await this.genericRepository.query(`
       UPDATE ymk
       SET L_so = '1000'
@@ -393,17 +329,9 @@ where cinvpk=?;
       warehouse.description = response[0].description;
       finalResponse.Warehouse = warehouse;
 
-      return ResponseHelper.CreateResponse<any>(
-        finalResponse,
-        HttpStatus.OK,
-        Constants.DATA_SUCCESS,
-      );
+      return ResponseHelper.CreateResponse<any>(finalResponse, HttpStatus.OK, Constants.DATA_SUCCESS);
     } else {
-      return ResponseHelper.CreateResponse<any>(
-        null,
-        HttpStatus.NOT_FOUND,
-        Constants.LOCATION_NOT_FOUND,
-      );
+      return ResponseHelper.CreateResponse<any>(null, HttpStatus.NOT_FOUND, Constants.LOCATION_NOT_FOUND);
     }
   }
 
@@ -425,28 +353,16 @@ where cinvpk=?;
         cstdcode = ?;
     `;
 
-    const response =
-      await this.genericRepository.query<TransactionSalesTableDto>(query, [
-        stockId,
-      ]);
+    const response = await this.genericRepository.query<TransactionSalesTableDto>(query, [stockId]);
     if (response?.length) {
-      return ResponseHelper.CreateResponse<any>(
-        response,
-        HttpStatus.OK,
-        Constants.DATA_SUCCESS,
-      );
+      return ResponseHelper.CreateResponse<any>(response, HttpStatus.OK, Constants.DATA_SUCCESS);
     } else {
-      return ResponseHelper.CreateResponse<any>(
-        null,
-        HttpStatus.NOT_FOUND,
-        Constants.DATA_NOT_FOUND,
-      );
+      return ResponseHelper.CreateResponse<any>(null, HttpStatus.NOT_FOUND, Constants.DATA_NOT_FOUND);
     }
   }
 
   // Sales Order Transaction Processing
   async setSalesOrderInvoice(body: any) {
-
     try {
       const allQuantitiesZero = body.tableFormData.every((item: any) => parseInt(item.qty, 10) === 0);
 
@@ -479,28 +395,21 @@ where cinvpk=?;
         body.invoice.date,
         body.invoice.date,
         body.invoice.customer.pk,
-        body.invoice.customer.desc,
-        body.invoice.customer.desc,
+        body.invoice.customer.desc.split('-')[0],
+        body.invoice.customer.desc.split('-')[1],
         body.invoice.salesman.pk || '..default..............',
         body.invoice.tax,
         body.invoice.loginUser,
         body.invoice.loginUser,
-        body.payment.total
+        body.payment.total,
       ];
-      const [_, invoiceResponse, pkres] = await this.genericRepository.query<any>(
-        invoiceQuery,
-        invoiceParams,
-      );
+      const [_, invoiceResponse, pkres] = await this.genericRepository.query<any>(invoiceQuery, invoiceParams);
       if (!invoiceResponse || invoiceResponse.affectedRows === 0) {
-        return ResponseHelper.CreateResponse<any>(
-          null,
-          HttpStatus.INTERNAL_SERVER_ERROR,
-          Constants.TRANSACTION_FAILURE,
-        );
+        return ResponseHelper.CreateResponse<any>(null, HttpStatus.INTERNAL_SERVER_ERROR, Constants.TRANSACTION_FAILURE);
       }
       // Handle invoice response
       const invoicePkNo = pkres[0].InvoicePkNo;
-      body.tableFormData = body.tableFormData.filter(item => parseInt(item.qty, 10) !== 0);
+      body.tableFormData = body.tableFormData.filter((item) => parseInt(item.qty, 10) !== 0);
       console.log('--------------------');
       console.log('SalesOrderInvoice');
       console.table(body.tableFormData);
@@ -524,33 +433,18 @@ where cinvpk=?;
                 LIMIT 1;
             `;
 
-        const detailParams = [
-          row.pk,
-          row.stock_id_header,
-          row.qty,
-          invoicePkNo,
-          row.price,
-          row.qty,
-          row.qty,
-          row.price,
-          i + 1,
-          row.pk,
-          row.stock_id_header,
-        ];
+        const detailParams = [row.pk, row.stock_id_header, row.qty, invoicePkNo, row.price, row.qty, row.qty, row.price, i + 1, row.pk, row.stock_id_header];
 
-        const detailResponse = await this.genericRepository.query<any>(
-          detailQuery,
-          detailParams,
-        );
+        const detailResponse = await this.genericRepository.query<any>(detailQuery, detailParams);
       }
       /**
        * Now Querying Data for Printing Sales Order Receipt...
        */
       const receiptQuery = `
       -- Master Query
-      select cinvrefno,oleh,ninvfreight,LTRIM(RTRIM(csamdesc)) as csamdesc,pheader,pfooter,LTRIM(RTRIM(cwhsdesc)) as cwhsdesc
-      ,ninvvalue,cinvfkentcode,
-      sum(1) as total_item,sum(nivdqtyout) as total_qty,
+      select cinvrefno,oleh,format(ninvfreight,0) as ninvfreight,LTRIM(RTRIM(csamdesc)) as csamdesc,pheader,pfooter,LTRIM(RTRIM(cwhsdesc)) as cwhsdesc
+      ,format(ninvvalue,0) as ninvvalue,cinvfkentcode,
+      sum(1) as total_item,format(sum(nivdqtyout),0) as total_qty,
       format(sum(nivdamount)*(1-ninvdisc1/100)*(1-ninvdisc2/100)*(1-ninvdisc3/100)-ninvdisc,0) as subtotal,
       format(sum(if(nivdstkppn=1,((nivdamount)*(1-ninvdisc1/100)*(1-ninvdisc2/100)*(1-ninvdisc3/100)-ninvdisc)*ninvtax/100,0)),0) as tax
       from porder
@@ -578,45 +472,24 @@ where cinvpk=?;
       console.log(`detail response`);
       console.log(receiptDetailResponse);
       if (!receiptMasterResponse || (Array.isArray(receiptDetailResponse) && receiptDetailResponse.length === 0)) {
-        return ResponseHelper.CreateResponse<any>(
-          [],
-          HttpStatus.OK,
-          Constants.TRANSACTION_SUCCESS);
+        return ResponseHelper.CreateResponse<any>([], HttpStatus.OK, Constants.TRANSACTION_SUCCESS);
       }
-      this.formatter.setWidth(this.printerConfig.getPrinterWidth())
+      this.formatter.setWidth(this.printerConfig.getPrinterWidth());
       const receipt = await this.formatter.salesOrder(receiptMasterResponse, receiptDetailResponse);
       console.log(receipt);
-      return ResponseHelper.CreateResponse<any>(
-        receipt,
-        HttpStatus.OK,
-        Constants.TRANSACTION_SUCCESS,
-      );
+      return ResponseHelper.CreateResponse<any>(receipt, HttpStatus.OK, Constants.TRANSACTION_SUCCESS);
     } catch (error) {
       console.log(error);
       console.log('in my catch');
       if (error instanceof TransactionError) {
-        return ResponseHelper.CreateResponse<any>(
-          null,
-          HttpStatus.BAD_REQUEST,
-          error.message,
-        );
+        return ResponseHelper.CreateResponse<any>(null, HttpStatus.BAD_REQUEST, error.message);
       }
       const deleteInvoiceDetail = `Delete FROM porderdetail WHERE civdfkinv = (SELECT cinvpk FROM invoice WHERE cinvrefno = ? and cinvspecial = 'JL')`;
-      await this.genericRepository.query<any>(
-        deleteInvoiceDetail,
-        [body.invoice.invoiceNo],
-      );
+      await this.genericRepository.query<any>(deleteInvoiceDetail, [body.invoice.invoiceNo]);
       const deleteInvoice = `Delete FROM porder WHERE cinvrefno = ?`;
-      await this.genericRepository.query<any>(
-        deleteInvoice,
-        [body.invoice.invoiceNo],
-      );
-      console.log
-      return ResponseHelper.CreateResponse<any>(
-        null,
-        HttpStatus.INTERNAL_SERVER_ERROR,
-        Constants.TRANSACTION_FAILURE,
-      );
+      await this.genericRepository.query<any>(deleteInvoice, [body.invoice.invoiceNo]);
+      console.log;
+      return ResponseHelper.CreateResponse<any>(null, HttpStatus.INTERNAL_SERVER_ERROR, Constants.TRANSACTION_FAILURE);
     }
   }
 
@@ -678,17 +551,9 @@ where cinvpk=?;
       warehouse.description = response[0].description;
       finalResponse.Warehouse = warehouse;
 
-      return ResponseHelper.CreateResponse<any>(
-        finalResponse,
-        HttpStatus.OK,
-        Constants.DATA_SUCCESS,
-      );
+      return ResponseHelper.CreateResponse<any>(finalResponse, HttpStatus.OK, Constants.DATA_SUCCESS);
     } else {
-      return ResponseHelper.CreateResponse<any>(
-        null,
-        HttpStatus.NOT_FOUND,
-        Constants.LOCATION_NOT_FOUND,
-      );
+      return ResponseHelper.CreateResponse<any>(null, HttpStatus.NOT_FOUND, Constants.LOCATION_NOT_FOUND);
     }
   }
 
@@ -710,22 +575,11 @@ where cinvpk=?;
         cstdcode = ?;
     `;
 
-    const response =
-      await this.genericRepository.query<TransactionSalesTableDto>(query, [
-        stockId,
-      ]);
+    const response = await this.genericRepository.query<TransactionSalesTableDto>(query, [stockId]);
     if (response?.length) {
-      return ResponseHelper.CreateResponse<any>(
-        response,
-        HttpStatus.OK,
-        Constants.DATA_SUCCESS,
-      );
+      return ResponseHelper.CreateResponse<any>(response, HttpStatus.OK, Constants.DATA_SUCCESS);
     } else {
-      return ResponseHelper.CreateResponse<any>(
-        null,
-        HttpStatus.NOT_FOUND,
-        Constants.DATA_NOT_FOUND,
-      );
+      return ResponseHelper.CreateResponse<any>(null, HttpStatus.NOT_FOUND, Constants.DATA_NOT_FOUND);
     }
   }
 
@@ -769,7 +623,7 @@ where cinvpk=?;
         body.invoice.invoiceNo, // cinvrefno
         body.invoice.warehouse, // cinvfkwhs
         body.invoice.customer.pk || '', // cinvfkent
-        body.invoice.customer.desc || '', // cinvfkentcode
+        body.invoice.customer.desc.split('-')[0] || '', // cinvfkentcode
         body.invoice.salesman.pk || '..default..............', // cinvfksam
         body.invoice.tax, // ninvtax
         body.invoice.table || ' ', // cinvmeja (Table)
@@ -781,24 +635,17 @@ where cinvpk=?;
         body.invoice.service, // ninvfreight (Service charge)
         body.invoice.loginUser, // cinvuser
         body.invoice.loginUser, // oleh
-        body.payment.total,// ninvvalue (ninvvoucher+ninvtunai+ninvcredit+ninvdebit+ninvmobile)
-        body.payment.total,// ninvvalue1 (ninvvoucher+ninvtunai+ninvcredit+ninvdebit+ninvmobile)
-        body.payment.change
+        body.payment.total, // ninvvalue (ninvvoucher+ninvtunai+ninvcredit+ninvdebit+ninvmobile)
+        body.payment.total, // ninvvalue1 (ninvvoucher+ninvtunai+ninvcredit+ninvdebit+ninvmobile)
+        body.payment.change,
       ];
-      const [_, invoiceResponse, pkres] = await this.genericRepository.query<any>(
-        invoiceQuery,
-        invoiceParams,
-      );
+      const [_, invoiceResponse, pkres] = await this.genericRepository.query<any>(invoiceQuery, invoiceParams);
       if (!invoiceResponse || invoiceResponse.affectedRows === 0) {
-        return ResponseHelper.CreateResponse<any>(
-          null,
-          HttpStatus.INTERNAL_SERVER_ERROR,
-          Constants.TRANSACTION_FAILURE,
-        );
+        return ResponseHelper.CreateResponse<any>(null, HttpStatus.INTERNAL_SERVER_ERROR, Constants.TRANSACTION_FAILURE);
       }
       // Handle invoice response
       const invoicePkNo = pkres[0].InvoicePkNo;
-      body.tableFormData = body.tableFormData.filter(item => parseInt(item.qty, 10) !== 0);
+      body.tableFormData = body.tableFormData.filter((item) => parseInt(item.qty, 10) !== 0);
       console.log('--------------------');
       console.log('POSInvoice');
       console.table(body.tableFormData);
@@ -845,9 +692,7 @@ where cinvpk=?;
         where cstdcode=?
          and (IFNULL(?, cwhspk) = cwhspk or cwhspk is null)
         `;
-        const qtyResponse = await this.genericRepository.query<any>(qtyQuery, [
-          row.stock_id_header, body.invoice.warehouse
-        ]);
+        const qtyResponse = await this.genericRepository.query<any>(qtyQuery, [row.stock_id_header, body.invoice.warehouse]);
         const qty = parseInt(qtyResponse[0].Qty) || 0;
         const detailQuery = `
                 INSERT INTO invoicedetail (
@@ -858,7 +703,7 @@ where cinvpk=?;
 SELECT ?, ?, ?, ?, ?, LEFT(SHA1(UUID()), 23), 
     ?, -- Subquery for civdfkinv
     ?, sd.nstdfactor, ? * sd.nstdfactor,
-    ? * ?, ?, u.cunidesc, s.nstkppn, 1,0, (select nstkbuy from stock where cstkpk= ?) * (? * sd.nstdfactor), ' ', ' '
+    ? * ?, ?, u.cunidesc, s.nstkppn, 1,' ', (select nstkbuy from stock where cstkpk= ?) * (? * sd.nstdfactor), ' ', ' '
 FROM stockdetail sd
 LEFT JOIN unit u ON u.cunipk = sd.cstdfkuni
 LEFT JOIN stock s ON s.cstkpk = ?
@@ -867,27 +712,24 @@ WHERE sd.cstdcode = ?;
             `;
 
         const detailParams = [
-          row.pk,              // civdfkstk
+          row.pk, // civdfkstk
           row.stock_id_header, // civdcode
-          qty,             // nivdonhand
-          row.qty,             // nivdqtyout
-          row.qty,             // qtyresep
+          qty, // nivdonhand
+          row.qty, // nivdqtyout
+          row.qty, // qtyresep
           invoicePkNo, // cinvrefno (subquery in SELECT)
-          row.price,           // nivdprice
-          row.qty,             // quantity * nstdfactor
-          row.qty,             // quantity
-          row.price,           // nivdamount
-          i + 1,               // nivdorder
+          row.price, // nivdprice
+          row.qty, // quantity * nstdfactor
+          row.qty, // quantity
+          row.price, // nivdamount
+          i + 1, // nivdorder
           row.pk,
           row.qty,
-          row.pk,              // s.cstkpk (to match stock in JOIN)
+          row.pk, // s.cstkpk (to match stock in JOIN)
           row.stock_id_header, // sd.cstdcode
         ];
 
-        const detailResponse = await this.genericRepository.query<any>(
-          detailQuery,
-          detailParams,
-        );
+        const detailResponse = await this.genericRepository.query<any>(detailQuery, detailParams);
       }
 
       /**
@@ -900,9 +742,10 @@ format((ninvtunai+ninvkembali),0) as ninvtunai_ninvkembali,
 ninvpiutang,
 format(ninvcredit,0) as ninvcredit,format(ninvdebit,0) as ninvdebit,
 format(ninvmobile,0) as ninvmobile,format(ninvkembali, 0) as ninvkembali,format(ninvvalue, 0) as ninvvalue,oleh,
-ninvfreight,LTRIM(RTRIM(csamdesc)) as csamdesc,LTRIM(RTRIM(pheader)) as pheader,
+format(ninvfreight,0) as ninvfreight,LTRIM(RTRIM(csamdesc)) as csamdesc,LTRIM(RTRIM(pheader)) as pheader,
 LTRIM(RTRIM(pfooter)) as pfooter,LTRIM(RTRIM(cwhsdesc)) as cwhsdesc,
-sum(1) as total_item,sum(nivdqtyout) as total_qty,
+sum(1) as total_item,format(sum(nivdqtyout),0) as total_qty,
+sum(1) as total_item,format(sum(nivdqtyout),0) as total_qty,
 format(sum(nivdamount)*(1-ninvdisc1/100)*(1-ninvdisc2/100)*(1-ninvdisc3/100)-ninvdisc,0) as subtotal,
 format(sum(if(nivdstkppn=1,((nivdamount)*(1-ninvdisc1/100)*(1-ninvdisc2/100)*(1-ninvdisc3/100)-ninvdisc)*ninvtax/100,0)),0) as tax,
 LTRIM(RTRIM(cinvfkentcode)) as cinvfkentcode
@@ -931,44 +774,23 @@ where cinvpk=?;
       console.log(`detail response`);
       console.log(receiptDetailResponse);
       if (!receiptMasterResponse || (Array.isArray(receiptDetailResponse) && receiptDetailResponse.length === 0)) {
-        return ResponseHelper.CreateResponse<any>(
-          [],
-          HttpStatus.OK,
-          Constants.TRANSACTION_SUCCESS);
+        return ResponseHelper.CreateResponse<any>([], HttpStatus.OK, Constants.TRANSACTION_SUCCESS);
       }
       this.formatter.setWidth(this.printerConfig.getPrinterWidth());
       const receipt = await this.formatter.pointOfSales(receiptMasterResponse, receiptDetailResponse);
       console.log(receipt);
-      return ResponseHelper.CreateResponse<any>(
-        receipt,
-        HttpStatus.OK,
-        Constants.TRANSACTION_SUCCESS,
-      );
+      return ResponseHelper.CreateResponse<any>(receipt, HttpStatus.OK, Constants.TRANSACTION_SUCCESS);
     } catch (error) {
       console.log(`hi from catch`);
       console.log(error);
       if (error instanceof TransactionError) {
-        return ResponseHelper.CreateResponse<any>(
-          null,
-          HttpStatus.BAD_REQUEST,
-          error.message,
-        );
+        return ResponseHelper.CreateResponse<any>(null, HttpStatus.BAD_REQUEST, error.message);
       }
       const deleteInvoiceDetail = `Delete FROM invoicedetail WHERE civdfkinv = (SELECT cinvpk FROM invoice WHERE cinvrefno = ? and cinvspecial = 'JL')`;
-      await this.genericRepository.query<any>(
-        deleteInvoiceDetail,
-        [body.invoice.invoiceNo],
-      );
+      await this.genericRepository.query<any>(deleteInvoiceDetail, [body.invoice.invoiceNo]);
       const deleteInvoice = `Delete FROM invoice WHERE cinvrefno = ?`;
-      await this.genericRepository.query<any>(
-        deleteInvoice,
-        [body.invoice.invoiceNo],
-      );
-      return ResponseHelper.CreateResponse<any>(
-        null,
-        HttpStatus.INTERNAL_SERVER_ERROR,
-        Constants.TRANSACTION_FAILURE,
-      );
+      await this.genericRepository.query<any>(deleteInvoice, [body.invoice.invoiceNo]);
+      return ResponseHelper.CreateResponse<any>(null, HttpStatus.INTERNAL_SERVER_ERROR, Constants.TRANSACTION_FAILURE);
     }
   }
 
@@ -1014,17 +836,9 @@ where cinvpk=?;
       warehouse.description = response[0].description;
       finalResponse.Warehouse = warehouse;
 
-      return ResponseHelper.CreateResponse<any>(
-        finalResponse,
-        HttpStatus.OK,
-        Constants.DATA_SUCCESS,
-      );
+      return ResponseHelper.CreateResponse<any>(finalResponse, HttpStatus.OK, Constants.DATA_SUCCESS);
     } else {
-      return ResponseHelper.CreateResponse<any>(
-        null,
-        HttpStatus.NOT_FOUND,
-        Constants.LOCATION_NOT_FOUND,
-      );
+      return ResponseHelper.CreateResponse<any>(null, HttpStatus.NOT_FOUND, Constants.LOCATION_NOT_FOUND);
     }
   }
 
@@ -1044,23 +858,12 @@ where cinvpk=?;
       cstdcode = ? and nstdfactor=1;
   `;
 
-    const response =
-      await this.genericRepository.query<TransactionSalesTableDto>(query, [
-        stockId,
-      ]);
+    const response = await this.genericRepository.query<TransactionSalesTableDto>(query, [stockId]);
 
     if (response?.length) {
-      return ResponseHelper.CreateResponse<any>(
-        response,
-        HttpStatus.OK,
-        Constants.DATA_SUCCESS,
-      );
+      return ResponseHelper.CreateResponse<any>(response, HttpStatus.OK, Constants.DATA_SUCCESS);
     } else {
-      return ResponseHelper.CreateResponse<any>(
-        null,
-        HttpStatus.NOT_FOUND,
-        Constants.DATA_NOT_FOUND,
-      );
+      return ResponseHelper.CreateResponse<any>(null, HttpStatus.NOT_FOUND, Constants.DATA_NOT_FOUND);
     }
   }
 
@@ -1093,26 +896,10 @@ SET @cinvpk := LEFT(SHA1(UUID()), 23);
   SELECT CAST(@cinvpk AS CHAR) AS InvoicePkNo;
   `;
 
-      const invoiceParams = [
-        body.invoice.invoiceNo,
-        body.invoice.warehouse,
-        body.invoice.date,
-        body.invoice.date,
-        body.invoice.date,
-        body.invoice.date,
-        body.invoice.loginUser,
-        body.invoice.loginUser,
-      ];
-      const [_, invoiceResponse, pkres] = await this.genericRepository.query<any>(
-        invoiceQuery,
-        invoiceParams,
-      );
+      const invoiceParams = [body.invoice.invoiceNo, body.invoice.warehouse, body.invoice.date, body.invoice.date, body.invoice.date, body.invoice.date, body.invoice.loginUser, body.invoice.loginUser];
+      const [_, invoiceResponse, pkres] = await this.genericRepository.query<any>(invoiceQuery, invoiceParams);
       if (!invoiceResponse || invoiceResponse.affectedRows === 0) {
-        return ResponseHelper.CreateResponse<any>(
-          null,
-          HttpStatus.INTERNAL_SERVER_ERROR,
-          Constants.TRANSACTION_FAILURE,
-        );
+        return ResponseHelper.CreateResponse<any>(null, HttpStatus.INTERNAL_SERVER_ERROR, Constants.TRANSACTION_FAILURE);
       }
       const invoicePkNo = pkres[0].InvoicePkNo;
       console.log('---------------------------');
@@ -1131,7 +918,7 @@ SET @cinvpk := LEFT(SHA1(UUID()), 23);
         if (!map.has(key)) {
           map.set(key, {
             ...item,
-            qty: parseFloat(item.qty)
+            qty: parseFloat(item.qty),
           });
         } else {
           const existing = map.get(key);
@@ -1182,9 +969,7 @@ SET @cinvpk := LEFT(SHA1(UUID()), 23);
         INNER JOIN unit ON cSTDfkUNI=cUNIpk 
         where cstdcode=? and (IFNULL(?, cwhspk) = cwhspk or cwhspk is null)
         `;
-        const qtyResponse = await this.genericRepository.query<any>(qtyQuery, [
-          row.stock_id_header, body.invoice.warehouse
-        ]);
+        const qtyResponse = await this.genericRepository.query<any>(qtyQuery, [row.stock_id_header, body.invoice.warehouse]);
         const qty = parseInt(qtyResponse[0].Qty) || 0;
         const nivdqtyin = qty < row.qty ? row.qty - qty : 0;
         const nivdzqtyin = qty < row.qty ? row.qty - qty : 0;
@@ -1212,70 +997,49 @@ SET @cinvpk := LEFT(SHA1(UUID()), 23);
         `;
 
         const detailParams = [
-          row.pk, row.stock_id_header, qty,
-          row.qty, invoicePkNo, row.pk,
-          nivdqtyin, nivdzqtyin, nivdqtyout, nivdzqtyout,  // Pre-calculated values
-          nivdamount, row.pk, i + 1,  // nivdamount and sequence number
-          row.pk  // Stock PK for retrieving unit information
+          row.pk,
+          row.stock_id_header,
+          qty,
+          row.qty,
+          invoicePkNo,
+          row.pk,
+          nivdqtyin,
+          nivdzqtyin,
+          nivdqtyout,
+          nivdzqtyout, // Pre-calculated values
+          nivdamount,
+          row.pk,
+          i + 1, // nivdamount and sequence number
+          row.pk, // Stock PK for retrieving unit information
         ];
 
-
-        const detailResponse = await this.genericRepository.query<any>(
-          detailQuery,
-          detailParams,
-        );
+        const detailResponse = await this.genericRepository.query<any>(detailQuery, detailParams);
       }
 
       /*
         Now Querying Data for printing receipt...
       */
-      const receiptQuery = "select cinvrefno,oleh,cstkdesc,format(nivdadjust,0) as qty,civdunit,cwhsdesc " +
-        " from invoice " +
-        " inner join invoicedetail on cinvpk=civdfkinv " +
-        " inner join stock on cstkpk=civdfkstk " +
-        " inner join warehouse on cinvfkwhs=cwhspk " +
-        " where cinvpk= ? ";
+      const receiptQuery = 'select cinvrefno,oleh,cstkdesc,format(nivdadjust,0) as qty,civdunit,cwhsdesc ' + ' from invoice ' + ' inner join invoicedetail on cinvpk=civdfkinv ' + ' inner join stock on cstkpk=civdfkstk ' + ' inner join warehouse on cinvfkwhs=cwhspk ' + ' where cinvpk= ? ';
       const params = [invoicePkNo];
       const receiptResponse = await this.genericRepository.query<any>(receiptQuery, params);
       if (!receiptResponse || (Array.isArray(receiptResponse) && receiptResponse.length === 0)) {
-        return ResponseHelper.CreateResponse<any>(
-          [],
-          HttpStatus.OK,
-          Constants.TRANSACTION_SUCCESS);
+        return ResponseHelper.CreateResponse<any>([], HttpStatus.OK, Constants.TRANSACTION_SUCCESS);
       }
       this.formatter.setWidth(this.printerConfig.getPrinterWidth());
       const receipt = await this.formatter.stockAdjustment(receiptResponse);
       console.log('stock adjustment receipt:');
       console.log(receipt);
-      return ResponseHelper.CreateResponse<any>(
-        receipt,
-        HttpStatus.OK,
-        Constants.TRANSACTION_SUCCESS,
-      );
+      return ResponseHelper.CreateResponse<any>(receipt, HttpStatus.OK, Constants.TRANSACTION_SUCCESS);
     } catch (error) {
       console.log(error);
       if (error instanceof TransactionError) {
-        return ResponseHelper.CreateResponse<any>(
-          null,
-          HttpStatus.BAD_REQUEST,
-          error.message,
-        );
+        return ResponseHelper.CreateResponse<any>(null, HttpStatus.BAD_REQUEST, error.message);
       }
       const deleteInvoiceDetail = `Delete FROM invoicedetail WHERE civdfkinv = (SELECT cinvpk FROM invoice WHERE cinvrefno = ? and cinvspecial = 'JL')`;
-      await this.genericRepository.query<any>(
-        deleteInvoiceDetail,
-        [body.invoice.invoiceNo],
-      );
+      await this.genericRepository.query<any>(deleteInvoiceDetail, [body.invoice.invoiceNo]);
       const deleteInvoice = `Delete FROM invoice WHERE cinvrefno = ?`;
-      await this.genericRepository.query<any>(
-        deleteInvoice,
-        [body.invoice.invoiceNo],
-      );
-      return ResponseHelper.CreateResponse<any>(
-        null,
-        HttpStatus.INTERNAL_SERVER_ERROR,
-        Constants.TRANSACTION_FAILURE,
-      );
+      await this.genericRepository.query<any>(deleteInvoice, [body.invoice.invoiceNo]);
+      return ResponseHelper.CreateResponse<any>(null, HttpStatus.INTERNAL_SERVER_ERROR, Constants.TRANSACTION_FAILURE);
     }
   }
 }

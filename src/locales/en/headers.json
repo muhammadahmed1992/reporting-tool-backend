@@ -50,6 +50,14 @@
     "price_header": "Price",
     "balance_header": "Balance"
   },
+    "stock_balance_report_sales_price": {
+    "stock_id_header": "Stock Code",
+    "stock_name_header": "Stock Name",
+    "location_header": "Location",
+    "qty_header": "Quantity",
+    "price_header": "Price",
+    "balance_header": "Balance"
+  },
   "purchasing_report": {
     "invoice_header": "Invoice",
     "date_header": "Date",
@@ -120,6 +128,15 @@
     "balance_header": "Balance"
   },
   "scan_barcode_report_purchase_price": {
+    "item_header": "Item",
+    "stock_id_header": "Stock Code",
+    "stock_name_header": "Stock Name",
+    "qty_header": "Qty",
+    "price_header": "Price",
+    "location_header": "Location",
+    "balance_header": "Balance"
+  },
+  "scan_barcode_report_sales_price": {
     "item_header": "Item",
     "stock_id_header": "Stock Code",
     "stock_name_header": "Stock Name",

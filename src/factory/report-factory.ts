@@ -19,6 +19,8 @@ import { PurchaseAnalystReportNoDisc } from 'src/reports/purchasing-analyst-repo
 import { CashDrawerDetailReport } from 'src/reports/cash-drawer-detail-report';
 import { SearchStockID_Purchase_Price_Report } from 'src/reports/search-stockid-purchase-price-report';
 import { StockBalanceReport_Purchase_Price } from 'src/reports/stock-balance-report-purchase-price';
+import { SearchStockID_Sales_Price_Report } from 'src/reports/search-stockid-sales-price-report';
+import { StockBalanceReport_Sales_Price } from 'src/reports/stock-balance-report-sales-price';
 
 @Injectable()
 export class ReportFactory {
@@ -37,7 +39,9 @@ export class ReportFactory {
         private readonly purchaseAnalystReportNoDisc: PurchaseAnalystReportNoDisc,
         private readonly cashDrawerDetailReport: CashDrawerDetailReport,
         private readonly stockBalancePurchasePriceReport: SearchStockID_Purchase_Price_Report,
-        private readonly stockBalanceReportPurchasePrice: StockBalanceReport_Purchase_Price
+        private readonly stockBalanceReportPurchasePrice: StockBalanceReport_Purchase_Price,
+        private readonly stockBalanceSalesPriceReport: SearchStockID_Sales_Price_Report,
+        private readonly stockBalanceReportSalesPrice: StockBalanceReport_Sales_Price        
     ) { }
 
     getStrategy(reportType: string): ReportStrategy {
@@ -72,6 +76,10 @@ export class ReportFactory {
                 return this.stockBalancePurchasePriceReport;
             case ReportName.Stock_Balance_Report_Purchase_Price:
                 return this.stockBalanceReportPurchasePrice;
+            case ReportName.Stock_Balance_BarCode_Sales_Price:
+                return this.stockBalanceSalesPriceReport;
+            case ReportName.Stock_Balance_Report_Sales_Price:
+                return this.stockBalanceReportSalesPrice;                
             default:
                 throw new Error(`Report type '${reportType}' not supported`);
         }

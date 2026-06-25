@@ -1,12 +1,8 @@
 import { Injectable, HttpStatus } from '@nestjs/common';
-
-import { GenericRepository } from '../repository/generic.repository'
-
+import { GenericRepository } from '../repository/generic.repository';
 import { ReportStrategy } from '../interfaces-strategy/report-strategy';
-
 import ApiResponse from 'src/helper/api-response';
 import ResponseHelper from 'src/helper/response-helper';
-
 import { SalesAnalystDTO } from '../dto/sales-analyst.dto';
 import { ReportName } from 'src/helper/enums/report-names.enum';
 import Constants from 'src/helper/constants';
@@ -17,101 +13,215 @@ export class PurchaseAnalystReport implements ReportStrategy {
     constructor(private readonly genericRepository: GenericRepository) {}
 
     public async generateReport(queryString: QueryStringDTO): Promise<ApiResponse<any>> {
-        let {startDate, endDate, warehouse, stockGroup, sortColumn, sortDirection, searchValue, columnsToFilter } = queryString;
-        let sortBy;
+        const {
+            startDate,
+            endDate,
+            warehouse,
+            stockGroup,
+            sortColumn,
+            sortDirection,
+            searchValue,
+            columnsToFilter
+        } = queryString;
 
-        const sortOrder = !sortDirection ? 'ASC' : sortDirection;
+        const parameters: any[] = [];
 
-        if(!sortColumn || sortColumn === 'currency_header' || sortColumn === 'stock_id_header') {
-            if(sortColumn === 'currency_header')
-                sortBy = `currency_header ${sortOrder},stock_id_header`;
-            else    
-                sortBy = `currency_header ,stock_id_header ${sortOrder}`;
+        const warehouseValue = warehouse ? decodeURIComponent(warehouse) : null;
+        const stockGroupValue = stockGroup ? decodeURIComponent(stockGroup) : null;
+        const sortOrder = String(sortDirection).toUpperCase() === 'DESC' ? 'DESC' : 'ASC';
+
+        /**
+         * Whitelist sortable output columns only.
+         * Never inject raw sortColumn into SQL.
+         */
+        const sortMap: Record<string, string> = {
+            stock_id_header: 'c.StockID',
+            stock_name_header: 'c.StockName',
+            qty_header: 'c.Qty',
+            currency_header: 'c.Currency',
+            amount_header: 'c.Amount',
+            amount_tax_header: 'c.Amount_Tax',
+            subtotal_header: 'c.Amount',
+            amount_tax_total_header: 'c.Amount_Tax'
+        };
+
+        let sortBy = 'c.Currency ASC, c.StockID ASC';
+
+        if (!sortColumn || sortColumn === 'stock_id_header') {
+            sortBy = `c.Currency ASC, c.StockID ${sortOrder}`;
+        } else if (sortColumn === 'currency_header') {
+            sortBy = `c.Currency ${sortOrder}, c.StockID ASC`;
         } else if (sortColumn === 'stock_name_header') {
-            sortBy = `currency_header,stock_name_header`;
-        } 
-        else {
-            sortBy = `currency_header,CAST(REPLACE(${sortColumn}, ',', '') AS SIGNED) ${sortOrder},stock_id_header`;
+            sortBy = `c.Currency ASC, c.StockName ${sortOrder}, c.StockID ASC`;
+        } else if (sortMap[sortColumn]) {
+            sortBy = `c.Currency ASC, ${sortMap[sortColumn]} ${sortOrder}, c.StockID ASC`;
         }
 
-        const parameters = [];
-        parameters.push(startDate);
-        parameters.push(endDate);
-        let query = 
-        `
-        SELECT StockID as stock_id_header, StockName as stock_name_header, FORMAT(Qty,0) as qty_header, Currency as currency_header, FORMAT(Amount, 0) as amount_header, FORMAT(Amount_Tax, 0) as amount_tax_header,
-            FORMAT(IF(@currentGroup <> Currency, 
-                IF(@currentGroup:= Currency, @currentSum:= 0, @currentSum:= Amount), 
-                @currentSum:= @currentSum + Amount
-            ),0) AS subtotal_header,
-            FORMAT(IF(@currentGroupAmountTax <> Currency, 
-                IF(@currentGroupAmountTax:= Currency, @currentSumAmountTax:= 0, @currentSumAmountTax:= Amount_Tax), 
-                @currentSumAmountTax:= @currentSumAmountTax + Amount_Tax
-            ),0) AS amount_tax_total_header   
-        FROM (
-        select 
-        cstdcode as StockID,
-        LTRIM(RTRIM(cstkdesc)) as StockName,
-        sum(tqty) as Qty,
-        cexcdesc as Currency,
-        sum(semua-if(cinvspecial='RB' or cinvspecial='RS',-ninvdisc,ninvdisc)/rows2) as Amount,
-        sum((semua-if(cinvspecial='RB' or cinvspecial='RS',-ninvdisc,ninvdisc)/rows2)*(1+if(nivdstkppn=1,ninvtax/100,0))) as Amount_Tax
-        
-        from
-        
-        (SELECT civdfkinv,count(1) as rows2 FROM invoicedetail
-            INNER JOIN invoice on cinvpk=civdfkinv
-            WHERE nIVDkirim=1 GROUP BY civdfkinv
-        ) as a
-        inner join
-        (SELECT nstkppn,cinvspecial,civdfkinv,cstdcode, cstkdesc, cexcdesc,ninvdisc,nivdstkppn,ninvtax,
-          sum(nivdzqtyin-nivdzqtyout) as tqty,
-          sum(if(cinvspecial='RB' OR cinvspecial='RS',-nIVDAmount,nivdamount)*(1-nINVdisc1/100)*(1-nINVdisc2/100)*(1-nINVdisc3/100)) as semua
-         FROM invoice
-            INNER JOIN invoicedetail
-           ON  cINVpk = cIVDfkINV
-            INNER JOIN exchange
-           ON  cINVfkexc = cexcpk
-            INNER JOIN stock
-           ON  cIVDfkSTK = cSTKpk
-            INNER JOIN stockdetail
-           ON  cSTKpk = cSTDfkSTK
-         WHERE nstdkey = 1 and nIVDkirim=1 AND (cINVspecial='BL' or cINVspecial='RB' or cINVspecial='KS')
-            and dinvdate>= ? and dinvdate<= ? `;
-            const filterColumns = columnsToFilter ? columnsToFilter.toString().split(',').map(item => item.trim()) : [];
-        if (searchValue) {
-            query += ' AND (';
-            query += filterColumns.map(column => `${column} LIKE ?`).join(' OR ');
-            query += ')';
-            parameters.push(...filterColumns.map(() => `%${searchValue}%`));
+        /**
+         * Only allow filtering on known physical columns.
+         * Map UI column names to real SQL columns.
+         */
+        const filterColumnMap: Record<string, string> = {
+            stock_id_header: 'sd.cstdcode',
+            stock_name_header: 's.cstkdesc',
+            currency_header: 'e.cexcdesc'
+        };
+
+        const requestedFilterColumns = columnsToFilter
+            ? columnsToFilter.toString().split(',').map(item => item.trim())
+            : [];
+
+        const safeFilterColumns = requestedFilterColumns
+            .map(col => filterColumnMap[col])
+            .filter(Boolean);
+
+        let searchClause = '';
+        if (searchValue && safeFilterColumns.length > 0) {
+            searchClause =
+                ' AND (' + safeFilterColumns.map(col => `${col} LIKE ?`).join(' OR ') + ')';
+            parameters.push(...safeFilterColumns.map(() => `%${searchValue}%`));
         }
-        if (warehouse) {
-            query+= ` and (IFNULL(?, cinvfkwhs) = cinvfkwhs or cinvfkwhs is null) `
-            parameters.push(decodeURIComponent(warehouse));
+
+        /**
+         * Build selective WHERE clauses directly.
+         * Avoid patterns like IFNULL(?, col) = col because they usually prevent index usage.
+         */
+        let optionalFilters = '';
+        if (warehouseValue) {
+            optionalFilters += ' AND i.cinvfkwhs = ?';
         }
-        if (stockGroup) {
-            query+= ` and (IFNULL(?, cstkfkgrp) = cstkfkgrp or cstkfkgrp is null)  `;
-            parameters.push(decodeURIComponent(stockGroup));
+        if (stockGroupValue) {
+            optionalFilters += ' AND s.cstkfkgrp = ?';
         }
-                               
-        query+= ` group by nstkppn,cinvspecial,civdfkinv,cstdcode, cstkdesc, cexcdesc,ninvdisc,nivdstkppn,ninvtax 
-         order by cexcdesc,cstdcode
-        ) as b
-        
-        on a.civdfkinv=b.civdfkinv
-        group by cstdcode,cstkdesc,cexcdesc
-         ) AS c, (SELECT @currentGroup := '', @currentSum := 0, @currentGroupAmountTax := '', @currentSumAmountTax := 0) r
-        order by ${sortBy}`;
+
+        /**
+         * Push date params first because they appear first in SQL.
+         */
+        parameters.unshift(startDate, endDate);
+
+        if (warehouseValue) {
+            parameters.push(warehouseValue);
+        }
+        if (stockGroupValue) {
+            parameters.push(stockGroupValue);
+        }
+
+        const query = `
+            SELECT
+                c.StockID AS stock_id_header,
+                c.StockName AS stock_name_header,
+                FORMAT(c.Qty, 0) AS qty_header,
+                c.Currency AS currency_header,
+                FORMAT(c.Amount, 0) AS amount_header,
+                FORMAT(c.Amount_Tax, 0) AS amount_tax_header,
+                FORMAT(
+                    IF(@currentGroup <> c.Currency,
+                        IF(@currentGroup := c.Currency, @currentSum := c.Amount, @currentSum := c.Amount),
+                        @currentSum := @currentSum + c.Amount
+                    ),
+                    0
+                ) AS subtotal_header,
+                FORMAT(
+                    IF(@currentGroupAmountTax <> c.Currency,
+                        IF(@currentGroupAmountTax := c.Currency, @currentSumAmountTax := c.Amount_Tax, @currentSumAmountTax := c.Amount_Tax),
+                        @currentSumAmountTax := @currentSumAmountTax + c.Amount_Tax
+                    ),
+                    0
+                ) AS amount_tax_total_header
+            FROM
+            (
+                SELECT
+                    sd.cstdcode AS StockID,
+                    TRIM(s.cstkdesc) AS StockName,
+                    SUM(d.nivdzqtyin - d.nivdzqtyout) AS Qty,
+                    e.cexcdesc AS Currency,
+                    SUM(
+                        (
+                            (
+                                IF(i.cinvspecial = 'RB', -d.nIVDAmount, d.nivdamount)
+                                * (1 - i.nINVdisc1 / 100)
+                                * (1 - i.nINVdisc2 / 100)
+                                * (1 - i.nINVdisc3 / 100)
+                            )
+                            - IF(i.cinvspecial = 'RB', -i.ninvdisc, i.ninvdisc) / x.rows2
+                        )
+                    ) AS Amount,
+                    SUM(
+                        (
+                            (
+                                (
+                                    IF(i.cinvspecial = 'RB', -d.nIVDAmount, d.nivdamount)
+                                    * (1 - i.nINVdisc1 / 100)
+                                    * (1 - i.nINVdisc2 / 100)
+                                    * (1 - i.nINVdisc3 / 100)
+                                )
+                                - IF(i.cinvspecial = 'RB', -i.ninvdisc, i.ninvdisc) / x.rows2
+                            )
+                            * (1 + IF(d.nivdstkppn = 1, i.ninvtax / 100, 0))
+                        )
+                    ) AS Amount_Tax
+                FROM invoice i
+                INNER JOIN
+                (
+                    SELECT
+                        id.civdfkinv,
+                        COUNT(*) AS rows2
+                    FROM invoicedetail id
+                    WHERE id.nIVDkirim = 1
+                    GROUP BY id.civdfkinv
+                ) x
+                    ON x.civdfkinv = i.cinvpk
+                INNER JOIN invoicedetail d
+                    ON d.cIVDfkINV = i.cINVpk
+                   AND d.nIVDkirim = 1
+                INNER JOIN exchange e
+                    ON e.cexcpk = i.cINVfkexc
+                INNER JOIN stock s
+                    ON s.cSTKpk = d.cIVDfkSTK
+                INNER JOIN stockdetail sd
+                    ON sd.cSTDfkSTK = s.cSTKpk
+                   AND sd.nstdkey = 1
+                WHERE
+                    i.cINVspecial IN ('BL', 'RB', 'KS')
+                    AND i.dinvdate >= ?
+                    AND i.dinvdate <= ?
+                    ${searchClause}
+                    ${optionalFilters}
+                GROUP BY
+                    sd.cstdcode,
+                    s.cstkdesc,
+                    e.cexcdesc
+            ) c,
+            (
+                SELECT
+                    @currentGroup := '',
+                    @currentSum := 0,
+                    @currentGroupAmountTax := '',
+                    @currentSumAmountTax := 0
+            ) vars
+            ORDER BY ${sortBy}
+        `;
+
         console.log(`query: ${query}`);
         console.log(`Report Name: ${ReportName.Purchase_Analyst_Report}`);
-        console.log('warehouse: ', decodeURIComponent(warehouse));
-        console.log('stockGroup: ', decodeURIComponent(stockGroup));
+        console.log('warehouse: ', warehouseValue);
+        console.log('stockGroup: ', stockGroupValue);
         console.log(`=============================================`);
+
         const response = await this.genericRepository.query<SalesAnalystDTO>(query, parameters);
+
         if (response?.length) {
-            return ResponseHelper.CreateResponse<SalesAnalystDTO[]>(response, HttpStatus.OK, Constants.DATA_SUCCESS);
+            return ResponseHelper.CreateResponse<SalesAnalystDTO[]>(
+                response,
+                HttpStatus.OK,
+                Constants.DATA_SUCCESS
+            );
         } else {
-            return ResponseHelper.CreateResponse<SalesAnalystDTO[]>([], HttpStatus.NOT_FOUND, Constants.DATA_NOT_FOUND);
+            return ResponseHelper.CreateResponse<SalesAnalystDTO[]>(
+                [],
+                HttpStatus.NOT_FOUND,
+                Constants.DATA_NOT_FOUND
+            );
         }
     }
 }

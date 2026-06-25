@@ -1,84 +1,183 @@
 import { Injectable, HttpStatus } from '@nestjs/common';
-
 import { ReportStrategy } from '../interfaces-strategy/report-strategy';
-import { GenericRepository } from '../repository/generic.repository'
+import { GenericRepository } from '../repository/generic.repository';
 import { Sales2DTO } from './../dto/sales-2.dto';
-
 import ApiResponse from 'src/helper/api-response';
 import ResponseHelper from 'src/helper/response-helper';
 import { ReportName } from 'src/helper/enums/report-names.enum';
 import Constants from 'src/helper/constants';
 import { QueryStringDTO } from 'src/dto/query-string.dto';
+
 @Injectable()
 export class Sales2Report implements ReportStrategy {
     constructor(private readonly genericRepository: GenericRepository) {}
 
     public async generateReport(queryString: QueryStringDTO): Promise<ApiResponse<any>> {
-        let {startDate, endDate, warehouse, sortColumn, sortDirection, searchValue, columnsToFilter } = queryString;
-        let sortBy;
+        const {
+            startDate,
+            endDate,
+            warehouse,
+            sortColumn,
+            sortDirection,
+            searchValue,
+            columnsToFilter,
+        } = queryString;
 
-        const sortOrder = !sortDirection ? 'ASC' : sortDirection;
+        const parameters: any[] = [];
+        const decodedWarehouse = warehouse ? decodeURIComponent(warehouse) : null;
+        const sortOrder = (sortDirection && sortDirection.toUpperCase() === 'DESC') ? 'DESC' : 'ASC';
 
-        if(!sortColumn || sortColumn === 'currency_header' || sortColumn === 'invoice_header') {
-            if(sortColumn === 'currency_header')
-                sortBy = ` currency_header ${sortOrder},invoice_header`;
-            else 
-                sortBy = ` currency_header ,invoice_header ${sortOrder}`;
-        }else if (sortColumn === 'date_header') {
-            sortBy = ` currency_header, STR_TO_DATE(date_header, '%d-%m-%Y') ${sortOrder}, invoice_header `;
-        }else {
-            sortBy = ` currency_header, CAST(REPLACE(${sortColumn}, ',', '') AS SIGNED) ${sortOrder} ,invoice_header`;
+        /**
+         * Only allow sorting by known output aliases to avoid SQL injection.
+         * Never inject raw client input into ORDER BY.
+         */
+        const allowedSortColumns: Record<string, string> = {
+            invoice_header: 'Invoice',
+            date_header: 'InvoiceDate',
+            customer_header: 'Customer',
+            currency_header: 'Currency',
+            amount_header: 'Amount',
+            subtotal_header: 'SubtotalAmount',
+        };
+
+        let sortBy = 'Currency ASC, Invoice ASC';
+
+        if (!sortColumn || sortColumn === 'invoice_header') {
+            sortBy = `Currency ASC, Invoice ${sortOrder}`;
+        } else if (sortColumn === 'currency_header') {
+            sortBy = `Currency ${sortOrder}, Invoice ASC`;
+        } else if (sortColumn === 'date_header') {
+            sortBy = `Currency ASC, InvoiceDate ${sortOrder}, Invoice ASC`;
+        } else if (sortColumn === 'customer_header') {
+            sortBy = `Currency ASC, Customer ${sortOrder}, Invoice ASC`;
+        } else if (sortColumn === 'amount_header' || sortColumn === 'subtotal_header') {
+            sortBy = `Currency ASC, Amount ${sortOrder}, Invoice ASC`;
         }
-        const parameters = [];
+
+        /**
+         * Only allow filtering on safe projected columns from the derived table.
+         * This avoids raw column injection from columnsToFilter.
+         */
+        const allowedFilterColumns: Record<string, string> = {
+            invoice_header: 't.Invoice',
+            date_header: "DATE_FORMAT(t.InvoiceDate, '%d-%m-%Y')",
+            customer_header: 't.Customer',
+            currency_header: 't.Currency',
+        };
+
+        const requestedFilterColumns = columnsToFilter
+            ? columnsToFilter
+                  .toString()
+                  .split(',')
+                  .map(item => item.trim())
+                  .filter(item => allowedFilterColumns[item])
+            : [];
+
+        let query = `
+            SELECT
+                x.Invoice AS invoice_header,
+                DATE_FORMAT(x.InvoiceDate, '%d-%m-%Y') AS date_header,
+                IFNULL(x.Customer, '') AS customer_header,
+                x.Currency AS currency_header,
+                FORMAT(x.Amount, 0) AS amount_header,
+                FORMAT(
+                    IF(
+                        @currentGroup <> x.Currency,
+                        IF(@currentGroup := x.Currency, @currentSum := x.Amount, @currentSum := x.Amount),
+                        @currentSum := @currentSum + x.Amount
+                    ),
+                    0
+                ) AS subtotal_header
+            FROM
+            (
+                SELECT
+                    LTRIM(RTRIM(i.cinvrefno)) AS Invoice,
+                    i.dinvdate AS InvoiceDate,
+                    LTRIM(RTRIM(e.centdesc)) AS Customer,
+                    ex.cexcdesc AS Currency,
+                    SUM(
+                        (
+                            IF(i.cinvspecial IN ('RJ', 'RS'), -id.nIVDAmount, id.nIVDAmount)
+                            * (1 - i.nInvDisc1 / 100)
+                            * (1 - i.nInvDisc2 / 100)
+                            * (1 - i.nInvDisc3 / 100)
+                            * (IF(id.nivdstkppn = 1, 1 + i.ninvtax / 100, 1))
+                        )
+                    ) + MAX(
+                        IF(i.cinvspecial IN ('RJ', 'RS'), -i.ninvfreight, i.ninvfreight)
+                    ) AS Amount
+                FROM invoice i
+                INNER JOIN invoicedetail id ON i.cinvpk = id.civdfkinv
+                INNER JOIN exchange ex ON i.cinvfkexc = ex.cexcpk
+                LEFT JOIN entity e ON i.cinvfkent = e.centpk
+                WHERE i.cinvspecial IN ('JL', 'RJ', 'PS', 'RS')
+                  AND i.dinvdate >= ?
+                  AND i.dinvdate < DATE_ADD(?, INTERVAL 1 DAY)
+        `;
 
         parameters.push(startDate);
         parameters.push(endDate);
-        let query = `
-        SELECT Invoice as invoice_header, Date as date_header, IFNULL(Customer, '') as customer_header,Currency as currency_header,
-            FORMAT(Amount,0) AS amount_header,
-            FORMAT(IF(@currentGroup <> Currency, 
-                IF(@currentGroup:= Currency, @currentSum:= 0, @currentSum:= Amount), 
-                @currentSum:= @currentSum + Amount
-            ),0) AS subtotal_header
-        FROM (
-        select 
-        LTRIM(RTRIM(cinvrefno)) as Invoice,
-        DATE_FORMAT(dinvdate,'%d-%m-%Y') as Date,
-        LTRIM(RTRIM(centdesc)) as Customer,
-        cexcdesc as Currency,
-        sum(if(cinvspecial='RJ' or cinvspecial='RS',-nIVDAmount,nIVDAmount)*(1-nInvDisc1/100)*(1-nInvDisc2/100)*(1-nInvDisc3/100)*(if(nivdstkppn=1,1+ninvtax/100,1)))+if(cinvspecial='RJ' or cinvspecial='RS',-ninvfreight,ninvfreight) as Amount
-        from invoice
-        inner join invoicedetail on cinvpk=civdfkinv
-        inner join exchange on cinvfkexc=cexcpk
-        left join entity on cinvfkent=centpk
-        where (cinvspecial='JL' or cinvspecial='RJ' or cinvspecial='PS' or cinvspecial='RS') 
-        and dinvdate>=? and dinvdate<=? `;
-        const filterColumns = columnsToFilter ? columnsToFilter.toString().split(',').map(item => item.trim()) : [];
-        if (searchValue) {
-            query += ' AND (';
-            query += filterColumns.map(column => `${column} LIKE ?`).join(' OR ');
-            query += ')';
-            parameters.push(...filterColumns.map(() => `%${searchValue}%`));
-        }
-        if (warehouse) {
-            query+= `and (IFNULL(?, cinvfkwhs) = cinvfkwhs or cinvfkwhs is null) `;
-            parameters.push(decodeURIComponent(warehouse));
+
+        /**
+         * Better than:
+         * and (IFNULL(?, cinvfkwhs) = cinvfkwhs or cinvfkwhs is null)
+         *
+         * That old pattern prevents index usage.
+         */
+        if (decodedWarehouse) {
+            query += ` AND (i.cinvfkwhs = ? OR i.cinvfkwhs IS NULL) `;
+            parameters.push(decodedWarehouse);
         }
 
         query += `
-        group by cinvrefno,dinvdate,centdesc,cexcdesc,ninvdisc1,ninvdisc2,ninvdisc3,ninvtax,ninvfreight,cinvspecial
-        ) AS c, (SELECT @currentGroup := '', @currentSum := 0) r 
-         order by ${sortBy}`;
+                GROUP BY
+                    i.cinvrefno,
+                    i.dinvdate,
+                    e.centdesc,
+                    ex.cexcdesc,
+                    i.cinvspecial,
+                    i.nInvDisc1,
+                    i.nInvDisc2,
+                    i.nInvDisc3,
+                    i.ninvtax
+            ) x
+            CROSS JOIN (SELECT @currentGroup := '', @currentSum := 0) vars
+            WHERE 1 = 1
+        `;
+
+        if (searchValue && requestedFilterColumns.length > 0) {
+            query += ' AND (';
+            query += requestedFilterColumns
+                .map(col => `${allowedFilterColumns[col]} LIKE ?`)
+                .join(' OR ');
+            query += ')';
+
+            for (let i = 0; i < requestedFilterColumns.length; i++) {
+                parameters.push(`%${searchValue}%`);
+            }
+        }
+
+        query += ` ORDER BY ${sortBy}`;
 
         console.log(`query: ${query}`);
         console.log(`Report Name: ${ReportName.Sales_No_Disc}`);
-        console.log('warehouse: ', decodeURIComponent(warehouse));
-        console.log(`=============================================`);   
+        console.log('warehouse: ', decodedWarehouse);
+        console.log(`=============================================`);
+
         const response = await this.genericRepository.query<Sales2DTO>(query, parameters);
+
         if (response?.length) {
-            return ResponseHelper.CreateResponse<Sales2DTO[]>(response, HttpStatus.OK, Constants.DATA_SUCCESS);
+            return ResponseHelper.CreateResponse<Sales2DTO[]>(
+                response,
+                HttpStatus.OK,
+                Constants.DATA_SUCCESS
+            );
         } else {
-            return ResponseHelper.CreateResponse<Sales2DTO[]>([], HttpStatus.NOT_FOUND, Constants.DATA_NOT_FOUND);
+            return ResponseHelper.CreateResponse<Sales2DTO[]>(
+                [],
+                HttpStatus.NOT_FOUND,
+                Constants.DATA_NOT_FOUND
+            );
         }
     }
 }

@@ -98,4 +98,16 @@ export class ReportsController {
     const result = await this.reportService.generateReport(ReportName.Stock_Balance_Report_Purchase_Price, query);
     return result;
   }
+
+  @Get('/stock-search-barcode-sales-price')
+  async stockSearchBarCodeSalesPrice(@Query() query: QueryStringDTO): Promise<any> {
+    const result = await this.reportService.generateReport(ReportName.Stock_Balance_BarCode_Sales_Price, query);
+    return result;
+  }
+
+  @Get('/stock-balance-sales-price')
+  async stockBalanceReportSalesPrice(@Query() query: QueryStringDTO): Promise<any> {
+    const result = await this.reportService.generateReport(ReportName.Stock_Balance_Report_Sales_Price, query);
+    return result;
+  }
 }

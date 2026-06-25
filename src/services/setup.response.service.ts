@@ -6,9 +6,9 @@ import { GenericRepository } from 'src/repository/generic.repository';
 
 @Injectable({ scope: Scope.REQUEST })
 export class SetupResponseService {
-    constructor(private readonly genericRepository: GenericRepository) {}
-    async getCustomerList(): Promise<ApiResponse<any>> {
-        let query = `select centpk, LTRIM(RTRIM(centdesc)) from entity where nentcust=1 and nentsuspend=0 order by centdesc asc`;
+  constructor(private readonly genericRepository: GenericRepository) {}
+  async getCustomerList(): Promise<ApiResponse<any>> {
+    const query = `select centpk, concat(centcode, ' - ', Trim(centdesc)) as centdesc from entity where nentcust=1 and nentsuspend=0 order by centdesc asc`;
 
         const response = await this.genericRepository.query<any>(query);
         if (response?.length) {
@@ -30,7 +30,17 @@ export class SetupResponseService {
     }
 
     async getStockNameList(): Promise<ApiResponse<any>> {
-        let query = `select cstdcode, concat(cstdcode, ' - ', Trim(cstkdesc)) as 'stockItem' from stock s join stockdetail d on d.cstdfkstk = s.cstkpk order by cstdcode asc`;
+        let query = `SELECT cstdcode, 
+    CONCAT(
+        CAST(cstdcode AS CHAR CHARACTER SET utf8),
+        ' - ',
+        CAST(TRIM(cstkdesc) AS CHAR CHARACTER SET utf8),
+        ' - ',
+        CAST(FORMAT(nstdretail,0) AS CHAR CHARACTER SET utf8)
+    ) AS stockItem
+FROM stock s JOIN stockdetail d 
+    ON d.cstdfkstk = s.cstkpk
+WHERE nstksuspend = 0 ORDER BY cstdcode ASC`; 
 
         const response = await this.genericRepository.query<any>(query);
         console.log(response);
@@ -42,7 +52,7 @@ export class SetupResponseService {
     }
 
     async getStockNameListForStockAdjusment(): Promise<ApiResponse<any>> {
-        let query = `select cstdcode, concat(cstdcode, ' - ', Trim(cstkdesc)) as 'stockItem' from stock s join stockdetail d on d.cstdfkstk = s.cstkpk and d.nstdfactor=1 order by cstdcode asc`;
+        let query = `select cstdcode, concat(cstdcode, ' - ', Trim(cstkdesc)) as 'stockItem' from stock s join stockdetail d on d.cstdfkstk = s.cstkpk and d.nstdfactor=1 and nstksuspend=0 order by cstdcode asc`;
         
         const response = await this.genericRepository.query<any>(query);
         console.log(response);

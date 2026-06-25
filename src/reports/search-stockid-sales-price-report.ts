@@ -9,33 +9,36 @@ import Constants from 'src/helper/constants';
 import { QueryStringDTO } from 'src/dto/query-string.dto';
 
 @Injectable()
-export class SearchStockIDReport implements ReportStrategy {
-  constructor(private readonly genericRepository: GenericRepository) {}
+export class SearchStockID_Sales_Price_Report implements ReportStrategy {
+    constructor(private readonly genericRepository: GenericRepository) {}
 
-  public async generateReport(queryString: QueryStringDTO): Promise<ApiResponse<any>> {
-    const { stockId } = queryString;
+    public async generateReport(queryString: QueryStringDTO): Promise<ApiResponse<any>> {
+        const { stockId } = queryString;
 
-    if (!stockId) {
-      return ResponseHelper.CreateResponse<StocBalancekDTO[]>(
-        [],
-        HttpStatus.NOT_FOUND,
-        Constants.STOCK_CODE_EMPTY
-      );
-    }
+        if (!stockId) {
+            return ResponseHelper.CreateResponse<StocBalancekDTO[]>(
+                [],
+                HttpStatus.NOT_FOUND,
+                Constants.STOCK_CODE_EMPTY
+            );
+        }
 
-    const parameters = [decodeURIComponent(stockId)];
+        const parameters = [decodeURIComponent(stockId)];
 
-    const query = `
-      SELECT 
+        const query = `
+       SELECT 
         LTRIM(RTRIM(cSTDcode)) AS StockID,
         LTRIM(RTRIM(cSTKdesc)) AS StockName,
         LTRIM(RTRIM(warehouse.cwhsdesc)) AS Location,
         FORMAT(SUM(zQtyIn - zQtyOut), 0) AS Qty,
-        FORMAT(sdt.nSTDretail, 0) AS Price,
-        FORMAT(SUM(zQtyIn - zQtyOut) * sdt.nSTDretail, 0) AS Balance
+        FORMAT(sdt.nSTDprice, 0) AS Price,
+        FORMAT(SUM(zQtyIn - zQtyOut) * sdt.nSTDprice, 0) AS Balance
       FROM (
         -- Invoiced Details
+				   
+						   
         SELECT cIvdFkStk, cInvFkWhs AS pkWhs,
+										  
                SUM(nIVDzqtyIn) AS zQtyIn, SUM(nIVDzqtyOut) AS zQtyOut
         FROM Invoicedetail
         INNER JOIN Invoice ON cIVDfkINV = cINVpk
@@ -45,13 +48,18 @@ export class SearchStockIDReport implements ReportStrategy {
         UNION ALL
 
         -- Transfer Details
+				  
+						  
         SELECT cIvdFkStk, cInvTransfer AS pkWhs,
                SUM(nIVDzqtyOut) AS zQtyIn, SUM(nIVDzqtyIn) AS zQtyOut
+										  
         FROM Invoicedetail
         INNER JOIN Invoice ON cIVDfkINV = cINVpk
         WHERE cinvspecial NOT IN ('KS', '02')
           AND cInvTransfer IS NOT NULL AND cInvTransfer <> 'n/a'
+									   
           AND nIVDkirim = 1 AND nIVDaccqty >= 0
+								 
         GROUP BY cIvdFkStk, cInvTransfer
       ) AS c
       INNER JOIN warehouse ON warehouse.cwhspk = c.pkWhs
@@ -72,6 +80,16 @@ export class SearchStockIDReport implements ReportStrategy {
 
     return response?.length
       ? ResponseHelper.CreateResponse<StocBalancekDTO[]>(response, HttpStatus.OK, Constants.DATA_SUCCESS)
+						 
+							  
+									  
+			  
+				
       : ResponseHelper.CreateResponse<StocBalancekDTO[]>([], HttpStatus.NOT_FOUND, Constants.DATA_NOT_FOUND);
+				   
+									 
+										
+			  
   }
+	 
 }

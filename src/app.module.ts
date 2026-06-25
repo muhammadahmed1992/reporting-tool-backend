@@ -22,6 +22,8 @@ import { ConnectionStringMiddleware } from './middleware/connection-string.middl
 import { SearchStockIDReport } from './reports/search-stockid-report';
 import { SearchStockID_Purchase_Price_Report } from './reports/search-stockid-purchase-price-report';
 import { StockBalanceReport_Purchase_Price } from './reports/stock-balance-report-purchase-price';
+import { SearchStockID_Sales_Price_Report } from './reports/search-stockid-sales-price-report';
+import { StockBalanceReport_Sales_Price } from './reports/stock-balance-report-sales-price';
 import { SchemaInfoController } from './controller/database.schema.controller';
 import { SchemaInformationService } from './services/schema.information.service';
 import { HeartBeatController } from './controller/heart.beat.controller';
@@ -82,6 +84,8 @@ import { LocaleService } from './services/locale.service';
     AdminService,
     SearchStockID_Purchase_Price_Report,
     StockBalanceReport_Purchase_Price,
+    SearchStockID_Sales_Price_Report,
+    StockBalanceReport_Sales_Price,
     ReceiptFormatter,
     PrinterConfigService,
     LocaleService

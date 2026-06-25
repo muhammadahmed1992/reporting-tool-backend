@@ -27,13 +27,13 @@ export class PriceListReport implements ReportStrategy {
         const parameters = [];
         let query = `
         SELECT cSTDcode as stock_id_header, LTRIM(RTRIM(cSTKdesc)) as stock_name_header,
-        FORMAT(nSTDprice,0) as price_header,LTRIM(RTRIM(cUNIdesc)) as unit_header
+        FORMAT(nSTDretail,0) as price_header,LTRIM(RTRIM(cUNIdesc)) as unit_header
         FROM Stock INNER JOIN Stockdetail
         ON Stock.cSTKpk = Stockdetail.cSTDfkSTK
         INNER JOIN Unit
         ON Stockdetail.cSTDfkUNI = Unit.cUNIpk
         inner join stockgroup on cstkfkgrp = cgrppk
-        where 1=1 `;
+        where nstksuspend=0 `;
         const filterColumns = columnsToFilter ? columnsToFilter.toString().split(',').map(item => item.trim()) : [];
         if (searchValue) {
             query += ' AND (';
